@@ -2,6 +2,7 @@ package com.learning
 
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
+import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.then
@@ -19,11 +20,11 @@ val appRoutes = routes(
         Response(OK).body("pong")
     },
     "/add" bind GET to { request ->
-        val valuesToAdd = Query.int().multi.defaulted("value", emptyList())(request)
+        val valuesToAdd = extractQueryValuesFrom(request)
         Response(OK).body(valuesToAdd.sum().toString())
     },
     "/multiply" bind GET to { request ->
-        val valuesToMultiply = Query.int().multi.defaulted("value", emptyList())(request)
+        val valuesToMultiply = extractQueryValuesFrom(request)
         val body = if (valuesToMultiply.isNotEmpty()) {
             valuesToMultiply.fold(1) { acc, next -> acc * next }.toString()
         } else {
@@ -32,6 +33,8 @@ val appRoutes = routes(
         Response(OK).body(body)
     }
 )
+
+private fun extractQueryValuesFrom(request: Request) = Query.int().multi.defaulted("value", emptyList())(request)
 
 val app: HttpHandler = CatchLensFailure.then(
     appRoutes
