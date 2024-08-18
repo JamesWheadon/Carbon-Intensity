@@ -22,8 +22,9 @@ val appRoutes = routes(
         val valuesToAdd = Query.int().multi.defaulted("value", emptyList())(request)
         Response(OK).body(valuesToAdd.sum().toString())
     },
-    "/multiply" bind GET to {
-        Response(OK).body("8")
+    "/multiply" bind GET to { request ->
+        val valuesToMultiply = Query.int().multi.defaulted("value", emptyList())(request)
+        Response(OK).body(valuesToMultiply.fold(1) { acc, next -> acc * next }.toString())
     }
 )
 
