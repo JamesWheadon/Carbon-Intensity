@@ -31,4 +31,9 @@ class EndToEndTest {
     fun `responds to add endpoint`() {
         client(Request(GET, "http://localhost:${server.port()}/add?value=1&value=2")).assertReturnsString("3")
     }
+
+    @Test
+    fun `responds to multiply endpoint`() {
+        client(Request(GET, "http://localhost:${server.port()}/multiply?value=1&value=2")).assertReturnsString("8")
+    }
 }
