@@ -14,16 +14,18 @@ import org.http4k.server.Http4kServer
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 
+val appRoutes = routes(
+    "/ping" bind GET to {
+        Response(OK).body("pong")
+    },
+    "/add" bind GET to { request ->
+        val valuesToAdd = Query.int().multi.defaulted("value", emptyList())(request)
+        Response(OK).body(valuesToAdd.sum().toString())
+    }
+)
+
 val app: HttpHandler = CatchLensFailure.then(
-    routes(
-        "/ping" bind GET to {
-            Response(OK).body("pong")
-        },
-        "/add" bind GET to { request ->
-            val valuesToAdd = Query.int().multi.defaulted("value", emptyList())(request)
-            Response(OK).body(valuesToAdd.sum().toString())
-        }
-    )
+    appRoutes
 )
 
 fun main() {
