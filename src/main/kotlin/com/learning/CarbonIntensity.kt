@@ -14,8 +14,9 @@ val app: HttpHandler = routes(
     "/ping" bind GET to {
         Response(OK).body("pong")
     },
-    "/add" bind GET to {
-        Response(OK).body("3")
+    "/add" bind GET to { request ->
+        val valuesToAdd = request.queries("value").filterNotNull().map { number -> number.toInt() }
+        Response(OK).body(valuesToAdd.sum().toString())
     }
 )
 

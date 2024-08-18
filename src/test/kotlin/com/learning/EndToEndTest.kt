@@ -38,6 +38,6 @@ class EndToEndTest {
     }
 }
 
-private fun Response.assertReturnsString(expected: String) {
+fun Response.assertReturnsString(expected: String) {
     assertThat(this, hasStatus(OK).and(hasBody(expected)))
 }
