@@ -12,4 +12,9 @@ class AddFunctionalTest {
     fun `adds values together`() {
         client(Request(GET, "/add?value=5&value=2")).assertReturnsString("7")
     }
+
+    @Test
+    fun `answer is zero when no values`() {
+        client(Request(GET, "/add")).assertReturnsString("0")
+    }
 }
