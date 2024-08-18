@@ -24,7 +24,12 @@ val appRoutes = routes(
     },
     "/multiply" bind GET to { request ->
         val valuesToMultiply = Query.int().multi.defaulted("value", emptyList())(request)
-        Response(OK).body(valuesToMultiply.fold(1) { acc, next -> acc * next }.toString())
+        val body = if (valuesToMultiply.isNotEmpty()) {
+            valuesToMultiply.fold(1) { acc, next -> acc * next }.toString()
+        } else {
+            "0"
+        }
+        Response(OK).body(body)
     }
 )
 

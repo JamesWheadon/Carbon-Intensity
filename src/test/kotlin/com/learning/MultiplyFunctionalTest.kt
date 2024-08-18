@@ -12,4 +12,9 @@ class MultiplyFunctionalTest {
     fun `multiplies values together`() {
         client(Request(GET, "/multiply?value=5&value=2")).assertReturnsString("10")
     }
+
+    @Test
+    fun `answer is zero when no values`() {
+        client(Request(GET, "/multiply")).assertReturnsString("0")
+    }
 }
