@@ -19,24 +19,22 @@ val appRoutes = routes(
     "/ping" bind GET to {
         Response(OK).body("pong")
     },
-    "/add" bind GET to { request ->
-        val valuesToAdd = extractQueryValuesFrom(request)
-        Response(OK).body(applyTransformToQueries(valuesToAdd) { values -> values.sum() }.toString())
-    },
-    "/multiply" bind GET to { request ->
-        val valuesToMultiply = extractQueryValuesFrom(request)
-        Response(OK).body(applyTransformToQueries(valuesToMultiply) { values -> values.fold(1) { acc, next -> acc * next } }.toString())
-    }
+    "/add" bind GET to calculateResult { values -> values.sum() },
+    "/multiply" bind GET to calculateResult { values -> values.fold(1) { acc, next -> acc * next } }
 )
 
-private fun applyTransformToQueries(values: List<Int>, operation: (List<Int>) -> Int) =
-    if (values.isNotEmpty()) {
-        operation(values)
-    } else {
-        0
-    }
+private fun calculateResult(calculation: (List<Int>) -> Int): (Request) -> Response = { request ->
+    val values = extractQueryValuesFrom(request)
+    Response(OK).body(performCalculation(values, calculation).toString())
+}
 
 private fun extractQueryValuesFrom(request: Request) = Query.int().multi.defaulted("value", emptyList())(request)
+
+private fun performCalculation(values: List<Int>, operation: (List<Int>) -> Int) = if (values.isNotEmpty()) {
+    operation(values)
+} else {
+    0
+}
 
 val app: HttpHandler = CatchLensFailure.then(
     appRoutes
