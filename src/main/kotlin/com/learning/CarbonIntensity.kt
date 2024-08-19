@@ -21,18 +21,20 @@ val appRoutes = routes(
     },
     "/add" bind GET to { request ->
         val valuesToAdd = extractQueryValuesFrom(request)
-        Response(OK).body(valuesToAdd.sum().toString())
+        Response(OK).body(applyTransformToQueries(valuesToAdd) { values -> values.sum() }.toString())
     },
     "/multiply" bind GET to { request ->
         val valuesToMultiply = extractQueryValuesFrom(request)
-        val body = if (valuesToMultiply.isNotEmpty()) {
-            valuesToMultiply.fold(1) { acc, next -> acc * next }.toString()
-        } else {
-            "0"
-        }
-        Response(OK).body(body)
+        Response(OK).body(applyTransformToQueries(valuesToMultiply) { values -> values.fold(1) { acc, next -> acc * next } }.toString())
     }
 )
+
+private fun applyTransformToQueries(values: List<Int>, operation: (List<Int>) -> Int) =
+    if (values.isNotEmpty()) {
+        operation(values)
+    } else {
+        0
+    }
 
 private fun extractQueryValuesFrom(request: Request) = Query.int().multi.defaulted("value", emptyList())(request)
 
