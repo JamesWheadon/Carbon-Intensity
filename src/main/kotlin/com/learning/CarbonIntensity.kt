@@ -1,11 +1,10 @@
 package com.learning
 
-import org.http4k.core.HttpHandler
+import org.http4k.client.JavaHttpClient
+import org.http4k.core.*
 import org.http4k.core.Method.GET
-import org.http4k.core.Request
-import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
-import org.http4k.core.then
+import org.http4k.filter.ClientFilters.SetHostFrom
 import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.lens.Query
 import org.http4k.lens.int
@@ -36,14 +35,16 @@ private fun performCalculation(values: List<Int>, operation: (List<Int>) -> Int)
     0
 }
 
-val app: HttpHandler = CatchLensFailure.then(
-    appRoutes
-)
-
 fun main() {
-    val server = carbonIntensityServer(9000).start()
+    val server = carbonIntensityServer(9000, Uri.of("http://localhost:1000")).start()
 
     println("Server started on " + server.port())
 }
 
-fun carbonIntensityServer(port: Int): Http4kServer = app.asServer(SunHttp(port))
+fun carbonIntensityServer(port: Int, recorderBaseUri: Uri): Http4kServer {
+    return app(SetHostFrom(recorderBaseUri).then(JavaHttpClient())).asServer(SunHttp(port))
+}
+
+fun app(recorder: HttpHandler): HttpHandler = CatchLensFailure.then(
+    appRoutes
+)

@@ -2,14 +2,18 @@ package com.learning
 
 import com.learning.Matchers.assertReturnsString
 import com.natpryce.hamkrest.assertion.assertThat
+import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Uri
+import org.http4k.core.then
+import org.http4k.filter.ClientFilters.SetHostFrom
 import org.http4k.hamkrest.hasStatus
 import org.junit.jupiter.api.Test
 
 class MultiplyFunctionalTest {
-    private val client = app
+    private val client = app(SetHostFrom(Uri.of("http://localhost:1000")).then(JavaHttpClient()))
 
     @Test
     fun `multiplies values together`() {
