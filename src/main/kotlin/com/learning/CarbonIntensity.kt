@@ -14,27 +14,6 @@ import org.http4k.server.Http4kServer
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 
-val appRoutes = routes(
-    "/ping" bind GET to {
-        Response(OK).body("pong")
-    },
-    "/add" bind GET to calculateResult { values -> values.sum() },
-    "/multiply" bind GET to calculateResult { values -> values.fold(1) { acc, next -> acc * next } }
-)
-
-private fun calculateResult(calculation: (List<Int>) -> Int): (Request) -> Response = { request ->
-    val values = extractQueryValuesFrom(request)
-    Response(OK).body(performCalculation(values, calculation).toString())
-}
-
-private fun extractQueryValuesFrom(request: Request) = Query.int().multi.defaulted("value", emptyList())(request)
-
-private fun performCalculation(values: List<Int>, operation: (List<Int>) -> Int) = if (values.isNotEmpty()) {
-    operation(values)
-} else {
-    0
-}
-
 fun main() {
     val server = carbonIntensityServer(9000, Uri.of("http://localhost:1000")).start()
 
@@ -45,6 +24,31 @@ fun carbonIntensityServer(port: Int, recorderBaseUri: Uri): Http4kServer {
     return app(SetHostFrom(recorderBaseUri).then(JavaHttpClient())).asServer(SunHttp(port))
 }
 
-fun app(recorder: HttpHandler): HttpHandler = CatchLensFailure.then(
-    appRoutes
-)
+fun app(recorderHttp: HttpHandler): (Request) -> Response {
+    val recorder = Recorder(recorderHttp)
+    return CatchLensFailure.then(
+        routes(
+            "/ping" bind GET to {
+                Response(OK).body("pong")
+            },
+            "/add" bind GET to calculateResult(recorder) { values -> values.sum() },
+            "/multiply" bind GET to calculateResult(recorder) { values -> values.fold(1) { acc, next -> acc * next } }
+        )
+    )
+}
+
+
+private fun calculateResult(recorder: Recorder, calculation: (List<Int>) -> Int): (Request) -> Response = { request ->
+    val values = extractQueryValuesFrom(request)
+    val answer = performCalculation(values, calculation)
+    recorder.record(answer)
+    Response(OK).body(answer.toString())
+}
+
+private fun extractQueryValuesFrom(request: Request) = Query.int().multi.defaulted("value", emptyList())(request)
+
+private fun performCalculation(values: List<Int>, operation: (List<Int>) -> Int) = if (values.isNotEmpty()) {
+    operation(values)
+} else {
+    0
+}
