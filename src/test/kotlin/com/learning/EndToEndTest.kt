@@ -4,6 +4,8 @@ import com.learning.Matchers.assertReturnsString
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
+import org.http4k.server.SunHttp
+import org.http4k.server.asServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -11,15 +13,19 @@ import org.junit.jupiter.api.Test
 class EndToEndTest {
     private val client = JavaHttpClient()
     private val server = carbonIntensityServer(0)
+    private val recorder = FakeRecorderHttp()
+    private val recorderServer = recorder.asServer(SunHttp(1000))
 
     @BeforeEach
     fun setup() {
         server.start()
+        recorderServer.start()
     }
 
     @AfterEach
     fun tearDown() {
         server.stop()
+        recorderServer.stop()
     }
 
     @Test
