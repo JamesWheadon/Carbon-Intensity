@@ -2,14 +2,18 @@ package com.learning
 
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.http4k.core.*
+import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
+import org.http4k.core.Request
+import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.with
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.junit.jupiter.api.Test
 import java.time.Instant
+
 
 abstract class NationalGridContractTest {
     abstract val httpClient: HttpHandler
@@ -22,19 +26,21 @@ abstract class NationalGridContractTest {
     @Test
     fun `responds with forecast for the current half hour`() {
         val currentIntensity = httpClient(Request(GET, "/intensity"))
-        val halfHourResponses = halfHourDataListLens(currentIntensity)
+        println(currentIntensity)
+        val halfHourResponses = nationalGridDataLens(currentIntensity)
+        println(halfHourResponses)
 
         assertThat(currentIntensity.status, equalTo(OK))
-        assertThat(halfHourResponses.size, equalTo(1))
+        assertThat(halfHourResponses.data.size, equalTo(1))
     }
 
     @Test
     fun `responds with forecast for the current day`() {
         val currentIntensity = httpClient(Request(GET, "/intensity/date"))
-        val halfHourResponses = halfHourDataListLens(currentIntensity)
+        val halfHourResponses = nationalGridDataLens(currentIntensity)
 
         assertThat(currentIntensity.status, equalTo(OK))
-        assertThat(halfHourResponses.size, equalTo(24))
+        assertThat(halfHourResponses.data.size, equalTo(24))
     }
 }
 
@@ -47,13 +53,13 @@ class FakeNationalGrid : HttpHandler {
         "/" bind GET to { Response(OK) },
         "intensity" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val currentHalfHour = HalfHourData(Instant.now().toString(), Instant.now().toString(), currentIntensity)
-            Response(OK).with(halfHourDataListLens of listOf(currentHalfHour))
+            val currentHalfHour = HalfHourData(Instant.now(), Instant.now(), currentIntensity)
+            Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
         "intensity/date" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val currentHalfHour = HalfHourData(Instant.now().toString(), Instant.now().toString(), currentIntensity)
-            Response(OK).with(halfHourDataListLens of List(24) { currentHalfHour })
+            val currentHalfHour = HalfHourData(Instant.now(), Instant.now(), currentIntensity)
+            Response(OK).with(nationalGridDataLens of NationalGridData(List(24) { currentHalfHour }))
         }
     )
 
@@ -67,9 +73,13 @@ data class Intensity(
 )
 
 data class HalfHourData(
-    val from: String,
-    val to: String,
+    val from: Instant,
+    val to: Instant,
     val intensity: Intensity
 )
 
-val halfHourDataListLens = Jackson.autoBody<List<HalfHourData>>().toLens()
+data class NationalGridData(
+    val data: List<HalfHourData>
+)
+
+val nationalGridDataLens = Jackson.autoBody<NationalGridData>().toLens()
