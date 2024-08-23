@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 
 abstract class NationalGridContractTest {
@@ -63,12 +64,14 @@ class FakeNationalGrid : HttpHandler {
         "/" bind GET to { Response(OK) },
         "intensity" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val currentHalfHour = HalfHourData(Instant.now(), Instant.now(), currentIntensity)
+            val (windowStart, windowEnd) = currentHalfHourWindow()
+            val currentHalfHour = HalfHourData(windowStart, windowEnd, currentIntensity)
             Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
         "intensity/date" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val currentHalfHour = HalfHourData(Instant.now(), Instant.now(), currentIntensity)
+            val (windowStart, windowEnd) = currentHalfHourWindow()
+            val currentHalfHour = HalfHourData(windowStart, windowEnd, currentIntensity)
             Response(OK).with(nationalGridDataLens of NationalGridData(List(24) { currentHalfHour }))
         }
     )
@@ -81,6 +84,15 @@ data class Intensity(
     val actual: Long?,
     val index: String
 )
+
+private fun currentHalfHourWindow(): Pair<Instant, Instant> {
+    val truncatedToMinutes = Instant.now().truncatedTo(ChronoUnit.MINUTES)
+    val minutesPastNearestHalHour = truncatedToMinutes.atZone(ZoneOffset.UTC).minute % 30
+    return Pair(
+        truncatedToMinutes.minusSeconds(minutesPastNearestHalHour * 60L),
+        truncatedToMinutes.plusSeconds((30 - minutesPastNearestHalHour) * 60L)
+    )
+}
 
 data class HalfHourData(
     @JsonSerialize(using = NationalGridInstantSerializer::class)
