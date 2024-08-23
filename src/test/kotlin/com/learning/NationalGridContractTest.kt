@@ -1,5 +1,13 @@
 package com.learning
 
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.HttpHandler
@@ -13,6 +21,8 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 
 abstract class NationalGridContractTest {
@@ -73,7 +83,11 @@ data class Intensity(
 )
 
 data class HalfHourData(
+    @JsonSerialize(using = NationalGridInstantSerializer::class)
+    @JsonDeserialize(using = NationalGridInstantDeserializer::class)
     val from: Instant,
+    @JsonSerialize(using = NationalGridInstantSerializer::class)
+    @JsonDeserialize(using = NationalGridInstantDeserializer::class)
     val to: Instant,
     val intensity: Intensity
 )
@@ -83,3 +97,25 @@ data class NationalGridData(
 )
 
 val nationalGridDataLens = Jackson.autoBody<NationalGridData>().toLens()
+
+class NationalGridInstantDeserializer : StdDeserializer<Instant?>(Instant::class.java) {
+    companion object {
+        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmX")
+    }
+
+    override fun deserialize(
+        jsonparser: JsonParser, context: DeserializationContext?
+    ): Instant {
+        return Instant.from(formatter.parse(jsonparser.text))
+    }
+}
+
+class NationalGridInstantSerializer : StdSerializer<Instant>(Instant::class.java) {
+    companion object {
+        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmX").withZone(ZoneOffset.UTC)
+    }
+
+    override fun serialize(instant: Instant, jgen: JsonGenerator, provider: SerializerProvider) {
+        jgen.writeString(formatter.format(instant))
+    }
+}
