@@ -27,6 +27,15 @@ abstract class NationalGridContractTest {
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.size, equalTo(1))
     }
+
+    @Test
+    fun `responds with forecast for the current day`() {
+        val currentIntensity = httpClient(Request(GET, "/intensity/date"))
+        val halfHourResponses = halfHourDataListLens(currentIntensity)
+
+        assertThat(currentIntensity.status, equalTo(OK))
+        assertThat(halfHourResponses.size, equalTo(24))
+    }
 }
 
 class FakeNationalGridTest : NationalGridContractTest() {
@@ -40,6 +49,11 @@ class FakeNationalGrid : HttpHandler {
             val currentIntensity = Intensity(60, 60, "moderate")
             val currentHalfHour = HalfHourData(Instant.now().toString(), Instant.now().toString(), currentIntensity)
             Response(OK).with(halfHourDataListLens of listOf(currentHalfHour))
+        },
+        "intensity/date" bind GET to {
+            val currentIntensity = Intensity(60, 60, "moderate")
+            val currentHalfHour = HalfHourData(Instant.now().toString(), Instant.now().toString(), currentIntensity)
+            Response(OK).with(halfHourDataListLens of List(24) { currentHalfHour })
         }
     )
 
