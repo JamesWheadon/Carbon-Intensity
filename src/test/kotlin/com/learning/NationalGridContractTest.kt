@@ -24,6 +24,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.*
 
 
 abstract class NationalGridContractTest {
@@ -46,6 +47,7 @@ abstract class NationalGridContractTest {
     @Test
     fun `responds with forecast for the current day`() {
         val currentIntensity = httpClient(Request(GET, "/intensity/date"))
+        println(currentIntensity)
         val halfHourResponses = nationalGridDataLens(currentIntensity)
 
         assertThat(currentIntensity.status, equalTo(OK))
@@ -67,8 +69,14 @@ class FakeNationalGrid : HttpHandler {
             Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
         "intensity/date" bind GET to {
+            val tz = TimeZone.getTimeZone("Europe/London")
+            val offset = if (tz.useDaylightTime()) {
+                tz.rawOffset + tz.dstSavings
+            } else {
+                tz.rawOffset
+            }
             val currentTime = Instant.now()
-            val startTime = currentTime.truncatedTo(ChronoUnit.DAYS)
+            val startTime = currentTime.truncatedTo(ChronoUnit.DAYS).minusMillis(offset.toLong())
             val dataWindows = mutableListOf<HalfHourData>()
             for (window in 0 until 48) {
                 val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * 30 * 60L))
