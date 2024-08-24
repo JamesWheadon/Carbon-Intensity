@@ -37,9 +37,7 @@ abstract class NationalGridContractTest {
     @Test
     fun `responds with forecast for the current half hour`() {
         val currentIntensity = httpClient(Request(GET, "/intensity"))
-        println(currentIntensity)
         val halfHourResponses = nationalGridDataLens(currentIntensity)
-        println(halfHourResponses)
 
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(1))
@@ -51,7 +49,7 @@ abstract class NationalGridContractTest {
         val halfHourResponses = nationalGridDataLens(currentIntensity)
 
         assertThat(currentIntensity.status, equalTo(OK))
-        assertThat(halfHourResponses.data.size, equalTo(24))
+        assertThat(halfHourResponses.data.size, equalTo(48))
     }
 }
 
@@ -64,15 +62,20 @@ class FakeNationalGrid : HttpHandler {
         "/" bind GET to { Response(OK) },
         "intensity" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val (windowStart, windowEnd) = currentHalfHourWindow()
+            val (windowStart, windowEnd) = halfHourWindow(Instant.now())
             val currentHalfHour = HalfHourData(windowStart, windowEnd, currentIntensity)
             Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
         "intensity/date" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val (windowStart, windowEnd) = currentHalfHourWindow()
-            val currentHalfHour = HalfHourData(windowStart, windowEnd, currentIntensity)
-            Response(OK).with(nationalGridDataLens of NationalGridData(List(24) { currentHalfHour }))
+            val currentTime = Instant.now()
+            val startTime = currentTime.truncatedTo(ChronoUnit.DAYS)
+            val dataWindows = mutableListOf<HalfHourData>()
+            for (window in 0 until 48) {
+                val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * 30 * 60L))
+                dataWindows.add(HalfHourData(windowStart, windowEnd, currentIntensity))
+            }
+            Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
         }
     )
 
@@ -85,8 +88,8 @@ data class Intensity(
     val index: String
 )
 
-private fun currentHalfHourWindow(): Pair<Instant, Instant> {
-    val truncatedToMinutes = Instant.now().truncatedTo(ChronoUnit.MINUTES)
+private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
+    val truncatedToMinutes = windowTime.truncatedTo(ChronoUnit.MINUTES)
     val minutesPastNearestHalHour = truncatedToMinutes.atZone(ZoneOffset.UTC).minute % 30
     return Pair(
         truncatedToMinutes.minusSeconds(minutesPastNearestHalHour * 60L),
