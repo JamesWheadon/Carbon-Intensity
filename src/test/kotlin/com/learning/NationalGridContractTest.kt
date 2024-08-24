@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.learning.Matchers.inTimeRange
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.HttpHandler
@@ -42,16 +43,18 @@ abstract class NationalGridContractTest {
 
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(1))
+        val currentData = halfHourResponses.data.first()
+        assertThat(Instant.now(), inTimeRange(currentData.from, currentData.to.plusSeconds(5)))
     }
 
     @Test
     fun `responds with forecast for the current day`() {
         val currentIntensity = httpClient(Request(GET, "/intensity/date"))
-        println(currentIntensity)
         val halfHourResponses = nationalGridDataLens(currentIntensity)
 
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(48))
+        assertThat(Instant.now(), inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to))
     }
 }
 
