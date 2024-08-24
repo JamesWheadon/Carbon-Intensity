@@ -67,13 +67,17 @@ class FakeNationalGrid : HttpHandler {
             Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
         "intensity/date" bind GET to {
-            val currentIntensity = Intensity(60, 60, "moderate")
             val currentTime = Instant.now()
             val startTime = currentTime.truncatedTo(ChronoUnit.DAYS)
             val dataWindows = mutableListOf<HalfHourData>()
             for (window in 0 until 48) {
                 val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * 30 * 60L))
-                dataWindows.add(HalfHourData(windowStart, windowEnd, currentIntensity))
+                val actualIntensity = if (windowStart.isBefore(currentTime)) {
+                    60L
+                } else {
+                    null
+                }
+                dataWindows.add(HalfHourData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate")))
             }
             Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
         }
