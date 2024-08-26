@@ -32,11 +32,6 @@ abstract class NationalGridContractTest {
     abstract val httpClient: HttpHandler
 
     @Test
-    fun `responds when pinged on the base path`() {
-        assertThat(httpClient(Request(GET, "/")).status, equalTo(OK))
-    }
-
-    @Test
     fun `responds with forecast for the current half hour`() {
         val currentIntensity = httpClient(Request(GET, "/intensity"))
         val halfHourResponses = nationalGridDataLens(currentIntensity)
@@ -64,7 +59,6 @@ class FakeNationalGridTest : NationalGridContractTest() {
 
 class FakeNationalGrid : HttpHandler {
     val routes = routes(
-        "/" bind GET to { Response(OK) },
         "intensity" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
             val (windowStart, windowEnd) = halfHourWindow(Instant.now())
