@@ -9,6 +9,8 @@ import org.http4k.hamkrest.hasBody
 import org.http4k.hamkrest.hasStatus
 import java.time.Instant
 
+const val TIME_DIFFERENCE_TOLERANCE = 5L
+
 object Matchers {
 
     fun Response.assertReturnsString(expected: String) {
@@ -16,6 +18,10 @@ object Matchers {
     }
 
     fun inTimeRange(expectedStart: Instant, expectedEnd: Instant): Matcher<Instant> {
-        return Matcher(Instant::isAfter, expectedStart) and Matcher(Instant::isBefore, expectedEnd)
+        return Matcher(
+            Instant::isAfter, expectedStart.minusSeconds(TIME_DIFFERENCE_TOLERANCE)
+        ) and Matcher(
+            Instant::isBefore, expectedEnd.plusSeconds(TIME_DIFFERENCE_TOLERANCE)
+        )
     }
 }

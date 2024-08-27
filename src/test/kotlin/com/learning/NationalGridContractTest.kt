@@ -39,17 +39,17 @@ abstract class NationalGridContractTest {
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(1))
         val currentData = halfHourResponses.data.first()
-        assertThat(Instant.now(), inTimeRange(currentData.from, currentData.to.plusSeconds(5)))
+        assertThat(Instant.now(), inTimeRange(currentData.from, currentData.to.plusSeconds(TIME_DIFFERENCE_TOLERANCE)))
     }
 
     @Test
-    fun `responds with forecast for the current day`() {
+    fun `responds with forecast for the current date in UTC time for the date in the Europe-London timezone`() {
         val currentIntensity = httpClient(Request(GET, "/intensity/date"))
         val halfHourResponses = nationalGridDataLens(currentIntensity)
 
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(48))
-        assertThat(Instant.now(), inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to))
+        assertThat(Instant.now().truncatedTo(ChronoUnit.DAYS), inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to))
     }
 }
 
