@@ -21,7 +21,6 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.junit.jupiter.api.Test
-import java.net.http.HttpClient
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -32,6 +31,8 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 private const val TIMEZONE = "Europe/London"
+private const val SECONDS_IN_HALF_HOUR = 1800L
+private const val SECONDS_IN_DAY = 86400L
 
 abstract class NationalGridContractTest {
     abstract val httpClient: HttpHandler
@@ -59,7 +60,7 @@ abstract class NationalGridContractTest {
 
     @Test
     fun `responds with forecast for the requested date`() {
-        val yesterday = Instant.now().minusSeconds(24 * 60 * 60).truncatedTo(ChronoUnit.DAYS)
+        val yesterday = Instant.now().minusSeconds(SECONDS_IN_DAY).truncatedTo(ChronoUnit.DAYS)
         val dateFormat = SimpleDateFormat("yyyy-MM-dd")
         val dateIntensity = httpClient(Request(GET, "/intensity/date/${dateFormat.format(Date.from(yesterday))}"))
         val halfHourResponses = nationalGridDataLens(dateIntensity)
@@ -82,7 +83,7 @@ class FakeNationalGrid : HttpHandler {
     val routes = routes(
         "/intensity" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val (windowStart, windowEnd) = halfHourWindow(Instant.now().minusSeconds(30 * 60))
+            val (windowStart, windowEnd) = halfHourWindow(Instant.now().minusSeconds(SECONDS_IN_HALF_HOUR))
             val currentHalfHour = HalfHourData(windowStart, windowEnd, currentIntensity)
             Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
@@ -111,7 +112,7 @@ class FakeNationalGrid : HttpHandler {
         val currentTime = Instant.now()
         val dataWindows = mutableListOf<HalfHourData>()
         for (window in 0 until 48) {
-            val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * 30 * 60L))
+            val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
             val actualIntensity = if (windowStart.isBefore(currentTime)) {
                 60L
             } else {
