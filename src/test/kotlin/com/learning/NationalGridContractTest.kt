@@ -103,15 +103,9 @@ class FakeNationalGrid : HttpHandler {
             Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
         },
         "intensity/date/{date}" bind GET to { request ->
-            val tz = TimeZone.getTimeZone("Europe/London")
-            val offset = if (tz.useDaylightTime()) {
-                tz.rawOffset + tz.dstSavings
-            } else {
-                tz.rawOffset
-            }
-            val localDate = LocalDate.parse(request.path("date")!!)
-            val currentTime = localDate.atStartOfDay(ZoneId.of("Europe/London")).toInstant()
-            val startTime = currentTime.truncatedTo(ChronoUnit.DAYS).minusMillis(offset.toLong())
+            val date = LocalDate.parse(request.path("date")!!)
+            val currentTime = Instant.now()
+            val startTime = date.atStartOfDay(ZoneId.of("Europe/London")).toInstant()
             val dataWindows = mutableListOf<HalfHourData>()
             for (window in 0 until 48) {
                 val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * 30 * 60L))
