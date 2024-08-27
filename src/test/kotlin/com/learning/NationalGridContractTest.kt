@@ -19,9 +19,13 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
+import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.junit.jupiter.api.Test
+import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -51,6 +55,18 @@ abstract class NationalGridContractTest {
         assertThat(halfHourResponses.data.size, equalTo(48))
         assertThat(Instant.now().truncatedTo(ChronoUnit.DAYS), inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to))
     }
+
+    @Test
+    fun `responds with forecast for the requested date`() {
+        val yesterday = Instant.now().minusSeconds(24 * 60 * 60).truncatedTo(ChronoUnit.DAYS)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd")
+        val dateIntensity = httpClient(Request(GET, "/intensity/date/${dateFormat.format(Date.from(yesterday))}"))
+        val halfHourResponses = nationalGridDataLens(dateIntensity)
+
+        assertThat(dateIntensity.status, equalTo(OK))
+        assertThat(halfHourResponses.data.size, equalTo(48))
+        assertThat(yesterday, inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to))
+    }
 }
 
 class FakeNationalGridTest : NationalGridContractTest() {
@@ -73,6 +89,28 @@ class FakeNationalGrid : HttpHandler {
                 tz.rawOffset
             }
             val currentTime = Instant.now()
+            val startTime = currentTime.truncatedTo(ChronoUnit.DAYS).minusMillis(offset.toLong())
+            val dataWindows = mutableListOf<HalfHourData>()
+            for (window in 0 until 48) {
+                val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * 30 * 60L))
+                val actualIntensity = if (windowStart.isBefore(currentTime)) {
+                    60L
+                } else {
+                    null
+                }
+                dataWindows.add(HalfHourData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate")))
+            }
+            Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+        },
+        "intensity/date/{date}" bind GET to { request ->
+            val tz = TimeZone.getTimeZone("Europe/London")
+            val offset = if (tz.useDaylightTime()) {
+                tz.rawOffset + tz.dstSavings
+            } else {
+                tz.rawOffset
+            }
+            val localDate = LocalDate.parse(request.path("date")!!)
+            val currentTime = localDate.atStartOfDay(ZoneId.of("Europe/London")).toInstant()
             val startTime = currentTime.truncatedTo(ChronoUnit.DAYS).minusMillis(offset.toLong())
             val dataWindows = mutableListOf<HalfHourData>()
             for (window in 0 until 48) {
