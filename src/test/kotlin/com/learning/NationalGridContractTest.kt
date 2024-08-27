@@ -11,17 +11,17 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.learning.Matchers.inTimeRange
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.http4k.core.HttpHandler
+import org.http4k.client.JavaHttpClient
+import org.http4k.core.*
 import org.http4k.core.Method.GET
-import org.http4k.core.Request
-import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
-import org.http4k.core.with
+import org.http4k.filter.ClientFilters.SetHostFrom
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.junit.jupiter.api.Test
+import java.net.http.HttpClient
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -37,14 +37,14 @@ abstract class NationalGridContractTest {
     abstract val httpClient: HttpHandler
 
     @Test
-    fun `responds with forecast for the current half hour`() {
+    fun `responds with forecast for the most recent full half hour`() {
         val currentIntensity = httpClient(Request(GET, "/intensity"))
         val halfHourResponses = nationalGridDataLens(currentIntensity)
 
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(1))
         val currentData = halfHourResponses.data.first()
-        assertThat(Instant.now(), inTimeRange(currentData.from, currentData.to.plusSeconds(TIME_DIFFERENCE_TOLERANCE)))
+        assertThat(Instant.now().minusSeconds(30 * 60), inTimeRange(currentData.from, currentData.to.plusSeconds(TIME_DIFFERENCE_TOLERANCE)))
     }
 
     @Test
@@ -74,15 +74,19 @@ class FakeNationalGridTest : NationalGridContractTest() {
     override val httpClient = FakeNationalGrid()
 }
 
+class NationalGridTest : NationalGridContractTest() {
+    override val httpClient = SetHostFrom(Uri.of("https://api.carbonintensity.org.uk")).then(JavaHttpClient())
+}
+
 class FakeNationalGrid : HttpHandler {
     val routes = routes(
-        "intensity" bind GET to {
+        "/intensity" bind GET to {
             val currentIntensity = Intensity(60, 60, "moderate")
-            val (windowStart, windowEnd) = halfHourWindow(Instant.now())
+            val (windowStart, windowEnd) = halfHourWindow(Instant.now().minusSeconds(30 * 60))
             val currentHalfHour = HalfHourData(windowStart, windowEnd, currentIntensity)
             Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
-        "intensity/date" bind GET to {
+        "/intensity/date" bind GET to {
             val tz = TimeZone.getTimeZone(TIMEZONE)
             val offset = if (tz.useDaylightTime()) {
                 tz.rawOffset + tz.dstSavings
@@ -93,7 +97,7 @@ class FakeNationalGrid : HttpHandler {
             val dataWindows = createHalfHourWindows(startTime)
             Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
         },
-        "intensity/date/{date}" bind GET to { request ->
+        "/intensity/date/{date}" bind GET to { request ->
             val date = LocalDate.parse(request.path("date")!!)
             val startTime = date.atStartOfDay(ZoneId.of(TIMEZONE)).toInstant()
             val dataWindows = createHalfHourWindows(startTime)
