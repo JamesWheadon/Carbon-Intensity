@@ -31,6 +31,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
 
+private const val TIMEZONE = "Europe/London"
 
 abstract class NationalGridContractTest {
     abstract val httpClient: HttpHandler
@@ -82,7 +83,7 @@ class FakeNationalGrid : HttpHandler {
             Response(OK).with(nationalGridDataLens of NationalGridData(listOf(currentHalfHour)))
         },
         "intensity/date" bind GET to {
-            val tz = TimeZone.getTimeZone("Europe/London")
+            val tz = TimeZone.getTimeZone(TIMEZONE)
             val offset = if (tz.useDaylightTime()) {
                 tz.rawOffset + tz.dstSavings
             } else {
@@ -94,7 +95,7 @@ class FakeNationalGrid : HttpHandler {
         },
         "intensity/date/{date}" bind GET to { request ->
             val date = LocalDate.parse(request.path("date")!!)
-            val startTime = date.atStartOfDay(ZoneId.of("Europe/London")).toInstant()
+            val startTime = date.atStartOfDay(ZoneId.of(TIMEZONE)).toInstant()
             val dataWindows = createHalfHourWindows(startTime)
             Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
         }
@@ -128,7 +129,7 @@ data class Intensity(
 
 private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
     val truncatedToMinutes = windowTime.truncatedTo(ChronoUnit.MINUTES)
-    val minutesPastNearestHalHour = truncatedToMinutes.atZone(ZoneOffset.UTC).minute % 30
+    val minutesPastNearestHalHour = truncatedToMinutes.atZone(ZoneId.of(TIMEZONE)).minute % 30
     return Pair(
         truncatedToMinutes.minusSeconds(minutesPastNearestHalHour * 60L),
         truncatedToMinutes.plusSeconds((30 - minutesPastNearestHalHour) * 60L)
