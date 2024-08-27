@@ -20,6 +20,7 @@ import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -75,6 +76,7 @@ class FakeNationalGridTest : NationalGridContractTest() {
     override val httpClient = FakeNationalGrid()
 }
 
+@Disabled
 class NationalGridTest : NationalGridContractTest() {
     override val httpClient = SetHostFrom(Uri.of("https://api.carbonintensity.org.uk")).then(JavaHttpClient())
 }
