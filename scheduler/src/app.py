@@ -13,7 +13,9 @@ def create_app(scheduler):
 
     @app.route("/charge-time")
     def charge_time():
-        return request.args.get("current")
+        current_time = int(request.args.get("current"))
+        best_action = app.config["SCHEDULER"].best_action_for(current_time)
+        return str(best_action)
 
     return app
 

@@ -36,7 +36,7 @@ class UseTimeScheduler:
                 self.epsilon *= self.epsilon_decay
             state = 0
 
-    def get_best_action_for_time_slot(self, time_slot):
+    def best_action_for(self, time_slot):
         return np.argmax(self.Q_table[time_slot][time_slot:]) + time_slot
 
     def print_q_table(self):
@@ -62,4 +62,4 @@ if __name__ == "__main__":
          235, 200, 244, 137, 241, 106, 265, 103, 114, 262, 156, 261, 165, 210, 183, 118, 164, 241, 235, 119, 121, 160,
          119, 185, 134, 263]
     )
-    print(scheduler.get_best_action_for_time_slot(20))
+    print(scheduler.best_action_for(20))

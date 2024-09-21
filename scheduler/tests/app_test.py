@@ -9,21 +9,21 @@ def test_index():
     assert response.data == b"Hello, World!"
 
 
-def test_charge_time():
-    tester = create_app(TestScheduler()).test_client()
-    response = tester.get("/charge-time?current=15", content_type="application/json")
-
-    assert response.status_code == 200
-    assert response.data == b"15"
-
-
-def test_charge_time_accepts_query_url_parameter():
-    tester = create_app(TestScheduler()).test_client()
+def test_charge_time_calls_scheduler_for_action():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
     response = tester.get("/charge-time?current=18", content_type="application/json")
 
     assert response.status_code == 200
-    assert response.data == b"18"
+    assert response.data == b"21"
+    assert fake.time_slots_called_by == [18]
 
 
 class TestScheduler:
-    pass
+    __test__ = False
+    def __init__(self):
+        self.time_slots_called_by = []
+
+    def best_action_for(self, time_slot):
+        self.time_slots_called_by.append(time_slot)
+        return time_slot + 3
