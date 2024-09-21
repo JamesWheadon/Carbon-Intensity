@@ -15,7 +15,7 @@ def test_charge_time_calls_scheduler_for_action():
     response = tester.get("/charge-time?current=18", content_type="application/json")
 
     assert response.status_code == 200
-    assert response.data == b"21"
+    assert response.data == b'{"chargeTime":21}\n'
     assert fake.time_slots_called_by == [18]
 
 
