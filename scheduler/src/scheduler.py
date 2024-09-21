@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-from carbon_intensity_env import CarbonIntensityEnv
+# from environments import CarbonIntensityEnv
 
 
 class UseTimeScheduler:
@@ -42,6 +42,17 @@ class UseTimeScheduler:
     def print_q_table(self):
         np.set_printoptions(threshold=self.num_time_slots * self.num_time_slots)
         print(self.Q_table)
+
+
+class CarbonIntensityEnv:
+    def __init__(self, day_intensities):
+        self.day_intensities = day_intensities
+
+    def step(self, action):
+        intensity = self.day_intensities[action]
+
+        reward = -intensity
+        return reward
 
 
 if __name__ == "__main__":
