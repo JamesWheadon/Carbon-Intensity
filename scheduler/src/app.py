@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 
 from src.scheduler import UseTimeScheduler
 
@@ -13,7 +13,7 @@ def create_app(scheduler):
 
     @app.route("/charge-time")
     def charge_time():
-        return "15"
+        return request.args.get("current")
 
     return app
 
