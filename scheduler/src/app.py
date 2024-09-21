@@ -7,10 +7,6 @@ def create_app(scheduler):
     app = Flask(__name__)
     app.config['SCHEDULER'] = scheduler
 
-    @app.route("/")
-    def hello():
-        return "Hello, World!"
-
     @app.route("/charge-time")
     def charge_time():
         current_time = request.args.get("current", type=int)
