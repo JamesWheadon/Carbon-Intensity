@@ -12,7 +12,6 @@ import java.time.Instant
 const val TIME_DIFFERENCE_TOLERANCE = 5L
 
 object Matchers {
-
     fun Response.assertReturnsString(expected: String) {
         assertThat(this, hasStatus(Status.OK).and(hasBody(expected)))
     }

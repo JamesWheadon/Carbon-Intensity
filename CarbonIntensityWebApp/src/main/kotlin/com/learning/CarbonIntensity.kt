@@ -17,10 +17,10 @@ fun main() {
 }
 
 fun carbonIntensityServer(port: Int): Http4kServer {
-    return app().asServer(SunHttp(port))
+    return carbonIntensity().asServer(SunHttp(port))
 }
 
-fun app(): (Request) -> Response {
+fun carbonIntensity(): (Request) -> Response {
     return CatchLensFailure.then(
         routes(
             "/ping" bind GET to {

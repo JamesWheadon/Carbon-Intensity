@@ -9,13 +9,12 @@ import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
 
 class CarbonIntensityTest {
-
     @Test
     fun `Ping test`() {
         assertThat(
             Response(OK).body("pong"),
             equalTo(
-                app()(Request(GET, "/ping"))
+                carbonIntensity()(Request(GET, "/ping"))
             )
         )
     }

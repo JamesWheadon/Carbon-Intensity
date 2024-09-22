@@ -35,8 +35,8 @@ private const val TIMEZONE = "Europe/London"
 private const val SECONDS_IN_HALF_HOUR = 1800L
 private const val SECONDS_IN_DAY = 86400L
 
-abstract class NationalGridContractTest {
-    abstract val httpClient: HttpHandler
+interface NationalGridContractTest {
+    val httpClient: HttpHandler
 
     @Test
     fun `responds with forecast for the most recent full half hour`() {
@@ -46,7 +46,10 @@ abstract class NationalGridContractTest {
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(1))
         val currentData = halfHourResponses.data.first()
-        assertThat(Instant.now().minusSeconds(30 * 60), inTimeRange(currentData.from, currentData.to.plusSeconds(TIME_DIFFERENCE_TOLERANCE)))
+        assertThat(
+            Instant.now().minusSeconds(30 * 60),
+            inTimeRange(currentData.from, currentData.to.plusSeconds(TIME_DIFFERENCE_TOLERANCE))
+        )
     }
 
     @Test
@@ -56,7 +59,10 @@ abstract class NationalGridContractTest {
 
         assertThat(currentIntensity.status, equalTo(OK))
         assertThat(halfHourResponses.data.size, equalTo(48))
-        assertThat(Instant.now().truncatedTo(ChronoUnit.DAYS), inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to))
+        assertThat(
+            Instant.now().truncatedTo(ChronoUnit.DAYS),
+            inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to)
+        )
     }
 
     @Test
@@ -72,12 +78,12 @@ abstract class NationalGridContractTest {
     }
 }
 
-class FakeNationalGridTest : NationalGridContractTest() {
+class FakeNationalGridTest : NationalGridContractTest {
     override val httpClient = FakeNationalGrid()
 }
 
 @Disabled
-class NationalGridTest : NationalGridContractTest() {
+class NationalGridTest : NationalGridContractTest {
     override val httpClient = SetHostFrom(Uri.of("https://api.carbonintensity.org.uk")).then(JavaHttpClient())
 }
 
@@ -108,31 +114,25 @@ class FakeNationalGrid : HttpHandler {
         }
     )
 
-    private fun createHalfHourWindows(
-        startTime: Instant
-    ): MutableList<HalfHourData> {
-        val currentTime = Instant.now()
-        val dataWindows = mutableListOf<HalfHourData>()
-        for (window in 0 until 48) {
-            val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
-            val actualIntensity = if (windowStart.isBefore(currentTime)) {
-                60L
-            } else {
-                null
-            }
-            dataWindows.add(HalfHourData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate")))
-        }
-        return dataWindows
-    }
-
     override fun invoke(request: Request): Response = routes(request)
 }
 
-data class Intensity(
-    val forecast: Long,
-    val actual: Long?,
-    val index: String
-)
+private fun createHalfHourWindows(
+    startTime: Instant
+): MutableList<HalfHourData> {
+    val currentTime = Instant.now()
+    val dataWindows = mutableListOf<HalfHourData>()
+    for (window in 0 until 48) {
+        val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
+        val actualIntensity = if (windowStart.isBefore(currentTime)) {
+            60L
+        } else {
+            null
+        }
+        dataWindows.add(HalfHourData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate")))
+    }
+    return dataWindows
+}
 
 private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
     val truncatedToMinutes = windowTime.truncatedTo(ChronoUnit.MINUTES)
@@ -142,6 +142,12 @@ private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
         truncatedToMinutes.plusSeconds((30 - minutesPastNearestHalHour) * 60L)
     )
 }
+
+data class Intensity(
+    val forecast: Long,
+    val actual: Long?,
+    val index: String
+)
 
 data class HalfHourData(
     @JsonSerialize(using = NationalGridInstantSerializer::class)
