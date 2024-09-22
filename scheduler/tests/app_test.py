@@ -1,5 +1,7 @@
 import json
 
+import numpy as np
+
 from src.app import create_app
 
 
@@ -74,7 +76,7 @@ class TestScheduler:
         self.time_slots_called_by.append(time_slot)
         if time_slot == 49:
             return None
-        return time_slot + 3
+        return np.int64(time_slot + 3)
 
     def calculate_schedules(self, intensities):
         self.intensities_called_with = intensities

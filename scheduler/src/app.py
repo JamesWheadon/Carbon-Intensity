@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request
 
 from src.scheduler import UseTimeScheduler
 
@@ -12,7 +12,7 @@ def create_app(scheduler):
         current_time = request.args.get("current", type=int)
         best_action = app.config["SCHEDULER"].best_action_for(current_time)
         if best_action is not None:
-            return {"chargeTime": best_action}, 200
+            return {"chargeTime": int(best_action)}, 200
         else:
             return {"error": "no data for time slot"}, 404
 
@@ -30,4 +30,4 @@ def create_app(scheduler):
 
 
 if __name__ == "__main__":
-    create_app(UseTimeScheduler()).run()
+    create_app(UseTimeScheduler()).run(port=8000)
