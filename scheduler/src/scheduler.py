@@ -37,7 +37,10 @@ class UseTimeScheduler:
             state = 0
 
     def best_action_for(self, time_slot):
-        return np.argmax(self.Q_table[time_slot][time_slot:]) + time_slot
+        try:
+            return np.argmax(self.Q_table[time_slot][time_slot:]) + time_slot
+        except IndexError:
+            return None
 
     def print_q_table(self):
         np.set_printoptions(threshold=self.num_time_slots * self.num_time_slots)
@@ -62,4 +65,4 @@ if __name__ == "__main__":
          235, 200, 244, 137, 241, 106, 265, 103, 114, 262, 156, 261, 165, 210, 183, 118, 164, 241, 235, 119, 121, 160,
          119, 185, 134, 263]
     )
-    print(scheduler.best_action_for(20))
+    print(scheduler.best_action_for(50))
