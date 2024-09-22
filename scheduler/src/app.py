@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, Response
 
 from src.scheduler import UseTimeScheduler
 
@@ -21,7 +21,7 @@ def create_app(scheduler):
         data = request.json["data"]
         forecasts = list(map(lambda slot: slot["forecast"], data))
         app.config["SCHEDULER"].calculate_schedules(forecasts)
-        return {"message": "intensities updated"}
+        return '', 204
 
     return app
 

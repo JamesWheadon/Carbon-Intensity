@@ -9,7 +9,7 @@ def test_charge_time_calls_scheduler_for_action():
     response = tester.get("/charge-time?current=18", content_type="application/json")
 
     assert response.status_code == 200
-    assert response.data == b'{"chargeTime":21}\n'
+    assert response.get_json() == {"chargeTime": 21}
     assert fake.time_slots_called_by == [18]
 
 
@@ -19,14 +19,14 @@ def test_charge_time_returns_not_found_when_out_of_range():
     response = tester.get("/charge-time?current=49", content_type="application/json")
 
     assert response.status_code == 404
-    assert response.data == b'{"error":"no data for time slot"}\n'
+    assert response.get_json() == {"error": "no data for time slot"}
 
 
 def test_intensities_accepts_json_body_and_calculates_schedules():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
     test_data = {
-        "data":[
+        "data": [
             {
                 "from": "2018-01-20T12:00Z",
                 "to": "2018-01-20T12:30Z",
@@ -41,13 +41,14 @@ def test_intensities_accepts_json_body_and_calculates_schedules():
     }
     response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
 
-    assert response.status_code == 200
-    assert response.data == b'{"message":"intensities updated"}\n'
+    assert response.status_code == 204
+    assert response.get_json() is None
     assert fake.intensities_called_with == [266, 312]
 
 
 class TestScheduler:
     __test__ = False
+
     def __init__(self):
         self.time_slots_called_by = []
         self.intensities_called_with = []
