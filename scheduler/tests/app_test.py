@@ -25,19 +25,12 @@ def test_charge_time_returns_not_found_when_out_of_range():
 def test_intensities_accepts_json_body_and_calculates_schedules():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
+    time_slots = [
+                     {"from": "2018-01-20T12:00Z", "to": "2018-01-20T12:30Z", "forecast": 266},
+                     {"from": "2018-01-20T12:30Z", "to": "2018-01-20T13:00Z", "forecast": 312}
+                 ] * 24
     test_data = {
-        "data": [
-            {
-                "from": "2018-01-20T12:00Z",
-                "to": "2018-01-20T12:30Z",
-                "forecast": 266
-            },
-            {
-                "from": "2018-01-20T12:30Z",
-                "to": "2018-01-20T13:00Z",
-                "forecast": 312
-            }
-        ] * 24
+        "data": time_slots
     }
     response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
 
@@ -51,17 +44,17 @@ def test_intensities_returns_unprocessable_entity_when_incorrect_input():
     tester = create_app(fake).test_client()
     test_data = {
         "data": [
-                    {
-                        "from": "2018-01-20T12:00Z",
-                        "to": "2018-01-20T12:30Z",
-                        "forecast": 266
-                    },
-                    {
-                        "from": "2018-01-20T12:30Z",
-                        "to": "2018-01-20T13:00Z",
-                        "forecast": 312
-                    }
-                ]
+            {
+                "from": "2018-01-20T12:00Z",
+                "to": "2018-01-20T12:30Z",
+                "forecast": 266
+            },
+            {
+                "from": "2018-01-20T12:30Z",
+                "to": "2018-01-20T13:00Z",
+                "forecast": 312
+            }
+        ]
     }
     response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
 

@@ -143,12 +143,7 @@ private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
     )
 }
 
-data class Intensity(
-    val forecast: Long,
-    val actual: Long?,
-    val index: String
-)
-
+data class NationalGridData(val data: List<HalfHourData>)
 data class HalfHourData(
     @JsonSerialize(using = NationalGridInstantSerializer::class)
     @JsonDeserialize(using = NationalGridInstantDeserializer::class)
@@ -158,10 +153,7 @@ data class HalfHourData(
     val to: Instant,
     val intensity: Intensity
 )
-
-data class NationalGridData(
-    val data: List<HalfHourData>
-)
+data class Intensity(val forecast: Long, val actual: Long?, val index: String)
 
 val nationalGridDataLens = Jackson.autoBody<NationalGridData>().toLens()
 

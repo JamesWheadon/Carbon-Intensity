@@ -11,6 +11,7 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.NO_CONTENT
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Status.Companion.UNPROCESSABLE_ENTITY
 import org.http4k.core.with
 import org.http4k.format.Jackson
 import org.http4k.lens.Query
@@ -42,9 +43,26 @@ interface SchedulerContractTest {
 
     @Test
     fun `responds with no content when intensities updated`() {
-        val intensitiesResponse = httpClient(Request(POST, "/intensities"))
+        val schedulerInput = Scheduler(List(48) { TimeSlot(212) })
+        val intensitiesResponse = httpClient(
+            Request(POST, "/intensities").with(schedulerLens of schedulerInput)
+        )
 
         assertThat(intensitiesResponse.status, equalTo(NO_CONTENT))
+    }
+
+    @Test
+    fun `responds with unprocessable entity when invalid intensities sent`() {
+        val schedulerInput = Scheduler(List(10) { TimeSlot(212) })
+        val intensitiesResponse = httpClient(
+            Request(POST, "/intensities").with(schedulerLens of schedulerInput)
+        )
+
+        assertThat(intensitiesResponse.status, equalTo(UNPROCESSABLE_ENTITY))
+        assertThat(
+            errorResponseLens(intensitiesResponse),
+            equalTo(ErrorResponse("invalid intensities, should be an array of 48 time slots"))
+        )
     }
 }
 
@@ -62,17 +80,26 @@ class FakeScheduler : HttpHandler {
                 Response(NOT_FOUND).with(chargeTimeLens of ChargeTime(null, "no data for time slot"))
             }
         },
-        "/intensities" bind POST to {
-            Response(NO_CONTENT)
+        "/intensities" bind POST to { request ->
+            val requestBody = schedulerLens(request)
+            if (requestBody.data.size == 48) {
+                Response(NO_CONTENT)
+            } else {
+                Response(UNPROCESSABLE_ENTITY).with(
+                    errorResponseLens of ErrorResponse("invalid intensities, should be an array of 48 time slots")
+                )
+            }
         }
     )
 
     override fun invoke(request: Request): Response = routes(request)
 }
 
-data class ChargeTime(
-    val chargeTime: Int?,
-    val error: String?
-)
+data class ChargeTime(val chargeTime: Int?, val error: String?)
+data class Scheduler(val data: List<TimeSlot>)
+data class TimeSlot(val intensity: Int)
+data class ErrorResponse(val error: String)
 
 val chargeTimeLens = Jackson.autoBody<ChargeTime>().toLens()
+val schedulerLens = Jackson.autoBody<Scheduler>().toLens()
+val errorResponseLens = Jackson.autoBody<ErrorResponse>().toLens()
