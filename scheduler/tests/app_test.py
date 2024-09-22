@@ -37,13 +37,37 @@ def test_intensities_accepts_json_body_and_calculates_schedules():
                 "to": "2018-01-20T13:00Z",
                 "forecast": 312
             }
-        ]
+        ] * 24
     }
     response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
 
     assert response.status_code == 204
     assert response.get_json() is None
-    assert fake.intensities_called_with == [266, 312]
+    assert fake.intensities_called_with == [266, 312] * 24
+
+
+def test_intensities_returns_unprocessable_entity_when_incorrect_input():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "data": [
+                    {
+                        "from": "2018-01-20T12:00Z",
+                        "to": "2018-01-20T12:30Z",
+                        "forecast": 266
+                    },
+                    {
+                        "from": "2018-01-20T12:30Z",
+                        "to": "2018-01-20T13:00Z",
+                        "forecast": 312
+                    }
+                ]
+    }
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 422
+    assert response.get_json() == {"error": "invalid intensities, should be an array of 48 time slots"}
+    assert fake.intensities_called_with == []
 
 
 class TestScheduler:
