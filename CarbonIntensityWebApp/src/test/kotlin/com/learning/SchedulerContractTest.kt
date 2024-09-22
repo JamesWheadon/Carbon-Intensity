@@ -5,9 +5,11 @@ import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.greaterThanOrEqualTo
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
+import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.NOT_FOUND
+import org.http4k.core.Status.Companion.NO_CONTENT
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson
@@ -37,6 +39,13 @@ interface SchedulerContractTest {
         assertThat(chargeTimeResponse.status, equalTo(NOT_FOUND))
         assertThat(chargeTime, equalTo(ChargeTime(null, "no data for time slot")))
     }
+
+    @Test
+    fun `responds with no content when intensities updated`() {
+        val intensitiesResponse = httpClient(Request(POST, "/intensities"))
+
+        assertThat(intensitiesResponse.status, equalTo(NO_CONTENT))
+    }
 }
 
 class FakeSchedulerTest : SchedulerContractTest {
@@ -52,6 +61,9 @@ class FakeScheduler : HttpHandler {
             } else {
                 Response(NOT_FOUND).with(chargeTimeLens of ChargeTime(null, "no data for time slot"))
             }
+        },
+        "/intensities" bind POST to {
+            Response(NO_CONTENT)
         }
     )
 
