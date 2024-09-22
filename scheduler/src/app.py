@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request
 
 from src.scheduler import UseTimeScheduler
 
@@ -15,6 +15,13 @@ def create_app(scheduler):
             return {"chargeTime": best_action}, 200
         else:
             return {"error": "no data for time slot"}, 404
+
+    @app.route("/intensities", methods=['POST'])
+    def intensities():
+        data = request.json["data"]
+        forecasts = list(map(lambda slot: slot["forecast"], data))
+        app.config["SCHEDULER"].calculate_schedules(forecasts)
+        return {"message": "intensities updated"}
 
     return app
 

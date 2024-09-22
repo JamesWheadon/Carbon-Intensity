@@ -1,8 +1,6 @@
 import numpy as np
 import random
 
-# from environments import CarbonIntensityEnv
-
 
 class UseTimeScheduler:
     def __init__(self):
