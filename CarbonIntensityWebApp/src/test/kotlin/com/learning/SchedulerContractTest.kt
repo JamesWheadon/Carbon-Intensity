@@ -22,6 +22,7 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
+import java.time.LocalDate
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 interface SchedulerContractTest {
@@ -30,7 +31,7 @@ interface SchedulerContractTest {
     @Test
     @Order(1)
     fun `responds with no content when intensities updated`() {
-        val schedulerInput = Scheduler(List(48) { TimeSlot(212) })
+        val schedulerInput = Scheduler(List(48) { 212 }, LocalDate.now())
         val intensitiesResponse = httpClient(
             Request(POST, "/intensities").with(schedulerLens of schedulerInput)
         )
@@ -40,7 +41,7 @@ interface SchedulerContractTest {
 
     @Test
     fun `responds with unprocessable entity when invalid intensities sent`() {
-        val schedulerInput = Scheduler(List(10) { TimeSlot(212) })
+        val schedulerInput = Scheduler(List(10) { 212 }, LocalDate.now())
         val intensitiesResponse = httpClient(
             Request(POST, "/intensities").with(schedulerLens of schedulerInput)
         )
@@ -92,7 +93,7 @@ class FakeScheduler : HttpHandler {
         },
         "/intensities" bind POST to { request ->
             val requestBody = schedulerLens(request)
-            if (requestBody.data.size == 48) {
+            if (requestBody.intensities.size == 48) {
                 Response(NO_CONTENT)
             } else {
                 Response(UNPROCESSABLE_ENTITY).with(
@@ -106,8 +107,7 @@ class FakeScheduler : HttpHandler {
 }
 
 data class ChargeTime(val chargeTime: Int?, val error: String?)
-data class Scheduler(val data: List<TimeSlot>)
-data class TimeSlot(val forecast: Int)
+data class Scheduler(val intensities: List<Int>, val date: LocalDate)
 data class ErrorResponse(val error: String)
 
 val chargeTimeLens = Jackson.autoBody<ChargeTime>().toLens()

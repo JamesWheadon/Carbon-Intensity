@@ -18,10 +18,10 @@ def create_app(scheduler):
 
     @app.route("/intensities", methods=['POST'])
     def intensities():
-        data = request.json["data"]
-        forecasts = list(map(lambda slot: slot["forecast"], data))
-        if len(forecasts) == 48:
-            app.config["SCHEDULER"].calculate_schedules(forecasts)
+        carbon_intensities = request.json["intensities"]
+        date = request.json["date"]
+        if len(carbon_intensities) == 48:
+            app.config["SCHEDULER"].calculate_schedules(carbon_intensities, date)
             return '', 204
         else:
             return {"error": "invalid intensities, should be an array of 48 time slots"}, 422

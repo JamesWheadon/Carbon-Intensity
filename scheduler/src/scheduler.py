@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from datetime import date
 
 
 class UseTimeScheduler:
@@ -12,8 +13,10 @@ class UseTimeScheduler:
         self.num_episodes = 1000
         self.num_time_slots = 48
         self.Q_table = np.zeros((self.num_time_slots, self.num_time_slots))
+        self.intensities_date = None
 
-    def calculate_schedules(self, intensities):
+    def calculate_schedules(self, intensities, intensities_date):
+        self.intensities_date = date.fromisoformat(intensities_date)
         env = CarbonIntensityEnv(intensities)
         state = 0
         for episode in range(self.num_episodes):
