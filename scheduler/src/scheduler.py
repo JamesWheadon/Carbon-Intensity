@@ -43,6 +43,9 @@ class UseTimeScheduler:
         except IndexError:
             return None
 
+    def day_of_data(self):
+        return self.intensities_date
+
     def print_q_table(self):
         np.set_printoptions(threshold=self.num_time_slots * self.num_time_slots)
         print(self.Q_table)
@@ -57,13 +60,3 @@ class CarbonIntensityEnv:
 
         reward = -intensity
         return reward
-
-
-if __name__ == "__main__":
-    scheduler = UseTimeScheduler()
-    scheduler.calculate_schedules(
-        [227, 239, 270, 113, 125, 190, 202, 131, 178, 207, 172, 163, 151, 109, 297, 107, 126, 159, 170, 103, 143, 190,
-         235, 200, 244, 137, 241, 106, 265, 103, 114, 262, 156, 261, 165, 210, 183, 118, 164, 241, 235, 119, 121, 160,
-         119, 185, 134, 263]
-    )
-    print(scheduler.best_action_for(50))
