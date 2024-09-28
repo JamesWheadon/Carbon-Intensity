@@ -1,7 +1,29 @@
+from datetime import date
+
 from flask import Flask, request
+from flask_expects_json import expects_json
+from jsonschema.exceptions import ValidationError
 
 from src.scheduler import UseTimeScheduler
 
+intensities_schema = {
+    'type': 'object',
+    'properties': {
+        'intensities': {
+            'type': 'array',
+            "items": {
+                "type": "integer"
+            },
+            "minItems": 48,
+            "maxItems": 48
+        },
+        'date': {
+            'type': 'string',
+            "pattern": '^\d{4}-\d{2}-\d{2}$'
+        }
+    },
+    'required': ['intensities', 'date']
+}
 
 def create_app(scheduler):
     app = Flask(__name__)
@@ -17,14 +39,12 @@ def create_app(scheduler):
             return {"error": "No data for time slot"}, 404
 
     @app.route("/intensities", methods=['POST'])
+    @expects_json(intensities_schema)
     def intensities():
         carbon_intensities = request.json["intensities"]
-        date = request.json["date"]
-        if len(carbon_intensities) == 48:
-            app.config["SCHEDULER"].calculate_schedules(carbon_intensities, date)
-            return '', 204
-        else:
-            return {"error": "Invalid intensities, should be an array of 48 time slots"}, 422
+        data_date = date.fromisoformat(request.json["date"])
+        app.config["SCHEDULER"].calculate_schedules(carbon_intensities, data_date)
+        return '', 204
 
     @app.route("/intensities/date", methods=['GET'])
     def intensities_date():
@@ -33,6 +53,13 @@ def create_app(scheduler):
             return {"date": date_of_intensities.isoformat()}, 200
         else:
             return {"error": "No data has been submitted to the scheduler"}, 404
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        if isinstance(error.description, ValidationError):
+            original_error = error.description
+            return {'error': original_error.message}, 400
+        return error
 
     return app
 

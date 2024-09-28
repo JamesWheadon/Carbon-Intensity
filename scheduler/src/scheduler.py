@@ -1,6 +1,6 @@
-import numpy as np
 import random
-from datetime import date
+
+import numpy as np
 
 
 class UseTimeScheduler:
@@ -16,7 +16,7 @@ class UseTimeScheduler:
         self.intensities_date = None
 
     def calculate_schedules(self, intensities, intensities_date):
-        self.intensities_date = date.fromisoformat(intensities_date)
+        self.intensities_date = intensities_date
         env = CarbonIntensityEnv(intensities)
         state = 0
         for episode in range(self.num_episodes):
