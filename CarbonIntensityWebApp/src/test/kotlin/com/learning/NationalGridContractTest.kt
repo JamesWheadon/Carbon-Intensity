@@ -19,7 +19,6 @@ import org.http4k.format.ConfigurableJackson
 import org.http4k.format.asConfigurable
 import org.http4k.format.withStandardMappings
 import org.http4k.lens.BiDiMapping
-import org.http4k.lens.StringBiDiMappings
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
@@ -179,7 +178,6 @@ object NationalGridJackson : ConfigurableJackson(
     KotlinModule.Builder().build()
         .asConfigurable()
         .withStandardMappings()
-        .text(StringBiDiMappings.instant())
         .text(
             BiDiMapping(
                 { timestamp -> Instant.from(DateTimeFormatter.ofPattern(gridPattern).withZone(UTC).parse(timestamp)) },
