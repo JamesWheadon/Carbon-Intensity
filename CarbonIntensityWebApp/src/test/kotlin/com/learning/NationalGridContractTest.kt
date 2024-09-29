@@ -1,7 +1,5 @@
 package com.learning
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.learning.Matchers.inTimeRange
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -15,10 +13,6 @@ import org.http4k.core.Uri
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.filter.ClientFilters.SetHostFrom
-import org.http4k.format.ConfigurableJackson
-import org.http4k.format.asConfigurable
-import org.http4k.format.withStandardMappings
-import org.http4k.lens.BiDiMapping
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
@@ -28,7 +22,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset.UTC
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.TimeZone
 
@@ -171,19 +164,3 @@ data class HalfHourData(
 data class Intensity(val forecast: Long, val actual: Long?, val index: String)
 
 val nationalGridDataLens = NationalGridJackson.autoBody<NationalGridData>().toLens()
-
-const val gridPattern = "yyyy-MM-dd'T'HH:mmX"
-
-object NationalGridJackson : ConfigurableJackson(
-    KotlinModule.Builder().build()
-        .asConfigurable()
-        .withStandardMappings()
-        .text(
-            BiDiMapping(
-                { timestamp -> Instant.from(DateTimeFormatter.ofPattern(gridPattern).withZone(UTC).parse(timestamp)) },
-                { instant -> DateTimeFormatter.ofPattern(gridPattern).withZone(UTC).format(instant) }
-            )
-        )
-        .done()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-)

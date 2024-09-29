@@ -1,7 +1,5 @@
 package com.learning
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.learning.Matchers.inTimeRange
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.contains
@@ -20,10 +18,7 @@ import org.http4k.core.Uri
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.filter.ClientFilters.SetHostFrom
-import org.http4k.format.ConfigurableJackson
 import org.http4k.format.Jackson
-import org.http4k.format.asConfigurable
-import org.http4k.format.withStandardMappings
 import org.http4k.lens.BiDiMapping
 import org.http4k.lens.Query
 import org.http4k.lens.map
@@ -35,8 +30,6 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import java.time.Instant
-import java.time.ZoneOffset.UTC
-import java.time.format.DateTimeFormatter
 
 private const val SECONDS_IN_DAY = 86400L
 
@@ -108,7 +101,7 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
     }
 
     override fun getBestChargeTime(chargeTime: Instant): ChargeTime {
-        val timestamp = formatInstantWith(schedulerPattern).format(chargeTime)
+        val timestamp = formatWith(schedulerPattern).format(chargeTime)
         return chargeTimeLens(httpHandler(Request(GET, "/charge-time?current=$timestamp")))
     }
 
@@ -130,8 +123,8 @@ class FakeScheduler : HttpHandler {
         "/charge-time" bind GET to { request ->
             val current = Query.map(
                 BiDiMapping(
-                    { timestamp -> Instant.from(formatInstantWith(schedulerPattern).parse(timestamp)) },
-                    { instant -> formatInstantWith(schedulerPattern).format(instant) }
+                    { timestamp -> Instant.from(formatWith(schedulerPattern).parse(timestamp)) },
+                    { instant -> formatWith(schedulerPattern).format(instant) }
                 )
             ).defaulted("current", null)(request)
             if (current != null && current >= Instant.now() && current < Instant.now().plusSeconds(2 * SECONDS_IN_DAY)
@@ -168,22 +161,3 @@ data class ErrorResponse(val error: String)
 val intensitiesLens = SchedulerJackson.autoBody<Intensities>().toLens()
 val chargeTimeLens = SchedulerJackson.autoBody<ChargeTime>().toLens()
 val errorResponseLens = Jackson.autoBody<ErrorResponse>().toLens()
-
-const val schedulerPattern: String = "yyyy-MM-dd'T'HH:mm:ss"
-
-object SchedulerJackson : ConfigurableJackson(
-    KotlinModule.Builder().build()
-        .asConfigurable()
-        .withStandardMappings()
-        .text(
-            BiDiMapping(
-                { timestamp -> Instant.from(formatInstantWith(schedulerPattern).parse(timestamp)) },
-                { instant -> formatInstantWith(schedulerPattern).format(instant) }
-            )
-        )
-        .done()
-        .deactivateDefaultTyping()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-)
-
-fun formatInstantWith(pattern: String): DateTimeFormatter = DateTimeFormatter.ofPattern(pattern).withZone(UTC)
