@@ -7,13 +7,18 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.contains
 import com.natpryce.hamkrest.equalTo
 import org.http4k.client.JavaHttpClient
-import org.http4k.core.*
+import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
+import org.http4k.core.Request
+import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.NO_CONTENT
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Uri
+import org.http4k.core.then
+import org.http4k.core.with
 import org.http4k.filter.ClientFilters.SetHostFrom
 import org.http4k.format.ConfigurableJackson
 import org.http4k.format.Jackson
@@ -24,7 +29,11 @@ import org.http4k.lens.StringBiDiMappings
 import org.http4k.lens.dateTime
 import org.http4k.routing.bind
 import org.http4k.routing.routes
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

@@ -1,91 +1,110 @@
 package com.learning
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.learning.Matchers.inTimeRange
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.client.JavaHttpClient
-import org.http4k.core.*
+import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
+import org.http4k.core.Request
+import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Uri
+import org.http4k.core.then
+import org.http4k.core.with
 import org.http4k.filter.ClientFilters.SetHostFrom
-import org.http4k.format.Jackson
+import org.http4k.format.ConfigurableJackson
+import org.http4k.format.asConfigurable
+import org.http4k.format.withStandardMappings
+import org.http4k.lens.BiDiMapping
+import org.http4k.lens.StringBiDiMappings
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.TimeZone
 
 private const val TIMEZONE = "Europe/London"
 private const val SECONDS_IN_HALF_HOUR = 1800L
-private const val SECONDS_IN_DAY = 86400L
 
 interface NationalGridContractTest {
-    val httpClient: HttpHandler
+    val nationalGrid: NationalGrid
 
     @Test
     fun `responds with forecast for the most recent full half hour`() {
-        val currentIntensity = httpClient(Request(GET, "/intensity"))
-        val halfHourResponses = nationalGridDataLens(currentIntensity)
+        val currentIntensity = nationalGrid.currentIntensity()
 
-        assertThat(currentIntensity.status, equalTo(OK))
-        assertThat(halfHourResponses.data.size, equalTo(1))
-        val currentData = halfHourResponses.data.first()
         assertThat(
             Instant.now().minusSeconds(30 * 60),
-            inTimeRange(currentData.from, currentData.to.plusSeconds(TIME_DIFFERENCE_TOLERANCE))
+            inTimeRange(currentIntensity.from, currentIntensity.to.plusSeconds(TIME_DIFFERENCE_TOLERANCE))
         )
     }
 
     @Test
     fun `responds with forecast for the current date in UTC time for the date in the Europe-London timezone`() {
-        val currentIntensity = httpClient(Request(GET, "/intensity/date"))
-        val halfHourResponses = nationalGridDataLens(currentIntensity)
+        val currentDayIntensity = nationalGrid.currentDayIntensity()
 
-        assertThat(currentIntensity.status, equalTo(OK))
-        assertThat(halfHourResponses.data.size, equalTo(48))
+        assertThat(currentDayIntensity.data.size, equalTo(48))
         assertThat(
             Instant.now().truncatedTo(ChronoUnit.DAYS),
-            inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to)
+            inTimeRange(currentDayIntensity.data.first().from, currentDayIntensity.data.last().to)
         )
     }
 
     @Test
     fun `responds with forecast for the requested date`() {
-        val yesterday = Instant.now().minusSeconds(SECONDS_IN_DAY).truncatedTo(ChronoUnit.DAYS)
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd")
-        val dateIntensity = httpClient(Request(GET, "/intensity/date/${dateFormat.format(Date.from(yesterday))}"))
-        val halfHourResponses = nationalGridDataLens(dateIntensity)
+        val date = LocalDate.now(UTC).minusDays(1)
+        val dateIntensity = nationalGrid.dateIntensity(date)
 
-        assertThat(dateIntensity.status, equalTo(OK))
-        assertThat(halfHourResponses.data.size, equalTo(48))
-        assertThat(yesterday, inTimeRange(halfHourResponses.data.first().from, halfHourResponses.data.last().to))
+        assertThat(dateIntensity.data.size, equalTo(48))
+        assertThat(date.atStartOfDay().toInstant(UTC), inTimeRange(dateIntensity.data.first().from, dateIntensity.data.last().to))
+    }
+}
+
+interface NationalGrid {
+    fun currentIntensity(): HalfHourData
+
+    fun currentDayIntensity(): NationalGridData
+
+    fun dateIntensity(date: LocalDate): NationalGridData
+}
+
+class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
+    override fun currentIntensity(): HalfHourData {
+        val currentIntensity = httpHandler(Request(GET, "/intensity"))
+        return nationalGridDataLens(currentIntensity).data.first()
+    }
+
+    override fun currentDayIntensity(): NationalGridData {
+        val currentIntensity = httpHandler(Request(GET, "/intensity/date"))
+        return nationalGridDataLens(currentIntensity)
+    }
+
+    override fun dateIntensity(date: LocalDate): NationalGridData {
+        val dateIntensity = httpHandler(Request(GET, "/intensity/date/$date"))
+        return nationalGridDataLens(dateIntensity)
     }
 }
 
 class FakeNationalGridTest : NationalGridContractTest {
-    override val httpClient = FakeNationalGrid()
+    override val nationalGrid = NationalGridCloud(FakeNationalGrid())
 }
 
 @Disabled
 class NationalGridTest : NationalGridContractTest {
-    override val httpClient = SetHostFrom(Uri.of("https://api.carbonintensity.org.uk")).then(JavaHttpClient())
+    override val nationalGrid = NationalGridCloud(nationalGridClient())
 }
+
+fun nationalGridClient() = SetHostFrom(Uri.of("https://api.carbonintensity.org.uk")).then(JavaHttpClient())
 
 class FakeNationalGrid : HttpHandler {
     val routes = routes(
@@ -145,36 +164,28 @@ private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
 
 data class NationalGridData(val data: List<HalfHourData>)
 data class HalfHourData(
-    @JsonSerialize(using = NationalGridInstantSerializer::class)
-    @JsonDeserialize(using = NationalGridInstantDeserializer::class)
     val from: Instant,
-    @JsonSerialize(using = NationalGridInstantSerializer::class)
-    @JsonDeserialize(using = NationalGridInstantDeserializer::class)
     val to: Instant,
     val intensity: Intensity
 )
+
 data class Intensity(val forecast: Long, val actual: Long?, val index: String)
 
-val nationalGridDataLens = Jackson.autoBody<NationalGridData>().toLens()
+val nationalGridDataLens = NationalGridJackson.autoBody<NationalGridData>().toLens()
 
-class NationalGridInstantDeserializer : StdDeserializer<Instant?>(Instant::class.java) {
-    companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmX")
-    }
+const val gridPattern = "yyyy-MM-dd'T'HH:mmX"
 
-    override fun deserialize(
-        jsonparser: JsonParser, context: DeserializationContext?
-    ): Instant {
-        return Instant.from(formatter.parse(jsonparser.text))
-    }
-}
-
-class NationalGridInstantSerializer : StdSerializer<Instant>(Instant::class.java) {
-    companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmX").withZone(ZoneOffset.UTC)
-    }
-
-    override fun serialize(instant: Instant, jgen: JsonGenerator, provider: SerializerProvider) {
-        jgen.writeString(formatter.format(instant))
-    }
-}
+object NationalGridJackson : ConfigurableJackson(
+    KotlinModule.Builder().build()
+        .asConfigurable()
+        .withStandardMappings()
+        .text(StringBiDiMappings.instant())
+        .text(
+            BiDiMapping(
+                { timestamp -> Instant.from(DateTimeFormatter.ofPattern(gridPattern).withZone(UTC).parse(timestamp)) },
+                { instant -> DateTimeFormatter.ofPattern(gridPattern).withZone(UTC).format(instant) }
+            )
+        )
+        .done()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+)
