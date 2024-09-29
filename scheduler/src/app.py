@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 
 from flask import Flask, request
 from flask_expects_json import expects_json
@@ -19,7 +19,7 @@ intensities_schema = {
         },
         'date': {
             'type': 'string',
-            "pattern": '^\d{4}-\d{2}-\d{2}$'
+            "pattern": '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
         }
     },
     'required': ['intensities', 'date']
@@ -31,10 +31,10 @@ def create_app(scheduler):
 
     @app.route("/charge-time")
     def charge_time():
-        current_time = request.args.get("current", type=int)
+        current_time = request.args.get("current", type=to_datetime)
         best_action = app.config["SCHEDULER"].best_action_for(current_time)
         if best_action is not None:
-            return {"chargeTime": int(best_action)}, 200
+            return {"chargeTime": best_action.isoformat()}, 200
         else:
             return {"error": "No data for time slot"}, 404
 
@@ -42,7 +42,7 @@ def create_app(scheduler):
     @expects_json(intensities_schema)
     def intensities():
         carbon_intensities = request.json["intensities"]
-        data_date = date.fromisoformat(request.json["date"])
+        data_date = to_datetime(request.json["date"])
         app.config["SCHEDULER"].calculate_schedules(carbon_intensities, data_date)
         return '', 204
 
@@ -62,6 +62,11 @@ def create_app(scheduler):
         return error
 
     return app
+
+
+def to_datetime(datetime_string):
+    return datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S")
+
 
 if __name__ == "__main__":
     create_app(UseTimeScheduler()).run(port=8000)

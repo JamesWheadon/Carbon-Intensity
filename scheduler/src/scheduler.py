@@ -1,4 +1,5 @@
 import random
+import datetime
 
 import numpy as np
 
@@ -37,9 +38,14 @@ class UseTimeScheduler:
                 self.epsilon *= self.epsilon_decay
             state = 0
 
-    def best_action_for(self, time_slot):
+    def best_action_for(self, timestamp):
+        if self.intensities_date is None or timestamp < self.intensities_date:
+            return None
+        minutes_diff = (timestamp - self.intensities_date).total_seconds() / 60.0
+        current_index = minutes_diff / 30
         try:
-            return np.argmax(self.Q_table[time_slot][time_slot:]) + time_slot
+            action_to_take = np.argmax(self.Q_table[current_index][current_index:]) + current_index
+            return self.intensities_date + datetime.timedelta(seconds = action_to_take * 1800)
         except IndexError:
             return None
 
