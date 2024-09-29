@@ -162,31 +162,6 @@ def test_intensities_returns_bad_request_when_no_date_in_input():
     assert fake.intensities_called_with == []
 
 
-def test_intensities_date_returns_date_of_latest_intensities():
-    fake = TestScheduler()
-    tester = create_app(fake).test_client()
-    test_data = {
-        "intensities": [266, 312] * 24,
-        "date": "2024-09-26T01:00:00"
-    }
-    tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
-
-    response = tester.get("intensities/date")
-
-    assert response.status_code == 200
-    assert response.get_json() == {"date": "2024-09-26T01:00:00"}
-
-
-def test_intensities_date_returns_404_when_no_data_submitted():
-    fake = TestScheduler()
-    tester = create_app(fake).test_client()
-
-    response = tester.get("intensities/date")
-
-    assert response.status_code == 404
-    assert response.get_json() == {"error": "No data has been submitted to the scheduler"}
-
-
 class TestScheduler:
     __test__ = False
 
@@ -206,6 +181,3 @@ class TestScheduler:
     def calculate_schedules(self, intensities, intensities_date):
         self.intensities_called_with = intensities
         self.intensities_date = intensities_date
-
-    def day_of_data(self):
-        return self.intensities_date

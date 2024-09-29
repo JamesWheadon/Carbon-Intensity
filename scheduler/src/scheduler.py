@@ -52,9 +52,6 @@ class UseTimeScheduler:
             print(e)
             return None
 
-    def day_of_data(self):
-        return self.intensities_date
-
     def print_q_table(self):
         np.set_printoptions(threshold=self.num_time_slots * self.num_time_slots)
         print(self.Q_table)

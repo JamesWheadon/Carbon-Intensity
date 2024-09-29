@@ -46,14 +46,6 @@ def create_app(scheduler):
         app.config["SCHEDULER"].calculate_schedules(carbon_intensities, data_date)
         return '', 204
 
-    @app.route("/intensities/date", methods=['GET'])
-    def intensities_date():
-        date_of_intensities = app.config["SCHEDULER"].day_of_data()
-        if date_of_intensities is not None:
-            return {"date": date_of_intensities.isoformat()}, 200
-        else:
-            return {"error": "No data has been submitted to the scheduler"}, 404
-
     @app.errorhandler(400)
     def bad_request(error):
         if isinstance(error.description, ValidationError):

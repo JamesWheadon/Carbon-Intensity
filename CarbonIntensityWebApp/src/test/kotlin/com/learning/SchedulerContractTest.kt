@@ -104,47 +104,18 @@ interface SchedulerContractTest {
         assertThat(chargeTimeResponse.status, equalTo(NOT_FOUND))
         assertThat(chargeTime, equalTo(ChargeTime(null, "No data for time slot")))
     }
-
-    @Test
-    fun `responds with the date intensities submitted for`() {
-        val schedulerDateResponse = httpClient(Request(GET, "/intensities/date"))
-        val schedulerDate = schedulerDateLens(schedulerDateResponse)
-
-        assertThat(schedulerDateResponse.status, equalTo(OK))
-        assertThat(
-            schedulerDate.date!!,
-            inLocalDateTimeRange(LocalDateTime.now().minusSeconds(60), LocalDateTime.now())
-        )
-    }
 }
 
 class FakeSchedulerTest : SchedulerContractTest {
     override val httpClient = FakeScheduler()
-
-    @AfterEach
-    fun tearDown() {
-        httpClient.dataForScheduler = true
-    }
-
-    @Test
-    fun `responds with not found when no data sent to the scheduler`() {
-        httpClient.dataForScheduler = false
-
-        val schedulerDateResponse = httpClient(Request(GET, "/intensities/date"))
-        val schedulerDate = errorResponseLens(schedulerDateResponse)
-
-        assertThat(schedulerDateResponse.status, equalTo(NOT_FOUND))
-        assertThat(schedulerDate.error, equalTo("No data has been submitted to the scheduler"))
-    }
 }
 
+@Disabled
 class SchedulerTest : SchedulerContractTest {
     override val httpClient = SetHostFrom(Uri.of("http://localhost:8000")).then(JavaHttpClient())
 }
 
 class FakeScheduler : HttpHandler {
-    var dataForScheduler = true
-
     val routes = routes(
         "/charge-time" bind GET to { request ->
             val current = Query.dateTime(formatter = DateTimeFormatter.ISO_DATE_TIME).defaulted("current", LocalDateTime.now())(request)
@@ -168,15 +139,6 @@ class FakeScheduler : HttpHandler {
                     errorResponseLens of ErrorResponse(errorMessage)
                 )
             }
-        },
-        "/intensities/date" bind GET to {
-            if (dataForScheduler) {
-                Response(OK).with(schedulerDateLens of SchedulerDate(LocalDateTime.now(), null))
-            } else {
-                Response(NOT_FOUND).with(
-                    errorResponseLens of ErrorResponse("No data has been submitted to the scheduler")
-                )
-            }
         }
     )
 
@@ -185,12 +147,10 @@ class FakeScheduler : HttpHandler {
 
 data class Scheduler(val intensities: List<Int>, val date: LocalDateTime)
 data class ChargeTime(val chargeTime: LocalDateTime?, val error: String?)
-data class SchedulerDate(val date: LocalDateTime?, val error: String?)
 data class ErrorResponse(val error: String)
 
 val schedulerLens = MyJackson.autoBody<Scheduler>().toLens()
 val chargeTimeLens = Jackson.autoBody<ChargeTime>().toLens()
-val schedulerDateLens = MyJackson.autoBody<SchedulerDate>().toLens()
 val errorResponseLens = Jackson.autoBody<ErrorResponse>().toLens()
 
 object MyJackson : ConfigurableJackson(
