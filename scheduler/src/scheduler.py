@@ -39,14 +39,17 @@ class UseTimeScheduler:
             state = 0
 
     def best_action_for(self, timestamp):
+        print(timestamp, self.intensities_date)
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
-        minutes_diff = (timestamp - self.intensities_date).total_seconds() / 60.0
-        current_index = minutes_diff / 30
+        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
+        current_index = int(minutes_diff // 30)
+        print(minutes_diff, current_index)
         try:
             action_to_take = np.argmax(self.Q_table[current_index][current_index:]) + current_index
-            return self.intensities_date + datetime.timedelta(seconds = action_to_take * 1800)
-        except IndexError:
+            return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 1800)
+        except IndexError as e:
+            print(e)
             return None
 
     def day_of_data(self):
