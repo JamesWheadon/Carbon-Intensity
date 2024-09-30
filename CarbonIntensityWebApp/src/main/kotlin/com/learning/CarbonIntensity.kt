@@ -9,6 +9,7 @@ import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Uri
 import org.http4k.core.then
@@ -51,9 +52,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                 var bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime)
                 if (bestChargeTime.chargeTime == null) {
                     val chargeDate = LocalDateTime.ofInstant(chargeDetails.startTime, ZoneOffset.UTC).toLocalDate()
-                    val dateIntensity = nationalGrid.dateIntensity(
-                        chargeDate
-                    )
+                    val dateIntensity = nationalGrid.dateIntensity(chargeDate)
                     val intensities = Intensities(
                         dateIntensity.data.map { halfHour -> halfHour.intensity.forecast.toInt() },
                         chargeDetails.startTime.truncatedTo(DAYS)
@@ -61,7 +60,11 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                     scheduler.sendIntensities(intensities)
                     bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime)
                 }
-                Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
+                if (bestChargeTime.chargeTime != null) {
+                    Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
+                } else {
+                    Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
+                }
             }
         )
     )
