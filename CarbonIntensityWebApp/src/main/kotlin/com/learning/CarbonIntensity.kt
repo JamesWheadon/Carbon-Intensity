@@ -2,7 +2,7 @@ package com.learning
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import org.http4k.core.Method.GET
+import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
@@ -34,8 +34,8 @@ fun carbonIntensityServer(port: Int): Http4kServer {
 fun carbonIntensity(): (Request) -> Response {
     return CatchLensFailure.then(
         routes(
-            "/ping" bind GET to {
-                Response(OK).body("pong")
+            "/charge-time" bind POST to {
+                Response(OK).body("""{"chargeTime": "2024-09-30T21:00:00"}""")
             }
         )
     )
