@@ -83,7 +83,7 @@ fun getTestInstant(): Instant = Instant.ofEpochSecond(1727727697L)
 
 class FakeSchedulerTest : IntensitiesContractTest {
     override val scheduler =
-        PythonScheduler(FakeScheduler(mapOf(getTestInstant().plusSeconds(60) to getTestInstant().plusSeconds(300))))
+        PythonScheduler(FakeScheduler(mapOf(getTestInstant().plusSeconds(60) to getTestInstant().plusSeconds(300))) {})
 }
 
 @Disabled
@@ -91,7 +91,7 @@ class IntensitiesTest : IntensitiesContractTest {
     override val scheduler = PythonScheduler(schedulerClient())
 }
 
-class FakeScheduler(validChargeTimes: Map<Instant, Instant>) : HttpHandler {
+class FakeScheduler(validChargeTimes: Map<Instant, Instant>, intensitiesUpdated: () -> Unit) : HttpHandler {
     val routes = routes(
         "/charge-time" bind GET to { request ->
             val current = Query.map(
@@ -111,6 +111,7 @@ class FakeScheduler(validChargeTimes: Map<Instant, Instant>) : HttpHandler {
         "/intensities" bind POST to { request ->
             val requestBody = intensitiesLens(request)
             if (requestBody.intensities.size == 48) {
+                intensitiesUpdated()
                 Response(NO_CONTENT)
             } else {
                 val errorMessage = if (requestBody.intensities.size > 48) {

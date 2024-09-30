@@ -13,14 +13,21 @@ import java.time.Instant
 
 class EndToEndTest {
     private val client = JavaHttpClient()
+    private val validChargeTimes = mutableMapOf(
+        Instant.parse("2024-09-30T19:55:00Z") to Instant.parse("2024-09-30T21:00:00Z"),
+        Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z")
+    )
     private val server = carbonIntensityServer(
-        1000, PythonScheduler(
+        1000,
+        PythonScheduler(
             FakeScheduler(
-                mapOf(
-                    Instant.parse("2024-09-30T19:55:00Z") to Instant.parse("2024-09-30T21:00:00Z"),
-                    Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z")
-                )
-            )
+                validChargeTimes
+            ) {
+                validChargeTimes[Instant.parse("2024-09-02T10:30:00Z")] = Instant.parse("2024-10-02T13:00:00Z")
+            }
+        ),
+        NationalGridCloud(
+            FakeNationalGrid()
         )
     )
 
@@ -54,6 +61,17 @@ class EndToEndTest {
 
         assertThat(response.status, equalTo(OK))
         assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-10-01T02:30:00")))
+    }
+
+    @Test
+    fun `calls national grid and updates intensities in scheduler when best charge time is not found`() {
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(getChargeTimeBody("2024-09-02T10:30:00"))
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-10-02T13:00:00")))
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""

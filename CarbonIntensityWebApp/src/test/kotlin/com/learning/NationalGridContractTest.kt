@@ -3,16 +3,12 @@ package com.learning
 import com.learning.Matchers.inTimeRange
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
-import org.http4k.core.Uri
-import org.http4k.core.then
 import org.http4k.core.with
-import org.http4k.filter.ClientFilters.SetHostFrom
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
@@ -62,31 +58,6 @@ interface NationalGridContractTest {
     }
 }
 
-interface NationalGrid {
-    fun currentIntensity(): HalfHourData
-
-    fun currentDayIntensity(): NationalGridData
-
-    fun dateIntensity(date: LocalDate): NationalGridData
-}
-
-class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
-    override fun currentIntensity(): HalfHourData {
-        val currentIntensity = httpHandler(Request(GET, "/intensity"))
-        return nationalGridDataLens(currentIntensity).data.first()
-    }
-
-    override fun currentDayIntensity(): NationalGridData {
-        val currentIntensity = httpHandler(Request(GET, "/intensity/date"))
-        return nationalGridDataLens(currentIntensity)
-    }
-
-    override fun dateIntensity(date: LocalDate): NationalGridData {
-        val dateIntensity = httpHandler(Request(GET, "/intensity/date/$date"))
-        return nationalGridDataLens(dateIntensity)
-    }
-}
-
 class FakeNationalGridTest : NationalGridContractTest {
     override val nationalGrid = NationalGridCloud(FakeNationalGrid())
 }
@@ -95,8 +66,6 @@ class FakeNationalGridTest : NationalGridContractTest {
 class NationalGridTest : NationalGridContractTest {
     override val nationalGrid = NationalGridCloud(nationalGridClient())
 }
-
-fun nationalGridClient() = SetHostFrom(Uri.of("https://api.carbonintensity.org.uk")).then(JavaHttpClient())
 
 class FakeNationalGrid : HttpHandler {
     val routes = routes(
@@ -153,14 +122,3 @@ private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
         truncatedToMinutes.plusSeconds((30 - minutesPastNearestHalHour) * 60L)
     )
 }
-
-data class NationalGridData(val data: List<HalfHourData>)
-data class HalfHourData(
-    val from: Instant,
-    val to: Instant,
-    val intensity: Intensity
-)
-
-data class Intensity(val forecast: Long, val actual: Long?, val index: String)
-
-val nationalGridDataLens = NationalGridJackson.autoBody<NationalGridData>().toLens()
