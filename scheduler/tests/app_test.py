@@ -59,6 +59,21 @@ def test_charge_time_returns_not_found_when_no_data():
     assert response.get_json() == {"error": "No data for time slot"}
 
 
+def test_charge_time_uses_end_timestamp_as_upper_limit_if_received():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-28T01:00:00"
+    }
+    tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T18:36:00", content_type="application/json")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"chargeTime": "2024-09-28T18:30:00"}
+
+
 def test_intensities_accepts_json_body_and_calculates_schedules():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
@@ -169,14 +184,18 @@ class TestScheduler:
         self.intensities_called_with = []
         self.intensities_date = None
 
-    def best_action_for(self, timestamp):
+    def best_action_for(self, timestamp, end_timestamp=None):
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
-        minutes_diff = (timestamp - self.intensities_date).total_seconds() / 60.0
-        action_index = minutes_diff // 30
+        action_index = self.action_index_from_timestamp(timestamp)
+        end_action_index = min(self.action_index_from_timestamp(end_timestamp), 47) if end_timestamp is not None else 47
         if action_index >= 48:
             return None
-        return self.intensities_date + timedelta(seconds = (action_index + 3) * 1800)
+        return self.intensities_date + timedelta(seconds = min(action_index + 3, end_action_index) * 1800)
+
+    def action_index_from_timestamp(self, timestamp):
+        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
+        return minutes_diff // 30
 
     def calculate_schedules(self, intensities, intensities_date):
         self.intensities_called_with = intensities

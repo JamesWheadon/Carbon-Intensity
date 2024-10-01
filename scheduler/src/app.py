@@ -32,7 +32,8 @@ def create_app(scheduler):
     @app.route("/charge-time")
     def charge_time():
         current_time = request.args.get("current", type=to_datetime)
-        best_action = app.config["SCHEDULER"].best_action_for(current_time)
+        end_time = request.args.get("end", type=to_datetime)
+        best_action = app.config["SCHEDULER"].best_action_for(current_time, end_time)
         if best_action is not None:
             return {"chargeTime": best_action.isoformat()}, 200
         else:

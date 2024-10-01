@@ -38,16 +38,20 @@ class UseTimeScheduler:
                 self.epsilon *= self.epsilon_decay
             state = 0
 
-    def best_action_for(self, timestamp):
+    def best_action_for(self, timestamp, end_timestamp=None):
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
-        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
-        current_index = int(minutes_diff // 30)
+        action_index = self.action_index_from_timestamp(timestamp)
+        end_action_index = min(self.action_index_from_timestamp(end_timestamp), 48) if end_timestamp is not None else 47
         try:
-            action_to_take = np.argmax(self.Q_table[current_index][current_index:]) + current_index
+            action_to_take = np.argmax(self.Q_table[action_index][action_index:end_action_index]) + action_index
             return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 1800)
         except IndexError:
             return None
+
+    def action_index_from_timestamp(self, timestamp):
+        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
+        return minutes_diff // 30
 
     def print_q_table(self):
         np.set_printoptions(threshold=self.num_time_slots * self.num_time_slots)
