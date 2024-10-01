@@ -74,6 +74,21 @@ def test_charge_time_uses_end_timestamp_as_upper_limit_if_received():
     assert response.get_json() == {"chargeTime": "2024-09-28T18:30:00"}
 
 
+def test_charge_time_returns_bad_request_when_before_data():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-26T01:00:00"
+    }
+    tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T17:36:00", content_type="application/json")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "End must be after current"}
+
+
 def test_intensities_accepts_json_body_and_calculates_schedules():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
@@ -185,6 +200,8 @@ class TestScheduler:
         self.intensities_date = None
 
     def best_action_for(self, timestamp, end_timestamp=None):
+        if end_timestamp is not None and end_timestamp < timestamp:
+            raise ValueError("End must be after current")
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
         action_index = self.action_index_from_timestamp(timestamp)

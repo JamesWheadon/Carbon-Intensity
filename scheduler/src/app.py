@@ -33,11 +33,14 @@ def create_app(scheduler):
     def charge_time():
         current_time = request.args.get("current", type=to_datetime)
         end_time = request.args.get("end", type=to_datetime)
-        best_action = app.config["SCHEDULER"].best_action_for(current_time, end_time)
-        if best_action is not None:
-            return {"chargeTime": best_action.isoformat()}, 200
-        else:
-            return {"error": "No data for time slot"}, 404
+        try:
+            best_action = app.config["SCHEDULER"].best_action_for(current_time, end_time)
+            if best_action is not None:
+                return {"chargeTime": best_action.isoformat()}, 200
+            else:
+                return {"error": "No data for time slot"}, 404
+        except ValueError as e:
+            return {"error": str(e)}, 400
 
     @app.route("/intensities", methods=['POST'])
     @expects_json(intensities_schema)

@@ -39,6 +39,8 @@ class UseTimeScheduler:
             state = 0
 
     def best_action_for(self, timestamp, end_timestamp=None):
+        if end_timestamp is not None and end_timestamp < timestamp:
+            raise ValueError("End must be after current")
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
         action_index = self.action_index_from_timestamp(timestamp)
