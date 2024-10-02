@@ -2,6 +2,7 @@ import json
 from datetime import timedelta
 
 from src.app import create_app
+from src.scheduler import Scheduler, check_action_timestamps
 
 
 def test_charge_time_calls_scheduler_for_action():
@@ -192,16 +193,19 @@ def test_intensities_returns_bad_request_when_no_date_in_input():
     assert fake.intensities_called_with == []
 
 
-class TestScheduler:
+class TestScheduler(Scheduler):
     __test__ = False
 
     def __init__(self):
+        super().__init__()
         self.intensities_called_with = []
-        self.intensities_date = None
+
+    def calculate_schedules(self, intensities, intensities_date):
+        self.intensities_called_with = intensities
+        self.intensities_date = intensities_date
 
     def best_action_for(self, timestamp, end_timestamp=None):
-        if end_timestamp is not None and end_timestamp < timestamp:
-            raise ValueError("End must be after current")
+        check_action_timestamps(end_timestamp, timestamp)
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
         action_index = self.action_index_from_timestamp(timestamp)
@@ -209,11 +213,3 @@ class TestScheduler:
         if action_index >= 48:
             return None
         return self.intensities_date + timedelta(seconds = min(action_index + 3, end_action_index) * 1800)
-
-    def action_index_from_timestamp(self, timestamp):
-        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
-        return minutes_diff // 30
-
-    def calculate_schedules(self, intensities, intensities_date):
-        self.intensities_called_with = intensities
-        self.intensities_date = intensities_date

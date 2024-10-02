@@ -4,8 +4,18 @@ import datetime
 import numpy as np
 
 
-class UseTimeScheduler:
+class Scheduler:
     def __init__(self):
+        self.intensities_date = None
+
+    def action_index_from_timestamp(self, timestamp):
+        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
+        return minutes_diff // 30
+
+
+class UseTimeScheduler(Scheduler):
+    def __init__(self):
+        super().__init__()
         self.alpha = 0.1
         self.gamma = 0.2
         self.epsilon = 1.0
@@ -14,7 +24,6 @@ class UseTimeScheduler:
         self.num_episodes = 1000
         self.num_time_slots = 48
         self.Q_table = np.zeros((self.num_time_slots, self.num_time_slots))
-        self.intensities_date = None
 
     def calculate_schedules(self, intensities, intensities_date):
         self.intensities_date = intensities_date
@@ -39,8 +48,7 @@ class UseTimeScheduler:
             state = 0
 
     def best_action_for(self, timestamp, end_timestamp=None):
-        if end_timestamp is not None and end_timestamp < timestamp:
-            raise ValueError("End must be after current")
+        check_action_timestamps(end_timestamp, timestamp)
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
         action_index = self.action_index_from_timestamp(timestamp)
@@ -51,13 +59,14 @@ class UseTimeScheduler:
         except IndexError:
             return None
 
-    def action_index_from_timestamp(self, timestamp):
-        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
-        return minutes_diff // 30
-
     def print_q_table(self):
         np.set_printoptions(threshold=self.num_time_slots * self.num_time_slots)
         print(self.Q_table)
+
+
+def check_action_timestamps(end_timestamp, timestamp):
+    if end_timestamp is not None and end_timestamp < timestamp:
+        raise ValueError("End must be after current")
 
 
 class CarbonIntensityEnv:
