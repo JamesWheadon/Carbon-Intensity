@@ -74,6 +74,8 @@ interface Scheduler {
     fun sendIntensities(intensities: Intensities): ErrorResponse?
 
     fun getBestChargeTime(chargeTime: Instant): ChargeTime
+
+    fun getBestChargeTime(chargeTime: Instant, endTime: Instant): ChargeTime
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
@@ -89,6 +91,12 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
     override fun getBestChargeTime(chargeTime: Instant): ChargeTime {
         val timestamp = formatWith(schedulerPattern).format(chargeTime)
         return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?current=$timestamp")))
+    }
+
+    override fun getBestChargeTime(chargeTime: Instant, endTime: Instant): ChargeTime {
+        val timestamp = formatWith(schedulerPattern).format(chargeTime)
+        val endTimestamp = formatWith(schedulerPattern).format(endTime)
+        return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?current=$timestamp&end=$endTimestamp")))
     }
 }
 

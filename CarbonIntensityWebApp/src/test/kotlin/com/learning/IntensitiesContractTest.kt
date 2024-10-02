@@ -77,13 +77,21 @@ interface IntensitiesContractTest {
         assertThat(chargeTime.chargeTime, equalTo(null))
         assertThat(chargeTime.error!!, equalTo("No data for time slot"))
     }
+
+    @Test
+    fun `responds with best time in range of current time and end time`() {
+        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(60), getTestInstant().plusSeconds(3000))
+
+        assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000)))
+        assertThat(chargeTime.error, equalTo(null))
+    }
 }
 
 fun getTestInstant(): Instant = Instant.ofEpochSecond(1727727697L)
 
 class FakeSchedulerTest : IntensitiesContractTest {
     override val scheduler =
-        PythonScheduler(FakeScheduler(mapOf(getTestInstant().plusSeconds(60) to getTestInstant().plusSeconds(300))) {})
+        PythonScheduler(FakeScheduler(mapOf(getTestInstant().plusSeconds(60) to getTestInstant().plusSeconds(3600))) {})
 }
 
 @Disabled
@@ -100,8 +108,13 @@ class FakeScheduler(validChargeTimes: Map<Instant, Instant>, intensitiesUpdated:
                     { instant -> formatWith(schedulerPattern).format(instant) }
                 )
             ).defaulted("current", null)(request)
-            val response =
-                validChargeTimes[current]?.let { ChargeTime(it, null) } ?: ChargeTime(null, "No data for time slot")
+            val end = Query.map(
+                BiDiMapping(
+                    { timestamp -> Instant.from(formatWith(schedulerPattern).parse(timestamp)) },
+                    { instant -> formatWith(schedulerPattern).format(instant) }
+                )
+            ).defaulted("end", null)(request)
+            val response = validChargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end) } ?: ChargeTime(null, "No data for time slot")
             if (response.error == null) {
                 Response(OK).with(chargeTimeLens of response)
             } else {
@@ -125,6 +138,16 @@ class FakeScheduler(validChargeTimes: Map<Instant, Instant>, intensitiesUpdated:
             }
         }
     )
+
+    private fun getChargeTime(chargeTime: Instant, end: Instant?): ChargeTime {
+        var actionTime = chargeTime
+        if (end != null) {
+            while (end < actionTime) {
+                actionTime = actionTime.minusSeconds(1800)
+            }
+        }
+        return ChargeTime(actionTime, null)
+    }
 
     override fun invoke(request: Request): Response = routes(request)
 }
