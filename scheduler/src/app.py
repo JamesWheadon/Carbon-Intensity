@@ -34,7 +34,7 @@ def create_app(scheduler):
         current_time = request.args.get("current", type=to_datetime)
         end_time = request.args.get("end", type=to_datetime)
         try:
-            best_action = app.config["SCHEDULER"].best_action_for(current_time, end_time)
+            best_action = app.config["SCHEDULER"].best_action_for(current_time, end_timestamp=end_time)
             if best_action is not None:
                 return {"chargeTime": best_action.isoformat()}, 200
             else:

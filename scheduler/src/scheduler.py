@@ -10,7 +10,7 @@ class Scheduler:
 
     def action_index_from_timestamp(self, timestamp):
         minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
-        return minutes_diff // 30
+        return int(minutes_diff // 15)
 
 
 class UseTimeScheduler(Scheduler):
@@ -22,46 +22,53 @@ class UseTimeScheduler(Scheduler):
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.num_episodes = 1000
-        self.num_time_slots = 48
-        self.Q_table = np.zeros((self.num_time_slots, self.num_time_slots))
+        self.num_time_slots = 96
+        self.durations = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
+        self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
 
     def calculate_schedules(self, intensities, intensities_date):
         self.intensities_date = intensities_date
         env = CarbonIntensityEnv(intensities)
         state = 0
         for episode in range(self.num_episodes):
-            while state != self.num_time_slots:
-                if random.uniform(0, 1) < self.epsilon:
-                    action = random.randint(state, self.num_time_slots - 1)
-                else:
-                    action = np.argmax(self.Q_table[state][state:]) + state
+            for duration in self.durations:
+            # duration = self.durations[random.randint(0, len(self.durations) - 1)]
+                duration_index = self.durations.index(duration)
+                while state + duration < self.num_time_slots:
+                    if random.uniform(0, 1) < self.epsilon:
+                        action = random.randint(state, self.num_time_slots - duration)
+                    else:
+                        action = np.argmax(self.Q_table[duration_index][state][state:self.num_time_slots - duration + 1]) + state
 
-                reward = env.step(action)
-                best_next_action = np.argmax(self.Q_table[action])
-                self.Q_table[state, action] = (self.Q_table[state, action] + self.alpha *
-                                               (reward + self.gamma * self.Q_table[action, best_next_action] -
-                                                self.Q_table[state, action]))
-                state += 1
+                    reward = env.step(action, duration)
+                    best_next_action = np.argmax(self.Q_table[duration_index][action])
+                    self.Q_table[duration_index, state, action] = (self.Q_table[duration_index, state, action] + self.alpha *
+                                                   (reward + self.gamma * self.Q_table[duration_index, action, best_next_action] -
+                                                    self.Q_table[duration_index, state, action]))
+                    state += 1
+                state = 0
 
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
-            state = 0
 
-    def best_action_for(self, timestamp, end_timestamp=None):
+    def best_action_for(self, timestamp, duration=2, end_timestamp=None):
         check_action_timestamps(end_timestamp, timestamp)
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
         action_index = self.action_index_from_timestamp(timestamp)
-        end_action_index = min(self.action_index_from_timestamp(end_timestamp), 48) if end_timestamp is not None else 47
+        end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration, 97 - duration) if end_timestamp is not None else 97 - duration
         try:
-            action_to_take = np.argmax(self.Q_table[action_index][action_index:end_action_index]) + action_index
-            return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 1800)
+            print(action_index, end_action_index)
+            action_to_take = np.argmax(self.Q_table[self.durations.index(duration)][action_index][action_index:end_action_index]) + action_index
+            return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 900)
         except IndexError:
             return None
 
     def print_q_table(self):
-        np.set_printoptions(threshold=self.num_time_slots * self.num_time_slots)
-        print(self.Q_table)
+        np.set_printoptions(edgeitems=30, linewidth=100000, threshold=self.num_time_slots * self.num_time_slots)
+        for duration in self.durations:
+            print(f"{duration * 15} minutes")
+            print(self.Q_table[self.durations.index(duration)])
 
 
 def check_action_timestamps(end_timestamp, timestamp):
@@ -71,10 +78,19 @@ def check_action_timestamps(end_timestamp, timestamp):
 
 class CarbonIntensityEnv:
     def __init__(self, day_intensities):
-        self.day_intensities = day_intensities
+        self.day_intensities = np.repeat(day_intensities, 2)
 
-    def step(self, action):
-        intensity = self.day_intensities[action]
-
-        reward = -intensity
+    def step(self, action, duration):
+        steps = duration
+        reward = 0
+        for s in range(steps):
+            reward -= self.day_intensities[action + s]
         return reward
+
+
+if __name__ == "__main__":
+    scheduler = UseTimeScheduler()
+    scheduler.calculate_schedules([134, 175, 243, 117, 208, 125, 87, 202, 58, 145, 134, 222, 133, 236, 140, 222, 87, 207, 199, 125, 100, 218, 236, 154, 215, 157, 151, 105, 107, 240, 53, 230, 249, 192, 70, 97, 99, 62, 116, 181, 144, 229, 127, 173, 69, 122, 146, 75], datetime.datetime.fromisoformat('2024-10-15T01:00:00'))
+    scheduler.print_q_table()
+    print(scheduler.best_action_for(datetime.datetime.fromisoformat('2024-10-15T14:00:00'), duration = 3))
+    print(scheduler.best_action_for(datetime.datetime.fromisoformat('2024-10-15T14:00:00'), duration = 6))
