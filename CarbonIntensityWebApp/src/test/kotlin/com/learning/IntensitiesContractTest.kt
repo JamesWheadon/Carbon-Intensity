@@ -16,6 +16,7 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.lens.BiDiMapping
 import org.http4k.lens.Query
+import org.http4k.lens.int
 import org.http4k.lens.map
 import org.http4k.routing.bind
 import org.http4k.routing.routes
@@ -56,7 +57,7 @@ interface IntensitiesContractTest {
 
     @Test
     fun `responds with best time to charge when queried with current time`() {
-        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(60))
+        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(60), null, null)
 
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(SECONDS_IN_DAY)))
         assertThat(chargeTime.error, equalTo(null))
@@ -64,7 +65,7 @@ interface IntensitiesContractTest {
 
     @Test
     fun `responds with not found error when queried with too early time`() {
-        val chargeTime = scheduler.getBestChargeTime(getTestInstant().minusSeconds(60))
+        val chargeTime = scheduler.getBestChargeTime(getTestInstant().minusSeconds(60), null, null)
 
         assertThat(chargeTime.chargeTime, equalTo(null))
         assertThat(chargeTime.error!!, equalTo("No data for time slot"))
@@ -72,7 +73,7 @@ interface IntensitiesContractTest {
 
     @Test
     fun `responds with not found error when queried with too late time`() {
-        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(3 * SECONDS_IN_DAY))
+        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(3 * SECONDS_IN_DAY), null, null)
 
         assertThat(chargeTime.chargeTime, equalTo(null))
         assertThat(chargeTime.error!!, equalTo("No data for time slot"))
@@ -80,9 +81,17 @@ interface IntensitiesContractTest {
 
     @Test
     fun `responds with best time in range of current time and end time`() {
-        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(60), getTestInstant().plusSeconds(3000))
+        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(60), getTestInstant().plusSeconds(3000), null)
 
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000)))
+        assertThat(chargeTime.error, equalTo(null))
+    }
+
+    @Test
+    fun `responds with best time to charge when queried with current time and duration`() {
+        val chargeTime = scheduler.getBestChargeTime(getTestInstant().plusSeconds(60), getTestInstant().plusSeconds(6000), 75)
+
+        assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500)))
         assertThat(chargeTime.error, equalTo(null))
     }
 }
@@ -114,7 +123,8 @@ class FakeScheduler(validChargeTimes: Map<Instant, Instant>, intensitiesUpdated:
                     { instant -> formatWith(schedulerPattern).format(instant) }
                 )
             ).defaulted("end", null)(request)
-            val response = validChargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end) } ?: ChargeTime(null, "No data for time slot")
+            val duration = Query.int().defaulted("duration", 30)(request)
+            val response = validChargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end, duration) } ?: ChargeTime(null, "No data for time slot")
             if (response.error == null) {
                 Response(OK).with(chargeTimeLens of response)
             } else {
@@ -139,12 +149,11 @@ class FakeScheduler(validChargeTimes: Map<Instant, Instant>, intensitiesUpdated:
         }
     )
 
-    private fun getChargeTime(chargeTime: Instant, end: Instant?): ChargeTime {
-        var actionTime = chargeTime
-        if (end != null) {
-            while (end < actionTime) {
-                actionTime = actionTime.minusSeconds(1800)
-            }
+    private fun getChargeTime(chargeTime: Instant, end: Instant?, duration: Int): ChargeTime {
+        val actionTime = if (end != null && end.minusSeconds(duration * 60L) < chargeTime) {
+            end.minusSeconds(duration * 60L)
+        } else {
+            chargeTime
         }
         return ChargeTime(actionTime, null)
     }

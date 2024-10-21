@@ -49,7 +49,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
         routes(
             "/charge-time" bind POST to { request ->
                 val chargeDetails = chargeDetailsLens(request)
-                var bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime)
+                var bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, null, null)
                 if (bestChargeTime.chargeTime == null) {
                     val chargeDate = LocalDateTime.ofInstant(chargeDetails.startTime, ZoneOffset.UTC).toLocalDate()
                     val dateIntensity = nationalGrid.dateIntensity(chargeDate)
@@ -58,7 +58,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                         chargeDetails.startTime.truncatedTo(DAYS)
                     )
                     scheduler.sendIntensities(intensities)
-                    bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime)
+                    bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, null, null)
                 }
                 if (bestChargeTime.chargeTime != null) {
                     Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
@@ -72,10 +72,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
 
 interface Scheduler {
     fun sendIntensities(intensities: Intensities): ErrorResponse?
-
-    fun getBestChargeTime(chargeTime: Instant): ChargeTime
-
-    fun getBestChargeTime(chargeTime: Instant, endTime: Instant): ChargeTime
+    fun getBestChargeTime(chargeTime: Instant, endTime: Instant?, duration: Int?): ChargeTime
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
@@ -88,15 +85,17 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun getBestChargeTime(chargeTime: Instant): ChargeTime {
+    override fun getBestChargeTime(chargeTime: Instant, endTime: Instant?, duration: Int?): ChargeTime {
         val timestamp = formatWith(schedulerPattern).format(chargeTime)
-        return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?current=$timestamp")))
-    }
-
-    override fun getBestChargeTime(chargeTime: Instant, endTime: Instant): ChargeTime {
-        val timestamp = formatWith(schedulerPattern).format(chargeTime)
-        val endTimestamp = formatWith(schedulerPattern).format(endTime)
-        return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?current=$timestamp&end=$endTimestamp")))
+        var query = "current=$timestamp"
+        if (endTime != null) {
+            val endTimestamp = formatWith(schedulerPattern).format(endTime)
+            query += "&end=$endTimestamp"
+        }
+        if (duration != null) {
+            query += "&duration=$duration"
+        }
+        return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?$query")))
     }
 }
 
