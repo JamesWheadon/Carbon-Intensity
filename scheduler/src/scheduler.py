@@ -23,7 +23,7 @@ class UseTimeScheduler(Scheduler):
         self.epsilon_decay = 0.995
         self.num_episodes = 1000
         self.num_time_slots = 96
-        self.durations = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
+        self.durations = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
         self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
 
     def calculate_schedules(self, intensities, intensities_date):
@@ -51,7 +51,7 @@ class UseTimeScheduler(Scheduler):
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
 
-    def best_action_for(self, timestamp, duration=2, end_timestamp=None):
+    def best_action_for(self, timestamp, duration, end_timestamp=None):
         check_action_timestamps(end_timestamp, timestamp)
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None

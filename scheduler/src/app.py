@@ -33,8 +33,11 @@ def create_app(scheduler):
     def charge_time():
         current_time = request.args.get("current", type=to_datetime)
         end_time = request.args.get("end", type=to_datetime)
+        duration = request.args.get("duration", type=int, default=30)
         try:
-            best_action = app.config["SCHEDULER"].best_action_for(current_time, end_timestamp=end_time)
+            charge_scheduler = app.config["SCHEDULER"]
+            slot_span = min(charge_scheduler.durations, key=lambda x:abs(x - duration / 15))
+            best_action = charge_scheduler.best_action_for(current_time, slot_span, end_timestamp=end_time)
             if best_action is not None:
                 return {"chargeTime": best_action.isoformat()}, 200
             else:
