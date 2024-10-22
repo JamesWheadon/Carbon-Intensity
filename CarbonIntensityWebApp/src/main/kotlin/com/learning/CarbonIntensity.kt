@@ -49,7 +49,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
         routes(
             "/charge-time" bind POST to { request ->
                 val chargeDetails = chargeDetailsLens(request)
-                var bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, chargeDetails.endTime, null)
+                var bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, chargeDetails.endTime, chargeDetails.duration)
                 if (bestChargeTime.chargeTime == null) {
                     val chargeDate = LocalDateTime.ofInstant(chargeDetails.startTime, ZoneOffset.UTC).toLocalDate()
                     val dateIntensity = nationalGrid.dateIntensity(chargeDate)
@@ -129,7 +129,8 @@ class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
 fun nationalGridClient() = ClientFilters.SetHostFrom(Uri.of("https://api.carbonintensity.org.uk"))
     .then(JavaHttpClient())
 
-data class ChargeDetails(val startTime: Instant, val endTime: Instant?)
+data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?)
+
 data class Intensities(val intensities: List<Int>, val date: Instant)
 data class ChargeTime(val chargeTime: Instant?, val error: String?)
 data class ChargeTimeResponse(val chargeTime: Instant)

@@ -77,6 +77,17 @@ class EndToEndTest {
     }
 
     @Test
+    fun `responds with optimal charge time using the scheduler service with end time and duration`() {
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(getChargeTimeBody("2024-09-30T21:20:00", "2024-09-30T23:30:00", 60))
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-30T22:30:00")))
+    }
+
+    @Test
     fun `calls national grid and updates intensities in scheduler when best charge time is not found`() {
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
@@ -101,6 +112,8 @@ class EndToEndTest {
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
     @Suppress("SameParameterValue")
     private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp"}"""
+    @Suppress("SameParameterValue")
+    private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String, duration: Int) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp","duration":$duration}"""
     private fun getChargeTimeResponse(chargeTimestamp: String) = """{"chargeTime":"$chargeTimestamp"}"""
     private fun getErrorResponse() = """{"error":"unable to find charge time"}"""
 }
