@@ -33,10 +33,12 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit.DAYS
 
-
 fun main() {
-    val server = carbonIntensityServer(9000, PythonScheduler(schedulerClient()), NationalGridCloud(nationalGridClient())).start()
-
+    val server = carbonIntensityServer(
+        9000,
+        PythonScheduler(schedulerClient()),
+        NationalGridCloud(nationalGridClient())
+    ).start()
     println("Server started on " + server.port())
 }
 
@@ -49,16 +51,15 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
         routes(
             "/charge-time" bind POST to { request ->
                 val chargeDetails = chargeDetailsLens(request)
-                var bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, chargeDetails.endTime, chargeDetails.duration)
+                var bestChargeTime =
+                    scheduler.getBestChargeTime(chargeDetails.startTime, chargeDetails.endTime, chargeDetails.duration)
                 if (bestChargeTime.chargeTime == null) {
-                    val chargeDate = LocalDateTime.ofInstant(chargeDetails.startTime, ZoneOffset.UTC).toLocalDate()
-                    val dateIntensity = nationalGrid.dateIntensity(chargeDate)
-                    val intensities = Intensities(
-                        dateIntensity.data.map { halfHour -> halfHour.intensity.forecast.toInt() },
-                        chargeDetails.startTime.truncatedTo(DAYS)
+                    updateScheduler(chargeDetails, nationalGrid, scheduler)
+                    bestChargeTime = scheduler.getBestChargeTime(
+                        chargeDetails.startTime,
+                        chargeDetails.endTime,
+                        chargeDetails.duration
                     )
-                    scheduler.sendIntensities(intensities)
-                    bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, chargeDetails.endTime, chargeDetails.duration)
                 }
                 if (bestChargeTime.chargeTime != null) {
                     Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
@@ -68,6 +69,28 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
             }
         )
     )
+}
+
+private fun updateScheduler(
+    chargeDetails: ChargeDetails,
+    nationalGrid: NationalGrid,
+    scheduler: Scheduler
+) {
+    val dateIntensity = getCarbonIntensitiesForDate(chargeDetails, nationalGrid)
+    val intensities = Intensities(
+        dateIntensity.data.map { halfHour -> halfHour.intensity.forecast.toInt() },
+        chargeDetails.startTime.truncatedTo(DAYS)
+    )
+    scheduler.sendIntensities(intensities)
+}
+
+private fun getCarbonIntensitiesForDate(
+    chargeDetails: ChargeDetails,
+    nationalGrid: NationalGrid
+): NationalGridData {
+    val chargeDate = LocalDateTime.ofInstant(chargeDetails.startTime, ZoneOffset.UTC).toLocalDate()
+    val dateIntensity = nationalGrid.dateIntensity(chargeDate)
+    return dateIntensity
 }
 
 interface Scheduler {
@@ -103,9 +126,7 @@ fun schedulerClient() = ClientFilters.SetHostFrom(Uri.of("http://localhost:8000"
 
 interface NationalGrid {
     fun currentIntensity(): HalfHourData
-
     fun currentDayIntensity(): NationalGridData
-
     fun dateIntensity(date: LocalDate): NationalGridData
 }
 
