@@ -52,14 +52,10 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
             "/charge-time" bind POST to { request ->
                 val chargeDetails = chargeDetailsLens(request)
                 var bestChargeTime =
-                    scheduler.getBestChargeTime(chargeDetails.startTime, chargeDetails.endTime, chargeDetails.duration)
+                    scheduler.getBestChargeTime(chargeDetails)
                 if (bestChargeTime.chargeTime == null) {
                     updateScheduler(chargeDetails, nationalGrid, scheduler)
-                    bestChargeTime = scheduler.getBestChargeTime(
-                        chargeDetails.startTime,
-                        chargeDetails.endTime,
-                        chargeDetails.duration
-                    )
+                    bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
                 }
                 if (bestChargeTime.chargeTime != null) {
                     Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
@@ -95,7 +91,7 @@ private fun getCarbonIntensitiesForDate(
 
 interface Scheduler {
     fun sendIntensities(intensities: Intensities): ErrorResponse?
-    fun getBestChargeTime(chargeTime: Instant, endTime: Instant?, duration: Int?): ChargeTime
+    fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
@@ -108,15 +104,15 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun getBestChargeTime(chargeTime: Instant, endTime: Instant?, duration: Int?): ChargeTime {
-        val timestamp = formatWith(schedulerPattern).format(chargeTime)
+    override fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime {
+        val timestamp = formatWith(schedulerPattern).format(chargeDetails.startTime)
         var query = "current=$timestamp"
-        if (endTime != null) {
-            val endTimestamp = formatWith(schedulerPattern).format(endTime)
+        if (chargeDetails.endTime != null) {
+            val endTimestamp = formatWith(schedulerPattern).format(chargeDetails.endTime)
             query += "&end=$endTimestamp"
         }
-        if (duration != null) {
-            query += "&duration=$duration"
+        if (chargeDetails.duration != null) {
+            query += "&duration=${chargeDetails.duration}"
         }
         return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?$query")))
     }
