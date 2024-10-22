@@ -99,6 +99,17 @@ class EndToEndTest {
     }
 
     @Test
+    fun `calls national grid and updates intensities in scheduler when best charge time is not found with end time`() {
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(getChargeTimeBody("2024-09-02T10:30:00", "2024-09-02T12:30:00"))
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T12:00:00")))
+    }
+
+    @Test
     fun `responds with not found and error if can't calculate best charge time`() {
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")

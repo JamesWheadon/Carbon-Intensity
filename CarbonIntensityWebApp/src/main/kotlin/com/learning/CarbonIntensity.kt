@@ -58,7 +58,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                         chargeDetails.startTime.truncatedTo(DAYS)
                     )
                     scheduler.sendIntensities(intensities)
-                    bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, null, null)
+                    bestChargeTime = scheduler.getBestChargeTime(chargeDetails.startTime, chargeDetails.endTime, null)
                 }
                 if (bestChargeTime.chargeTime != null) {
                     Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
