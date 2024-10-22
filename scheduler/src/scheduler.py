@@ -58,7 +58,6 @@ class UseTimeScheduler(Scheduler):
         action_index = self.action_index_from_timestamp(timestamp)
         end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration, 97 - duration) if end_timestamp is not None else 97 - duration
         try:
-            print(action_index, end_action_index)
             action_to_take = np.argmax(self.Q_table[self.durations.index(duration)][action_index][action_index:end_action_index]) + action_index
             return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 900)
         except IndexError:
