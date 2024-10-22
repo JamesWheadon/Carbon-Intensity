@@ -143,6 +143,17 @@ class EndToEndTest {
         assertThat(response.body.toString(), equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30")))
     }
 
+    @Test
+    fun `responds with bad request and error if difference between start and end less than duration`() {
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(getChargeTimeBody("2024-09-02T10:31:00", "2024-09-02T10:56:00", 30))
+        )
+
+        assertThat(response.status, equalTo(BAD_REQUEST))
+        assertThat(response.body.toString(), equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30")))
+    }
+
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
     @Suppress("SameParameterValue")
     private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp"}"""
