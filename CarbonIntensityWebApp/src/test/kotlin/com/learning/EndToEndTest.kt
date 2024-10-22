@@ -5,6 +5,7 @@ import com.natpryce.hamkrest.equalTo
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.AfterEach
@@ -128,7 +129,18 @@ class EndToEndTest {
         )
 
         assertThat(response.status, equalTo(NOT_FOUND))
-        assertThat(response.body.toString(), equalTo(getErrorResponse()))
+        assertThat(response.body.toString(), equalTo(getErrorResponse("unable to find charge time")))
+    }
+
+    @Test
+    fun `responds with bad request and error if end time before start`() {
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(getChargeTimeBody("2024-09-02T10:31:00", "2024-09-02T10:30:00"))
+        )
+
+        assertThat(response.status, equalTo(BAD_REQUEST))
+        assertThat(response.body.toString(), equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30")))
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
@@ -137,5 +149,5 @@ class EndToEndTest {
     @Suppress("SameParameterValue")
     private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String, duration: Int) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp","duration":$duration}"""
     private fun getChargeTimeResponse(chargeTimestamp: String) = """{"chargeTime":"$chargeTimestamp"}"""
-    private fun getErrorResponse() = """{"error":"unable to find charge time"}"""
+    private fun getErrorResponse(message: String) = """{"error":"$message"}"""
 }

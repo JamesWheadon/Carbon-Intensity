@@ -9,6 +9,7 @@ import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Uri
@@ -51,16 +52,20 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
         routes(
             "/charge-time" bind POST to { request ->
                 val chargeDetails = chargeDetailsLens(request)
-                var bestChargeTime =
-                    scheduler.getBestChargeTime(chargeDetails)
-                if (bestChargeTime.chargeTime == null) {
-                    updateScheduler(chargeDetails, nationalGrid, scheduler)
-                    bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
-                }
-                if (bestChargeTime.chargeTime != null) {
-                    Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
+                if (chargeDetails.endTime != null && chargeDetails.endTime < chargeDetails.startTime) {
+                    Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
                 } else {
-                    Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
+                    var bestChargeTime =
+                        scheduler.getBestChargeTime(chargeDetails)
+                    if (bestChargeTime.chargeTime == null) {
+                        updateScheduler(chargeDetails, nationalGrid, scheduler)
+                        bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
+                    }
+                    if (bestChargeTime.chargeTime != null) {
+                        Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
+                    } else {
+                        Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
+                    }
                 }
             }
         )
