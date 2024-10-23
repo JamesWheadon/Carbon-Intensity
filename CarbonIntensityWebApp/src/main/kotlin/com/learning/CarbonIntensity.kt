@@ -52,26 +52,31 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
         routes(
             "/charge-time" bind POST to { request ->
                 val chargeDetails = chargeDetailsLens(request)
-                if (chargeDetails.endTime != null && chargeDetails.endTime < chargeDetails.startTime.plusSeconds(
-                        chargeDetails.duration?.times(60L) ?: 0
-                    )) {
-                    Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
+                if (chargeDetails.isValid()) {
+                    getChargeTime(scheduler, chargeDetails, nationalGrid)
                 } else {
-                    var bestChargeTime =
-                        scheduler.getBestChargeTime(chargeDetails)
-                    if (bestChargeTime.chargeTime == null) {
-                        updateScheduler(chargeDetails, nationalGrid, scheduler)
-                        bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
-                    }
-                    if (bestChargeTime.chargeTime != null) {
-                        Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
-                    } else {
-                        Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
-                    }
+                    Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
                 }
             }
         )
     )
+}
+
+private fun getChargeTime(
+    scheduler: Scheduler,
+    chargeDetails: ChargeDetails,
+    nationalGrid: NationalGrid
+): Response {
+    var bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
+    if (bestChargeTime.chargeTime == null) {
+        updateScheduler(chargeDetails, nationalGrid, scheduler)
+        bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
+    }
+    return if (bestChargeTime.chargeTime != null) {
+        Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
+    } else {
+        Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
+    }
 }
 
 private fun updateScheduler(
@@ -154,6 +159,7 @@ fun nationalGridClient() = ClientFilters.SetHostFrom(Uri.of("https://api.carboni
     .then(JavaHttpClient())
 
 data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?)
+private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.plusSeconds(duration?.times(60L) ?: 0)
 
 data class Intensities(val intensities: List<Int>, val date: Instant)
 data class ChargeTime(val chargeTime: Instant?, val error: String?)

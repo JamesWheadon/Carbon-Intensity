@@ -155,9 +155,7 @@ class EndToEndTest {
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
-    @Suppress("SameParameterValue")
     private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp"}"""
-    @Suppress("SameParameterValue")
     private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String, duration: Int) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp","duration":$duration}"""
     private fun getChargeTimeResponse(chargeTimestamp: String) = """{"chargeTime":"$chargeTimestamp"}"""
     private fun getErrorResponse(message: String) = """{"error":"$message"}"""
