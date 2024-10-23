@@ -1,4 +1,4 @@
-package com.learning
+package com.intensity
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
