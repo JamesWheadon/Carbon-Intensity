@@ -14,3 +14,10 @@ test('renders start time input field and value can update', () => {
   fireEvent.change(startTimeInput, {target: {value: '20:24'}});
   expect(startTimeInput).toHaveValue("20:24");
 });
+
+test('renders end time input field and value can update', () => {
+  render(<ChargeTimeForm />);
+  const endTimeInput = screen.getByLabelText(/End time:/i);
+  fireEvent.change(endTimeInput, {target: {value: '23:12'}});
+  expect(endTimeInput).toHaveValue("23:12");
+});
