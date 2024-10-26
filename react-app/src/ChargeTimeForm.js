@@ -19,6 +19,22 @@ function ChargeTimeForm() {
                     onChange={(i) => setEnd(i.target.value)}
                 />
             </label>
+            <label> Duration:
+                <select name="charge-duration" id="duration">
+                    <option value="30">30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">60 minutes</option>
+                    <option value="75">75 minutes</option>
+                    <option value="90">90 minutes</option>
+                    <option value="105">105 minutes</option>
+                    <option value="120">120 minutes</option>
+                    <option value="150">150 minutes</option>
+                    <option value="180">180 minutes</option>
+                    <option value="210">210 minutes</option>
+                    <option value="240">240 minutes</option>
+                    <option value="300">300 minutes</option>
+                </select>
+            </label>
         </form>
     );
 }

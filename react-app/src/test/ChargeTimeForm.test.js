@@ -21,3 +21,9 @@ test('renders end time input field and value can update', () => {
   fireEvent.change(endTimeInput, {target: {value: '23:12'}});
   expect(endTimeInput).toHaveValue("23:12");
 });
+
+test('renders duration dropdown input field and value can update', () => {
+  render(<ChargeTimeForm />);
+  const durationInput = screen.getByLabelText(/Duration:/i);
+  expect(durationInput).toHaveValue("30");
+});
