@@ -11,6 +11,6 @@ test('renders start time label', () => {
 test('renders start time input field and value can update', () => {
   render(<ChargeTimeForm />);
   const startTimeInput = screen.getByLabelText(/Start time:/i);
-  fireEvent.change(startTimeInput, {target: {value: 'test'}});
-  expect(startTimeInput).toHaveValue("test");
+  fireEvent.change(startTimeInput, {target: {value: '20:24'}});
+  expect(startTimeInput).toHaveValue("20:24");
 });

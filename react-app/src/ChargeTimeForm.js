@@ -6,7 +6,7 @@ function ChargeTimeForm() {
         <form>
             <label>Start time:
                 <input
-                    type="text"
+                    type="time"
                     value={start}
                     onChange={(i) => setStart(i.target.value)}
                 />
