@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import ChargeTimeForm from '../ChargeTimeForm';
 
@@ -26,4 +27,6 @@ test('renders duration dropdown input field and value can update', () => {
   render(<ChargeTimeForm />);
   const durationInput = screen.getByLabelText(/Duration:/i);
   expect(durationInput).toHaveValue("30");
+  userEvent.selectOptions(durationInput, "60 minutes");
+  expect(durationInput).toHaveValue("60");
 });

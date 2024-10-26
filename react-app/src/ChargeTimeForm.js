@@ -3,6 +3,7 @@ import { useState } from 'react';
 function ChargeTimeForm() {
     const [start, setStart] = useState("");
     const [end, setEnd] = useState("");
+    const [duration, setDuration] = useState("30");
     return (
         <form>
             <label>Start time:
@@ -20,7 +21,10 @@ function ChargeTimeForm() {
                 />
             </label>
             <label> Duration:
-                <select name="charge-duration" id="duration">
+                <select 
+                    value={duration}
+                    onChange={(i) => setDuration(i.target.value)}
+                >
                     <option value="30">30 minutes</option>
                     <option value="45">45 minutes</option>
                     <option value="60">60 minutes</option>
