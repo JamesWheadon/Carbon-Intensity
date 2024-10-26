@@ -1,7 +1,10 @@
 /.idea/
 WebApp/.gradle/
 /WebApp/build/
-/Scheduler/Scheduler.iml
+
+/scheduler/scheduler.iml
+/scheduler/src/__pycache__
+/scheduler/tests/__pycache__
 
 react-app/node_modules
 react-app/.pnp
