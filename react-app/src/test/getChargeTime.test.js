@@ -18,7 +18,19 @@ test("retrieves charge time for input", async () => {
 });
 
 test("converts time in date to timestamp", () => {
-  const result = timeToDateTime("20:12", new Date("2024-10-28"));
+  const date = new Date("2024-10-28");
+  if (date.getTimezoneOffset() == 0) {
+    const result = timeToDateTime("20:12", date);
 
-  expect(result).toStrictEqual("2024-10-28T20:12:00");
+    expect(result).toStrictEqual("2024-10-28T20:12:00");
+  }
+});
+
+test("converts time in date to timestamp in BST", () => {
+  const date = new Date("2024-10-24");
+  if (date.getTimezoneOffset() == -60) {
+    const result = timeToDateTime("20:12", date);
+
+    expect(result).toStrictEqual("2024-10-24T19:12:00");
+  }
 });
