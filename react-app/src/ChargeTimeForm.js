@@ -1,11 +1,15 @@
 import { useState } from 'react';
 
-function ChargeTimeForm() {
+function ChargeTimeForm({ getChargeTime }) {
     const [start, setStart] = useState("");
     const [end, setEnd] = useState("");
     const [duration, setDuration] = useState("30");
+    const submit = (e) => {
+        e.preventDefault();
+        getChargeTime(start, end, duration);
+    };
     return (
-        <form>
+        <form onSubmit={submit}>
             <label>Start time:
                 <input
                     type="time"
@@ -21,7 +25,7 @@ function ChargeTimeForm() {
                 />
             </label>
             <label> Duration:
-                <select 
+                <select
                     value={duration}
                     onChange={(i) => setDuration(i.target.value)}
                 >
