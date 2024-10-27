@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const getChargeTime = async (start, end, duration) => {
+export async function getChargeTime(start, end, duration) {
     const body = {
         "startTime": start,
         "endTime": end,
@@ -10,4 +10,9 @@ const getChargeTime = async (start, end, duration) => {
     return response.data;
 };
 
-export default getChargeTime;
+export function timeToDateTime(time) {
+    const currentDate = new Date();
+    const [hours, minutes] = time.split(':').map(Number);
+    currentDate.setHours(hours, minutes, 0, 0);
+    return currentDate.toISOString().replace(".000Z", "");
+}

@@ -1,5 +1,5 @@
 import axios from "axios";
-import getChargeTime from "../getChargeTime";
+import { getChargeTime, timeToDateTime } from "../getChargeTime";
 
 jest.mock("axios");
 
@@ -15,4 +15,10 @@ test("retrieves charge time for input", async () => {
 
   expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', body);
   expect(result).toStrictEqual({ "chargeTime": "2024-09-30T21:00:00" });
+});
+
+test("converts time in current day to timestamp", () => {
+  const result = timeToDateTime("20:12");
+
+  expect(result).toStrictEqual("2024-10-27T20:12:00");
 });
