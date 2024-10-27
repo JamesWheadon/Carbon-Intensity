@@ -39,6 +39,7 @@ function ChargeTimeForm() {
                     <option value="300">300 minutes</option>
                 </select>
             </label>
+            <button type="submit">Send</button>
         </form>
     );
 }

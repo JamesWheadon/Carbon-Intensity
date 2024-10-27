@@ -30,3 +30,9 @@ test('renders duration dropdown input field and value can update', () => {
   userEvent.selectOptions(durationInput, "60 minutes");
   expect(durationInput).toHaveValue("60");
 });
+
+test('renders the submit button', () => {
+  render(<ChargeTimeForm />);
+  const durationInput = screen.getByText(/Send/i);
+  expect(durationInput).toBeInTheDocument();
+});
