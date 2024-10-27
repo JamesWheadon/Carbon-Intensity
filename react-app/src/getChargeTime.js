@@ -10,6 +10,15 @@ export async function getChargeTime(start, end, duration) {
     return response.data;
 };
 
+export function createChargeTimeBody(start, end, duration, date) {
+    const body = {
+        "startTime": timeToDateTime(start, date),
+        "endTime": timeToDateTime(end, date),
+        "duration": Number(duration)
+    };
+    return body;
+}
+
 export function timeToDateTime(time, date) {
     const [hours, minutes] = time.split(':').map(Number);
     date.setHours(hours, minutes, 0, 0);

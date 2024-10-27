@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getChargeTime, timeToDateTime } from "../getChargeTime";
+import { getChargeTime, timeToDateTime, createChargeTimeBody } from "../getChargeTime";
 
 jest.mock("axios");
 
@@ -32,5 +32,33 @@ test("converts time in date to timestamp in BST", () => {
     const result = timeToDateTime("20:12", date);
 
     expect(result).toStrictEqual("2024-10-24T19:12:00");
+  }
+});
+
+test("creates charge time body", () => {
+  const body = {
+    "startTime": "2024-10-28T20:12:00",
+    "endTime": "2024-10-28T23:34:00",
+    "duration": 60
+  };
+  const date = new Date("2024-10-28");
+  if (date.getTimezoneOffset() == 0) {
+    const result = createChargeTimeBody("20:12", "23:34", "60", date);
+
+    expect(result).toStrictEqual(body);
+  }
+});
+
+test("creates charge time body in BST", () => {
+  const body = {
+    "startTime": "2024-10-24T19:12:00",
+    "endTime": "2024-10-24T22:34:00",
+    "duration": 60
+  };
+  const date = new Date("2024-10-24");
+  if (date.getTimezoneOffset() == -60) {
+    const result = createChargeTimeBody("20:12", "23:34", "60", date);
+
+    expect(result).toStrictEqual(body);
   }
 });
