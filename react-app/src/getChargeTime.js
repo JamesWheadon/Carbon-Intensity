@@ -10,9 +10,8 @@ export async function getChargeTime(start, end, duration) {
     return response.data;
 };
 
-export function timeToDateTime(time) {
-    const currentDate = new Date();
+export function timeToDateTime(time, date) {
     const [hours, minutes] = time.split(':').map(Number);
-    currentDate.setHours(hours, minutes, 0, 0);
-    return currentDate.toISOString().replace(".000Z", "");
+    date.setHours(hours, minutes, 0, 0);
+    return date.toISOString().replace(".000Z", "");
 }

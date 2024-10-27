@@ -17,8 +17,8 @@ test("retrieves charge time for input", async () => {
   expect(result).toStrictEqual({ "chargeTime": "2024-09-30T21:00:00" });
 });
 
-test("converts time in current day to timestamp", () => {
-  const result = timeToDateTime("20:12");
+test("converts time in date to timestamp", () => {
+  const result = timeToDateTime("20:12", new Date("2024-10-28"));
 
-  expect(result).toStrictEqual("2024-10-27T20:12:00");
+  expect(result).toStrictEqual("2024-10-28T20:12:00");
 });
