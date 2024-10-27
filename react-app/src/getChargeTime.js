@@ -1,5 +1,10 @@
 import axios from "axios";
 
+export async function chargeTime(start, end, duration) {
+    const body = createChargeTimeBody(start, end, duration, new Date());
+    return getChargeTime(body);
+};
+
 export async function getChargeTime(body) {
     const response = await axios.post('http://localhost:9000/charge-time', body);
     return response.data;

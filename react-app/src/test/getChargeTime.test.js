@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getChargeTime, createChargeTimeBody } from "../getChargeTime";
+import { chargeTime, getChargeTime, createChargeTimeBody } from "../getChargeTime";
 
 jest.mock("axios");
 
@@ -43,4 +43,13 @@ test("creates charge time body in BST", () => {
 
     expect(result).toStrictEqual(body);
   }
+});
+
+test("creates body from form output and gets charge time", async () => {
+  axios.post.mockImplementation(() => Promise.resolve({ data: { "chargeTime": "2024-09-30T21:00:00" } }));
+
+  const result = await chargeTime("20:12", "23:34", "60");
+
+  expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', expect.objectContaining({"duration": 60}));
+  expect(result).toStrictEqual({ "chargeTime": "2024-09-30T21:00:00" });
 });
