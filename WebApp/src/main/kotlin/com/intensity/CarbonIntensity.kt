@@ -16,6 +16,8 @@ import org.http4k.core.Uri
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.filter.ClientFilters
+import org.http4k.filter.CorsPolicy
+import org.http4k.filter.ServerFilters
 import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.format.ConfigurableJackson
 import org.http4k.format.Jackson
@@ -43,21 +45,25 @@ fun main() {
     println("Server started on " + server.port())
 }
 
+val corsMiddleware = ServerFilters.Cors(CorsPolicy.UnsafeGlobalPermissive)
+
 fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: NationalGrid): Http4kServer {
     return carbonIntensity(scheduler, nationalGrid).asServer(SunHttp(port))
 }
 
 fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request) -> Response {
-    return CatchLensFailure.then(
-        routes(
-            "/charge-time" bind POST to { request ->
-                val chargeDetails = chargeDetailsLens(request)
-                if (chargeDetails.isValid()) {
-                    getChargeTime(scheduler, chargeDetails, nationalGrid)
-                } else {
-                    Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
+    return corsMiddleware.then(
+        CatchLensFailure.then(
+            routes(
+                "/charge-time" bind POST to { request ->
+                    val chargeDetails = chargeDetailsLens(request)
+                    if (chargeDetails.isValid()) {
+                        getChargeTime(scheduler, chargeDetails, nationalGrid)
+                    } else {
+                        Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
+                    }
                 }
-            }
+            )
         )
     )
 }
