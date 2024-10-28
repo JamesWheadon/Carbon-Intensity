@@ -14,7 +14,7 @@ test("retrieves charge time for input", async () => {
   const result = await getChargeTime(body);
 
   expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', body);
-  expect(result).toStrictEqual({ "chargeTime": "2024-09-30T21:00:00" });
+  expect(result).toStrictEqual("21:00");
 });
 
 test("creates charge time body", () => {
@@ -51,5 +51,5 @@ test("creates body from form output and gets charge time", async () => {
   const result = await chargeTime("20:12", "23:34", "60");
 
   expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', expect.objectContaining({"duration": 60}));
-  expect(result).toStrictEqual({ "chargeTime": "2024-09-30T21:00:00" });
+  expect(result).toStrictEqual("21:00");
 });

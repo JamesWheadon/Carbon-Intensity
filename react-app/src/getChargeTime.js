@@ -7,7 +7,13 @@ export async function chargeTime(start, end, duration) {
 
 export async function getChargeTime(body) {
     const response = await axios.post('http://localhost:9000/charge-time', body);
-    return response.data;
+    const dateTime = new Date(response.data.chargeTime);
+    
+    var h = dateTime.getHours();
+    var m = dateTime.getMinutes();
+    h = (h<10) ? '0' + h : h;
+    m = (m<10) ? '0' + m : m;
+    return h + ':' + m;
 };
 
 export function createChargeTimeBody(start, end, duration, date) {
