@@ -1,7 +1,13 @@
+import { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import ChargeTimeForm from './ChargeTimeForm';
+import ChargeTime from './ChargeTime';
+import { chargeTime } from './getChargeTime';
 
 function App() {
+  const [bestTime, setBestTime] = useState(null);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -18,6 +24,10 @@ function App() {
         >
           Learn React
         </a>
+      <ChargeTimeForm getChargeTime={ async (start, end, duration) => {
+        setBestTime(await chargeTime(start, end, duration))
+      }}/>
+      <ChargeTime bestChargeTime={bestTime}/>
       </header>
     </div>
   );
