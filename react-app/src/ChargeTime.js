@@ -1,6 +1,6 @@
-function ChargeTime() {
+function ChargeTime({ bestChargeTime }) {
     return(
-        <h3>Best Time:</h3>
+        <h3>Best Time: {bestChargeTime}</h3>
     );
 }
 
