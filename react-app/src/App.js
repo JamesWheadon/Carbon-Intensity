@@ -27,7 +27,7 @@ function App() {
       <ChargeTimeForm getChargeTime={ async (start, end, duration) => {
         setBestTime(await chargeTime(start, end, duration))
       }}/>
-      <ChargeTime bestChargeTime={bestTime}/>
+      {bestTime ? <ChargeTime bestChargeTime={bestTime}/> : null}
       </header>
     </div>
   );
