@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 function ChargeTimeForm({ getChargeTime }) {
-    const [start, setStart] = useState("");
-    const [end, setEnd] = useState("");
-    const [duration, setDuration] = useState("30");
+    const [start, setStart] = useState('');
+    const [end, setEnd] = useState('');
+    const [duration, setDuration] = useState('30');
     const submit = (e) => {
         e.preventDefault();
         getChargeTime(start, end, duration);
