@@ -13,7 +13,7 @@ test('gets best charge time', async () => {
     fireEvent.change(screen.getByLabelText(/Start time/i), { target: { value: '20:24' } });
     fireEvent.change(screen.getByLabelText(/End time/i), { target: { value: '23:12' } });
     userEvent.selectOptions(screen.getByLabelText(/Duration/i), '60 minutes');
-    fireEvent.click(screen.getByText(/Send/i));
+    fireEvent.click(screen.getByText(/Calculate/i));
     
     await waitFor(() => expect(screen.getByText(/Best Time: 21:00/i)).toBeInTheDocument());
 });

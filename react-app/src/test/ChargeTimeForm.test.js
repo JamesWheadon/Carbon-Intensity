@@ -19,7 +19,7 @@ test('form data is passed to getChargeTime when form submitted', () => {
     fireEvent.change(screen.getAllByRole("combobox")[2], { target: { value: "23" } });
     fireEvent.change(screen.getAllByRole("combobox")[3], { target: { value: "45" } });
 	fireEvent.change(screen.getByLabelText(/Duration/i), { target: { value: '60'} });
-	fireEvent.click(screen.getByText(/Send/i));
+	fireEvent.click(screen.getByText(/Calculate/i));
 	
     expect(start).toBe('20:15');
 	expect(end).toBe('23:45');

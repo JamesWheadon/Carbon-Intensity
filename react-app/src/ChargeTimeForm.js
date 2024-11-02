@@ -36,7 +36,7 @@ function ChargeTimeForm({ getChargeTime }) {
                     <option value="300">300 minutes</option>
                 </select>
             </label>
-            <button type="submit">Send</button>
+            <button type="submit">Calculate</button>
         </form>
     );
 }
