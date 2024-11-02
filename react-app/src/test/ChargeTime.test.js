@@ -17,3 +17,15 @@ test('gets best charge time', async () => {
     
     await waitFor(() => expect(screen.getByText(/Best Time: 21:00/i)).toBeInTheDocument());
 });
+
+test('displays error when can not get best charge time', async () => {
+	axios.post.mockRejectedValueOnce();
+    render(<ChargeTime />);
+
+    fireEvent.change(screen.getByLabelText(/Start time/i), { target: { value: '20:24' } });
+    fireEvent.change(screen.getByLabelText(/End time/i), { target: { value: '23:12' } });
+    userEvent.selectOptions(screen.getByLabelText(/Duration/i), '60 minutes');
+    fireEvent.click(screen.getByText(/Calculate/i));
+    
+    await waitFor(() => expect(screen.getByText(/Could not get best charge time, please try again/i)).toBeInTheDocument());
+});
