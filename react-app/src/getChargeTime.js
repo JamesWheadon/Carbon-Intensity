@@ -14,9 +14,9 @@ export async function getChargeTime(body) {
         var m = dateTime.getMinutes();
         h = (h < 10) ? '0' + h : h;
         m = (m < 10) ? '0' + m : m;
-        return h + ':' + m;
+        return { chargeTime: h + ':' + m };
     } catch (error) {
-        return { error: "unable to get best charge time" }
+        return { error: "unable to get best charge time" };
     }
 }
 
