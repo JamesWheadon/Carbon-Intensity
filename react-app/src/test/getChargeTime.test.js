@@ -55,3 +55,12 @@ test('creates body from form output and gets charge time', async () => {
 	expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', expect.objectContaining({ 'duration': 60 }));
 	expect(result).toStrictEqual('21:00');
 });
+
+test('catches request error and returns error body', async () => {
+	axios.post.mockRejectedValueOnce();
+
+	const result = await chargeTime('20:12', '23:34', '60');
+
+	expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', expect.objectContaining({ 'duration': 60 }));
+	expect(result).toStrictEqual({error: "unable to get best charge time"});
+});
