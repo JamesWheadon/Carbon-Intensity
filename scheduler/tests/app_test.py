@@ -244,11 +244,6 @@ class TestScheduler(Scheduler):
         self.env = CarbonIntensityEnv(intensities)
         self.intensities_date = intensities_date
 
-    def get_intensities(self):
-        if self.env is None:
-            return None
-        return self.env.get_intensities()
-
     def best_action_for(self, timestamp, duration, end_timestamp=None):
         check_action_timestamps(end_timestamp, timestamp)
         if self.intensities_date is None or timestamp < self.intensities_date:
