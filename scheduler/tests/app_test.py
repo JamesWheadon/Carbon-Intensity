@@ -117,7 +117,7 @@ def test_intensities_accepts_json_body_and_calculates_schedules():
 
     assert response.status_code == 204
     assert response.get_json() is None
-    assert fake.get_intensities() == [266, 312] * 24
+    assert fake.get_intensities()["intensities"] == [266, 312] * 24
 
 
 def test_intensities_returns_bad_request_when_too_few_intensities():
@@ -208,7 +208,7 @@ def test_intensities_returns_bad_request_when_no_date_in_input():
     assert fake.get_intensities() is None
 
 
-def test_intensities_returns_intensities():
+def test_intensities_returns_intensities_and_date():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
     test_data = {
@@ -220,7 +220,7 @@ def test_intensities_returns_intensities():
     response = tester.get("/intensities", content_type="application/json")
 
     assert response.status_code == 200
-    assert response.get_json() == {"intensities": [266, 312] * 24}
+    assert response.get_json() == test_data
 
 
 def test_intensities_returns_not_found_with_no_intensities_set():

@@ -16,7 +16,10 @@ class Scheduler:
     def get_intensities(self):
         if self.env is None:
             return None
-        return self.env.get_intensities()
+        return {
+            "intensities": self.env.get_intensities(),
+            "date": self.intensities_date
+        }
 
 
 class UseTimeScheduler(Scheduler):

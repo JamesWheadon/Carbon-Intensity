@@ -58,7 +58,9 @@ def create_app(scheduler):
     def get_intensities():
         intensities = app.config["SCHEDULER"].get_intensities()
         if intensities:
-            return {"intensities": intensities}, 200
+            print(intensities["date"])
+            print(from_datetime(intensities["date"]))
+            return {"intensities": intensities["intensities"], "date": from_datetime(intensities["date"])}, 200
         return {"error": "No intensity data for scheduler"}, 404
 
     @app.errorhandler(400)
@@ -73,6 +75,9 @@ def create_app(scheduler):
 
 def to_datetime(datetime_string):
     return datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S")
+
+def from_datetime(datetime_object):
+    return datetime_object.isoformat()[:19]
 
 
 if __name__ == "__main__":
