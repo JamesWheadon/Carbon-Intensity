@@ -46,38 +46,36 @@ class UseTimeScheduler(Scheduler):
         self.epsilon = 1.0
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
-        self.num_episodes = 1000
+        self.num_episodes = 500
         self.num_time_slots = 96
         self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
 
     def calculate_schedules(self, intensities, intensities_date):
         self.intensities_date = intensities_date
         self.env = CarbonIntensityEnv(intensities)
-        state = 0
-        for episode in range(self.num_episodes):
-            for duration in self.durations:
-                # duration = self.durations[random.randint(0, len(self.durations) - 1)]
-                duration_index = self.durations.index(duration)
-                while state + duration < self.num_time_slots:
-                    if random.uniform(0, 1) < self.epsilon:
-                        action = random.randint(state, self.num_time_slots - duration)
-                    else:
-                        action = np.argmax(
-                            self.Q_table[duration_index][state][state:self.num_time_slots - duration + 1]) + state
 
-                    reward = self.env.step(action, duration)
-                    best_next_action = np.argmax(self.Q_table[duration_index][action])
-                    self.Q_table[duration_index, state, action] = (
-                                self.Q_table[duration_index, state, action] + self.alpha *
-                                (reward + self.gamma * self.Q_table[duration_index, action, best_next_action] -
-                                 self.Q_table[duration_index, state, action]))
-                    state += 1
-                state = 0
+    def train(self, duration):
+        duration_index = self.durations.index(duration)
+        for episode in range(self.num_episodes):
+            state = 0
+            while state + duration < self.num_time_slots:
+                if random.uniform(0, 1) < self.epsilon:
+                    action = random.randint(state, self.num_time_slots - duration)
+                else:
+                    action = np.argmax(
+                        self.Q_table[duration_index][state][state:self.num_time_slots - duration + 1]) + state
+
+                reward = self.env.step(action, duration)
+                best_next_action = np.argmax(self.Q_table[duration_index][action])
+                self.Q_table[duration_index, state, action] = (
+                        self.Q_table[duration_index, state, action] + self.alpha *
+                        (reward + self.gamma * self.Q_table[duration_index, action, best_next_action] -
+                         self.Q_table[duration_index, state, action]))
+                state += 1
 
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
 
-    def train(self, duration):
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
