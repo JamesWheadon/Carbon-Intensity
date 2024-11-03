@@ -74,6 +74,10 @@ def create_app(scheduler):
             return {'error': original_error.message}, 400
         return error
 
+    @app.errorhandler(TypeError)
+    def handle_type_error(error):
+        return {'error': error.args[0]}, 400
+
     return app
 
 

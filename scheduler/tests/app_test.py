@@ -236,12 +236,28 @@ def test_intensities_returns_not_found_with_no_intensities_set():
 def test_training_trains_for_duration():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-26T01:00:00"
+    }
+    tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
 
     response = tester.patch("/intensities/train?duration=60", content_type="application/json")
 
     assert response.status_code == 204
     assert response.get_json() is None
     assert 4 in fake.durations_trained
+
+
+def test_training_bad_request_if_no_training_data():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+
+    response = tester.patch("/intensities/train?duration=60", content_type="application/json")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "No intensity data for scheduler"}
+    assert fake.durations_trained == []
 
 
 class TestScheduler(Scheduler):
@@ -255,6 +271,8 @@ class TestScheduler(Scheduler):
         self.intensities_date = intensities_date
 
     def train(self, duration):
+        if not self.env:
+            raise TypeError("No intensity data for scheduler")
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
