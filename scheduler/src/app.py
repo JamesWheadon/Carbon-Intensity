@@ -48,7 +48,7 @@ def create_app(scheduler):
 
     @app.route("/intensities", methods=["POST"])
     @expects_json(intensities_schema)
-    def intensities():
+    def set_intensities():
         carbon_intensities = request.json["intensities"]
         data_date = to_datetime(request.json["date"])
         app.config["SCHEDULER"].calculate_schedules(carbon_intensities, data_date)
@@ -56,7 +56,10 @@ def create_app(scheduler):
 
     @app.route("/intensities", methods=["GET"])
     def get_intensities():
-        return {"intensities": app.config["SCHEDULER"].get_intensities()}, 200
+        intensities = app.config["SCHEDULER"].get_intensities()
+        if len(intensities) > 0:
+            return {"intensities": intensities}, 200
+        return {"error": "No intensity data for scheduler"}, 404
 
     @app.errorhandler(400)
     def bad_request(error):

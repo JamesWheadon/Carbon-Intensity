@@ -223,6 +223,16 @@ def test_intensities_returns_intensities():
     assert response.get_json() == {"intensities": [266, 312] * 24}
 
 
+def test_intensities_returns_not_found_with_no_intensities_set():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+
+    response = tester.get("/intensities", content_type="application/json")
+
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "No intensity data for scheduler"}
+
+
 class TestScheduler(Scheduler):
     __test__ = False
 
