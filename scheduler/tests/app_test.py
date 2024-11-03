@@ -2,7 +2,7 @@ import json
 from datetime import timedelta
 
 from src.app import create_app
-from src.scheduler import Scheduler, validate_request, CarbonIntensityEnv
+from src.scheduler import Scheduler, CarbonIntensityEnv
 
 
 def test_charge_time_calls_scheduler_for_action():
@@ -282,10 +282,7 @@ class TestScheduler(Scheduler):
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
-        if duration not in self.durations_trained:
-            return None
-        validate_request(end_timestamp, timestamp)
-        if timestamp < self.intensities_date:
+        if not self.validate_request(timestamp, duration, end_timestamp):
             return None
         action_index = self.action_index_from_timestamp(timestamp)
         end_action_index = min(self.action_index_from_timestamp(end_timestamp), 95) if end_timestamp is not None else 95

@@ -29,6 +29,16 @@ class Scheduler:
         }
 
 
+    def validate_request(self, timestamp, duration, end_timestamp):
+        if end_timestamp is not None and end_timestamp < timestamp:
+            raise ValueError("End must be after current")
+        if duration not in self.durations_trained:
+            return False
+        if self.intensities_date is None or timestamp < self.intensities_date:
+            return False
+        return True
+
+
 class UseTimeScheduler(Scheduler):
     def __init__(self):
         super().__init__()
@@ -70,13 +80,10 @@ class UseTimeScheduler(Scheduler):
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
-        if duration not in self.durations_trained:
-            return None
-        validate_request(end_timestamp, timestamp)
-        if self.intensities_date is None or timestamp < self.intensities_date:
+        if not self.validate_request(timestamp, duration, end_timestamp):
             return None
         action_index = self.action_index_from_timestamp(timestamp)
-        end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration, 97 - duration) if end_timestamp is not None else 97 - duration
+        end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration, self.num_time_slots + 1 - duration) if end_timestamp is not None else self.num_time_slots + 1 - duration
         try:
             action_to_take = np.argmax(self.Q_table[self.durations.index(duration)][action_index][action_index:end_action_index]) + action_index
             return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 900)
@@ -88,11 +95,6 @@ class UseTimeScheduler(Scheduler):
         for duration in self.durations:
             print(f"{duration * 15} minutes")
             print(self.Q_table[self.durations.index(duration)])
-
-
-def validate_request(end_timestamp, timestamp):
-    if end_timestamp is not None and end_timestamp < timestamp:
-        raise ValueError("End must be after current")
 
 
 class CarbonIntensityEnv:
