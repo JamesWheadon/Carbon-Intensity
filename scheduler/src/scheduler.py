@@ -15,7 +15,7 @@ class Scheduler:
 
     def get_intensities(self):
         if self.env is None:
-            return []
+            return None
         return self.env.get_intensities()
 
 

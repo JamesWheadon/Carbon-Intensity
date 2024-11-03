@@ -57,7 +57,7 @@ def create_app(scheduler):
     @app.route("/intensities", methods=["GET"])
     def get_intensities():
         intensities = app.config["SCHEDULER"].get_intensities()
-        if len(intensities) > 0:
+        if intensities:
             return {"intensities": intensities}, 200
         return {"error": "No intensity data for scheduler"}, 404
 

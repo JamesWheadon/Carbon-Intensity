@@ -132,7 +132,7 @@ def test_intensities_returns_bad_request_when_too_few_intensities():
 
     assert response.status_code == 400
     assert "too short" in response.get_json()["error"]
-    assert fake.get_intensities() == []
+    assert fake.get_intensities() is None
 
 
 def test_intensities_returns_bad_request_when_too_many_intensities():
@@ -147,7 +147,7 @@ def test_intensities_returns_bad_request_when_too_many_intensities():
 
     assert response.status_code == 400
     assert "too long" in response.get_json()["error"]
-    assert fake.get_intensities() == []
+    assert fake.get_intensities() is None
 
 
 def test_intensities_returns_bad_request_when_invalid_intensities():
@@ -162,7 +162,7 @@ def test_intensities_returns_bad_request_when_invalid_intensities():
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "'256' is not of type 'integer'"}
-    assert fake.get_intensities() == []
+    assert fake.get_intensities() is None
 
 
 def test_intensities_returns_bad_request_when_no_intensities_in_input():
@@ -176,7 +176,7 @@ def test_intensities_returns_bad_request_when_no_intensities_in_input():
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "'intensities' is a required property"}
-    assert fake.get_intensities() == []
+    assert fake.get_intensities() is None
 
 
 def test_intensities_returns_bad_request_when_date_is_invalid():
@@ -191,7 +191,7 @@ def test_intensities_returns_bad_request_when_date_is_invalid():
 
     assert response.status_code == 400
     assert "does not match '^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}$'" in response.get_json()["error"]
-    assert fake.get_intensities() == []
+    assert fake.get_intensities() is None
 
 
 def test_intensities_returns_bad_request_when_no_date_in_input():
@@ -205,7 +205,7 @@ def test_intensities_returns_bad_request_when_no_date_in_input():
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "'date' is a required property"}
-    assert fake.get_intensities() == []
+    assert fake.get_intensities() is None
 
 
 def test_intensities_returns_intensities():
@@ -246,7 +246,7 @@ class TestScheduler(Scheduler):
 
     def get_intensities(self):
         if self.env is None:
-            return []
+            return None
         return self.env.get_intensities()
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
