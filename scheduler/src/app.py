@@ -35,16 +35,13 @@ def create_app(scheduler):
         current_time = request.args.get("current", type=to_datetime)
         end_time = request.args.get("end", type=to_datetime)
         duration = request.args.get("duration", type=int, default=30)
-        try:
-            charge_scheduler = app.config["SCHEDULER"]
-            slot_span = min(charge_scheduler.durations, key=lambda x: abs(x - duration / 15))
-            best_action = charge_scheduler.best_action_for(current_time, slot_span, end_timestamp=end_time)
-            if best_action is not None:
-                return {"chargeTime": best_action.isoformat()}, 200
-            else:
-                return {"error": "No data for time slot"}, 404
-        except ValueError as e:
-            return {"error": str(e)}, 400
+        charge_scheduler = app.config["SCHEDULER"]
+        slot_span = min(charge_scheduler.durations, key=lambda x: abs(x - duration / 15))
+        best_action = charge_scheduler.best_action_for(current_time, slot_span, end_timestamp=end_time)
+        if best_action is not None:
+            return {"chargeTime": best_action.isoformat()}, 200
+        else:
+            return {"error": "No data for time slot"}, 404
 
     @app.route("/intensities", methods=["POST"])
     @expects_json(intensities_schema)
@@ -77,6 +74,10 @@ def create_app(scheduler):
     @app.errorhandler(TypeError)
     def handle_type_error(error):
         return {'error': error.args[0]}, 400
+
+    @app.errorhandler(ValueError)
+    def handle_value_error(error):
+        return {'error': str(error)}, 400
 
     return app
 

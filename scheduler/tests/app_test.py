@@ -285,6 +285,22 @@ def test_training_bad_request_if_no_training_data():
     assert fake.durations_trained == []
 
 
+def test_training_bad_request_if_invalid_duration():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-26T01:00:00"
+    }
+    tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    response = tester.patch("/intensities/train?duration=500", content_type="application/json")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Invalid duration"}
+    assert fake.durations_trained == []
+
+
 class TestScheduler(Scheduler):
     __test__ = False
 
@@ -298,6 +314,8 @@ class TestScheduler(Scheduler):
     def train(self, duration):
         if not self.env:
             raise TypeError("No intensity data for scheduler")
+        if duration not in self.durations:
+            raise ValueError("Invalid duration")
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
