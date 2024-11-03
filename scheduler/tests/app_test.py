@@ -241,6 +241,7 @@ def test_training_trains_for_duration():
 
     assert response.status_code == 204
     assert response.get_json() is None
+    assert 4 in fake.durations_trained
 
 
 class TestScheduler(Scheduler):
@@ -252,6 +253,9 @@ class TestScheduler(Scheduler):
     def calculate_schedules(self, intensities, intensities_date):
         self.env = CarbonIntensityEnv(intensities)
         self.intensities_date = intensities_date
+
+    def train(self, duration):
+        self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
         check_action_timestamps(end_timestamp, timestamp)

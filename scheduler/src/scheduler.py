@@ -66,6 +66,9 @@ class UseTimeScheduler(Scheduler):
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
 
+    def train(self, duration):
+        self.durations_trained.append(duration)
+
     def best_action_for(self, timestamp, duration, end_timestamp=None):
         check_action_timestamps(end_timestamp, timestamp)
         if self.intensities_date is None or timestamp < self.intensities_date:
