@@ -61,7 +61,9 @@ def create_app(scheduler):
     @app.route("/intensities/train", methods=["PATCH"])
     def train_for_duration():
         duration = request.args.get("duration", type=int)
-        app.config["SCHEDULER"].train(duration // 15)
+        charge_scheduler = app.config["SCHEDULER"]
+        slot_span = min(charge_scheduler.durations, key=lambda x: abs(x - duration / 15))
+        charge_scheduler.train(slot_span)
         return '', 204
 
     @app.errorhandler(400)

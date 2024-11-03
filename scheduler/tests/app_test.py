@@ -285,7 +285,7 @@ def test_training_bad_request_if_no_training_data():
     assert fake.durations_trained == []
 
 
-def test_training_bad_request_if_invalid_duration():
+def test_training_trains_for_closest_duration_to_request():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
     test_data = {
@@ -296,9 +296,9 @@ def test_training_bad_request_if_invalid_duration():
 
     response = tester.patch("/intensities/train?duration=500", content_type="application/json")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "Invalid duration"}
-    assert fake.durations_trained == []
+    assert response.status_code == 204
+    assert response.get_json() is None
+    assert fake.durations_trained == [20]
 
 
 class TestScheduler(Scheduler):
