@@ -16,6 +16,7 @@ class Scheduler:
 class UseTimeScheduler(Scheduler):
     def __init__(self):
         super().__init__()
+        self.env = None
         self.alpha = 0.1
         self.gamma = 0.2
         self.epsilon = 1.0
@@ -28,7 +29,7 @@ class UseTimeScheduler(Scheduler):
 
     def calculate_schedules(self, intensities, intensities_date):
         self.intensities_date = intensities_date
-        env = CarbonIntensityEnv(intensities)
+        self.env = CarbonIntensityEnv(intensities)
         state = 0
         for episode in range(self.num_episodes):
             for duration in self.durations:
@@ -40,7 +41,7 @@ class UseTimeScheduler(Scheduler):
                     else:
                         action = np.argmax(self.Q_table[duration_index][state][state:self.num_time_slots - duration + 1]) + state
 
-                    reward = env.step(action, duration)
+                    reward = self.env.step(action, duration)
                     best_next_action = np.argmax(self.Q_table[duration_index][action])
                     self.Q_table[duration_index, state, action] = (self.Q_table[duration_index, state, action] + self.alpha *
                                                    (reward + self.gamma * self.Q_table[duration_index, action, best_next_action] -
@@ -62,6 +63,11 @@ class UseTimeScheduler(Scheduler):
             return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 900)
         except IndexError:
             return None
+
+    def get_intensities(self):
+        if self.env is None:
+            return []
+        return self.env.get_intensities()
 
     def print_q_table(self):
         np.set_printoptions(edgeitems=30, linewidth=100000, threshold=self.num_time_slots * self.num_time_slots)
@@ -85,6 +91,9 @@ class CarbonIntensityEnv:
         for s in range(steps):
             reward -= self.day_intensities[action + s]
         return reward
+
+    def get_intensities(self):
+        return self.day_intensities[::2].tolist()
 
 
 if __name__ == "__main__":

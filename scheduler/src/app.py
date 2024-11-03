@@ -25,6 +25,7 @@ intensities_schema = {
     'required': ['intensities', 'date']
 }
 
+
 def create_app(scheduler):
     app = Flask(__name__)
     app.config['SCHEDULER'] = scheduler
@@ -36,7 +37,7 @@ def create_app(scheduler):
         duration = request.args.get("duration", type=int, default=30)
         try:
             charge_scheduler = app.config["SCHEDULER"]
-            slot_span = min(charge_scheduler.durations, key=lambda x:abs(x - duration / 15))
+            slot_span = min(charge_scheduler.durations, key=lambda x: abs(x - duration / 15))
             best_action = charge_scheduler.best_action_for(current_time, slot_span, end_timestamp=end_time)
             if best_action is not None:
                 return {"chargeTime": best_action.isoformat()}, 200
@@ -45,13 +46,17 @@ def create_app(scheduler):
         except ValueError as e:
             return {"error": str(e)}, 400
 
-    @app.route("/intensities", methods=['POST'])
+    @app.route("/intensities", methods=["POST"])
     @expects_json(intensities_schema)
     def intensities():
         carbon_intensities = request.json["intensities"]
         data_date = to_datetime(request.json["date"])
         app.config["SCHEDULER"].calculate_schedules(carbon_intensities, data_date)
         return '', 204
+
+    @app.route("/intensities", methods=["GET"])
+    def get_intensities():
+        return {"intensities": app.config["SCHEDULER"].get_intensities()}, 200
 
     @app.errorhandler(400)
     def bad_request(error):
