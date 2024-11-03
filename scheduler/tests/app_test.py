@@ -90,7 +90,7 @@ def test_charge_time_returns_not_found_when_no_data():
     assert response.get_json() == {"error": "No data for time slot"}
 
 
-def test_charge_time_returns_bad_request_when_before_data():
+def test_charge_time_returns_bad_request_when_end_before_start():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
     test_data = {
