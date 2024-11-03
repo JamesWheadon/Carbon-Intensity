@@ -70,7 +70,9 @@ class UseTimeScheduler(Scheduler):
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
-        check_action_timestamps(end_timestamp, timestamp)
+        if duration not in self.durations_trained:
+            return None
+        validate_request(end_timestamp, timestamp)
         if self.intensities_date is None or timestamp < self.intensities_date:
             return None
         action_index = self.action_index_from_timestamp(timestamp)
@@ -88,7 +90,7 @@ class UseTimeScheduler(Scheduler):
             print(self.Q_table[self.durations.index(duration)])
 
 
-def check_action_timestamps(end_timestamp, timestamp):
+def validate_request(end_timestamp, timestamp):
     if end_timestamp is not None and end_timestamp < timestamp:
         raise ValueError("End must be after current")
 

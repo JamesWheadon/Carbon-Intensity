@@ -2,7 +2,7 @@ import json
 from datetime import timedelta
 
 from src.app import create_app
-from src.scheduler import Scheduler, check_action_timestamps, CarbonIntensityEnv
+from src.scheduler import Scheduler, validate_request, CarbonIntensityEnv
 
 
 def test_charge_time_calls_scheduler_for_action():
@@ -13,6 +13,7 @@ def test_charge_time_calls_scheduler_for_action():
         "date": "2024-09-28T01:00:00"
     }
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+    tester.patch("/intensities/train?duration=30", content_type="application/json")
 
     response = tester.get("/charge-time?current=2024-09-28T17:59:00", content_type="application/json")
 
@@ -28,6 +29,7 @@ def test_charge_time_uses_end_timestamp_as_upper_limit_if_received():
         "date": "2024-09-28T01:00:00"
     }
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+    tester.patch("/intensities/train?duration=30", content_type="application/json")
 
     response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T18:36:00", content_type="application/json")
 
@@ -43,6 +45,7 @@ def test_charge_time_uses_duration_for_action_time():
         "date": "2024-09-28T01:00:00"
     }
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+    tester.patch("/intensities/train?duration=75", content_type="application/json")
 
     response = tester.get("/charge-time?current=2024-09-28T17:59:00&duration=75", content_type="application/json")
 
@@ -58,6 +61,7 @@ def test_charge_time_returns_not_found_when_out_of_range():
         "date": "2024-09-26T01:00:00"
     }
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+    tester.patch("/intensities/train?duration=30", content_type="application/json")
 
     response = tester.get("/charge-time?current=2024-09-30T17:59:00", content_type="application/json")
 
@@ -73,6 +77,7 @@ def test_charge_time_returns_not_found_when_before_data():
         "date": "2024-09-26T01:00:00"
     }
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+    tester.patch("/intensities/train?duration=30", content_type="application/json")
 
     response = tester.get("/charge-time?current=2024-09-25T17:59:00", content_type="application/json")
 
@@ -98,6 +103,7 @@ def test_charge_time_returns_bad_request_when_end_before_start():
         "date": "2024-09-26T01:00:00"
     }
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+    tester.patch("/intensities/train?duration=30", content_type="application/json")
 
     response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T17:36:00", content_type="application/json")
 
@@ -276,8 +282,10 @@ class TestScheduler(Scheduler):
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
-        check_action_timestamps(end_timestamp, timestamp)
-        if self.intensities_date is None or timestamp < self.intensities_date:
+        if duration not in self.durations_trained:
+            return None
+        validate_request(end_timestamp, timestamp)
+        if timestamp < self.intensities_date:
             return None
         action_index = self.action_index_from_timestamp(timestamp)
         end_action_index = min(self.action_index_from_timestamp(end_timestamp), 95) if end_timestamp is not None else 95
