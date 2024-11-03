@@ -6,8 +6,15 @@ import numpy as np
 
 class Scheduler:
     def __init__(self):
+        self.durations = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
+        self.durations_trained = []
         self.intensities_date = None
         self.env = None
+
+    def set_intensities(self, intensities, intensities_date):
+        self.intensities_date = intensities_date
+        self.env = CarbonIntensityEnv(intensities)
+        self.durations_trained.clear()
 
     def action_index_from_timestamp(self, timestamp):
         minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
@@ -32,7 +39,6 @@ class UseTimeScheduler(Scheduler):
         self.epsilon_decay = 0.995
         self.num_episodes = 1000
         self.num_time_slots = 96
-        self.durations = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
         self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
 
     def calculate_schedules(self, intensities, intensities_date):

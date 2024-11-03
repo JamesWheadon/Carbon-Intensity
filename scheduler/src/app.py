@@ -19,7 +19,7 @@ intensities_schema = {
         },
         'date': {
             'type': 'string',
-            "pattern": '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
+            "pattern": '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
         }
     },
     'required': ['intensities', 'date']
@@ -51,7 +51,7 @@ def create_app(scheduler):
     def set_intensities():
         carbon_intensities = request.json["intensities"]
         data_date = to_datetime(request.json["date"])
-        app.config["SCHEDULER"].calculate_schedules(carbon_intensities, data_date)
+        app.config["SCHEDULER"].set_intensities(carbon_intensities, data_date)
         return '', 204
 
     @app.route("/intensities", methods=["GET"])

@@ -190,7 +190,7 @@ def test_intensities_returns_bad_request_when_date_is_invalid():
     response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
 
     assert response.status_code == 400
-    assert "does not match '^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}$'" in response.get_json()["error"]
+    assert "does not match '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'" in response.get_json()["error"]
     assert fake.get_intensities() is None
 
 
@@ -238,7 +238,6 @@ class TestScheduler(Scheduler):
 
     def __init__(self):
         super().__init__()
-        self.durations = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
 
     def calculate_schedules(self, intensities, intensities_date):
         self.env = CarbonIntensityEnv(intensities)
