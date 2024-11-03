@@ -31,7 +31,8 @@ def test_charge_time_uses_end_timestamp_as_upper_limit_if_received():
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
     tester.patch("/intensities/train?duration=30", content_type="application/json")
 
-    response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T18:36:00", content_type="application/json")
+    response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T18:36:00",
+                          content_type="application/json")
 
     assert response.status_code == 200
     assert response.get_json() == {"chargeTime": "2024-09-28T18:00:00"}
@@ -105,10 +106,28 @@ def test_charge_time_returns_bad_request_when_end_before_start():
     tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
     tester.patch("/intensities/train?duration=30", content_type="application/json")
 
-    response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T17:36:00", content_type="application/json")
+    response = tester.get("/charge-time?current=2024-09-28T17:59:00&end=2024-09-28T17:36:00",
+                          content_type="application/json")
 
     assert response.status_code == 400
-    assert response.get_json() == {"error": "End must be after current"}
+    assert response.get_json() == {"error": "End must be after current plus duration"}
+
+
+def test_charge_time_returns_bad_request_when_end_before_start_plus_duration():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-26T01:00:00"
+    }
+    tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+    tester.patch("/intensities/train?duration=30", content_type="application/json")
+
+    response = tester.get("/charge-time?current=2024-09-26T17:59:00&end=2024-09-26T18:28:00",
+                          content_type="application/json")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "End must be after current plus duration"}
 
 
 def test_intensities_accepts_json_body_and_calculates_schedules():
@@ -292,4 +311,4 @@ class TestScheduler(Scheduler):
             i = 11
         else:
             i = 5
-        return self.intensities_date + timedelta(seconds =min(action_index + i, end_action_index - duration) * 900)
+        return self.intensities_date + timedelta(seconds=min(action_index + i, end_action_index - duration) * 900)

@@ -28,10 +28,9 @@ class Scheduler:
             "date": self.intensities_date
         }
 
-
     def validate_request(self, timestamp, duration, end_timestamp):
-        if end_timestamp is not None and end_timestamp < timestamp:
-            raise ValueError("End must be after current")
+        if end_timestamp is not None and end_timestamp < timestamp + datetime.timedelta(minutes=duration * 15):
+            raise ValueError("End must be after current plus duration")
         if duration not in self.durations_trained:
             return False
         if self.intensities_date is None or timestamp < self.intensities_date:
@@ -57,19 +56,21 @@ class UseTimeScheduler(Scheduler):
         state = 0
         for episode in range(self.num_episodes):
             for duration in self.durations:
-            # duration = self.durations[random.randint(0, len(self.durations) - 1)]
+                # duration = self.durations[random.randint(0, len(self.durations) - 1)]
                 duration_index = self.durations.index(duration)
                 while state + duration < self.num_time_slots:
                     if random.uniform(0, 1) < self.epsilon:
                         action = random.randint(state, self.num_time_slots - duration)
                     else:
-                        action = np.argmax(self.Q_table[duration_index][state][state:self.num_time_slots - duration + 1]) + state
+                        action = np.argmax(
+                            self.Q_table[duration_index][state][state:self.num_time_slots - duration + 1]) + state
 
                     reward = self.env.step(action, duration)
                     best_next_action = np.argmax(self.Q_table[duration_index][action])
-                    self.Q_table[duration_index, state, action] = (self.Q_table[duration_index, state, action] + self.alpha *
-                                                   (reward + self.gamma * self.Q_table[duration_index, action, best_next_action] -
-                                                    self.Q_table[duration_index, state, action]))
+                    self.Q_table[duration_index, state, action] = (
+                                self.Q_table[duration_index, state, action] + self.alpha *
+                                (reward + self.gamma * self.Q_table[duration_index, action, best_next_action] -
+                                 self.Q_table[duration_index, state, action]))
                     state += 1
                 state = 0
 
@@ -83,10 +84,12 @@ class UseTimeScheduler(Scheduler):
         if not self.validate_request(timestamp, duration, end_timestamp):
             return None
         action_index = self.action_index_from_timestamp(timestamp)
-        end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration, self.num_time_slots + 1 - duration) if end_timestamp is not None else self.num_time_slots + 1 - duration
+        end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration,
+                               self.num_time_slots + 1 - duration) if end_timestamp is not None else self.num_time_slots + 1 - duration
         try:
-            action_to_take = np.argmax(self.Q_table[self.durations.index(duration)][action_index][action_index:end_action_index]) + action_index
-            return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 900)
+            action_to_take = np.argmax(self.Q_table[self.durations.index(duration)][action_index][
+                                       action_index:end_action_index]) + action_index
+            return self.intensities_date + datetime.timedelta(seconds=int(action_to_take) * 900)
         except IndexError:
             return None
 
@@ -114,7 +117,10 @@ class CarbonIntensityEnv:
 
 if __name__ == "__main__":
     scheduler = UseTimeScheduler()
-    scheduler.calculate_schedules([134, 175, 243, 117, 208, 125, 87, 202, 58, 145, 134, 222, 133, 236, 140, 222, 87, 207, 199, 125, 100, 218, 236, 154, 215, 157, 151, 105, 107, 240, 53, 230, 249, 192, 70, 97, 99, 62, 116, 181, 144, 229, 127, 173, 69, 122, 146, 75], datetime.datetime.fromisoformat('2024-10-15T01:00:00'))
+    scheduler.calculate_schedules(
+        [134, 175, 243, 117, 208, 125, 87, 202, 58, 145, 134, 222, 133, 236, 140, 222, 87, 207, 199, 125, 100, 218, 236,
+         154, 215, 157, 151, 105, 107, 240, 53, 230, 249, 192, 70, 97, 99, 62, 116, 181, 144, 229, 127, 173, 69, 122,
+         146, 75], datetime.datetime.fromisoformat('2024-10-15T01:00:00'))
     scheduler.print_q_table()
-    print(scheduler.best_action_for(datetime.datetime.fromisoformat('2024-10-15T14:00:00'), duration = 3))
-    print(scheduler.best_action_for(datetime.datetime.fromisoformat('2024-10-15T14:00:00'), duration = 6))
+    print(scheduler.best_action_for(datetime.datetime.fromisoformat('2024-10-15T14:00:00'), duration=3))
+    print(scheduler.best_action_for(datetime.datetime.fromisoformat('2024-10-15T14:00:00'), duration=6))
