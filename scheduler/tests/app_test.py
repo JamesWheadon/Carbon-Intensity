@@ -238,7 +238,6 @@ class TestScheduler(Scheduler):
 
     def __init__(self):
         super().__init__()
-        self.env = None
         self.durations = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
 
     def calculate_schedules(self, intensities, intensities_date):

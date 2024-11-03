@@ -7,16 +7,21 @@ import numpy as np
 class Scheduler:
     def __init__(self):
         self.intensities_date = None
+        self.env = None
 
     def action_index_from_timestamp(self, timestamp):
         minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
         return int(minutes_diff // 15)
 
+    def get_intensities(self):
+        if self.env is None:
+            return []
+        return self.env.get_intensities()
+
 
 class UseTimeScheduler(Scheduler):
     def __init__(self):
         super().__init__()
-        self.env = None
         self.alpha = 0.1
         self.gamma = 0.2
         self.epsilon = 1.0
@@ -63,11 +68,6 @@ class UseTimeScheduler(Scheduler):
             return self.intensities_date + datetime.timedelta(seconds = int(action_to_take) * 900)
         except IndexError:
             return None
-
-    def get_intensities(self):
-        if self.env is None:
-            return []
-        return self.env.get_intensities()
 
     def print_q_table(self):
         np.set_printoptions(edgeitems=30, linewidth=100000, threshold=self.num_time_slots * self.num_time_slots)
