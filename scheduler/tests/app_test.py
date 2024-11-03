@@ -233,6 +233,16 @@ def test_intensities_returns_not_found_with_no_intensities_set():
     assert response.get_json() == {"error": "No intensity data for scheduler"}
 
 
+def test_training_trains_for_duration():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+
+    response = tester.patch("/intensities/train?duration=60", content_type="application/json")
+
+    assert response.status_code == 204
+    assert response.get_json() is None
+
+
 class TestScheduler(Scheduler):
     __test__ = False
 

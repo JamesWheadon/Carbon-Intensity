@@ -63,6 +63,10 @@ def create_app(scheduler):
             return {"intensities": intensities["intensities"], "date": from_datetime(intensities["date"])}, 200
         return {"error": "No intensity data for scheduler"}, 404
 
+    @app.route("/intensities/train", methods=["PATCH"])
+    def train_for_duration():
+        return '', 204
+
     @app.errorhandler(400)
     def bad_request(error):
         if isinstance(error.description, ValidationError):
