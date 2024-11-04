@@ -23,8 +23,8 @@ import java.util.TimeZone
 private const val TIMEZONE = "Europe/London"
 private const val SECONDS_IN_HALF_HOUR = 1800L
 
-interface NationalGridContractTest {
-    val nationalGrid: NationalGrid
+abstract class NationalGridContractTest {
+    abstract val nationalGrid: NationalGrid
 
     @Test
     fun `responds with forecast for the most recent full half hour`() {
@@ -57,12 +57,12 @@ interface NationalGridContractTest {
     }
 }
 
-class FakeNationalGridTest : NationalGridContractTest {
+class FakeNationalGridTest : NationalGridContractTest() {
     override val nationalGrid = NationalGridCloud(FakeNationalGrid())
 }
 
 @Disabled
-class NationalGridTest : NationalGridContractTest {
+class NationalGridTest : NationalGridContractTest() {
     override val nationalGrid = NationalGridCloud(nationalGridClient())
 }
 

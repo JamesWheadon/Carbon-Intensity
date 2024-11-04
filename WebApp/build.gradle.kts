@@ -22,13 +22,14 @@ dependencies {
 
     testImplementation("org.http4k:http4k-testing-approval:${http4kVersion}")
     testImplementation("org.http4k:http4k-testing-hamkrest:${http4kVersion}")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 }
 
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
     jvmToolchain(17)
 }

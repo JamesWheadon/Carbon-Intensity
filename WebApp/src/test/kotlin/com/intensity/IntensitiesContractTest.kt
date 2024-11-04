@@ -29,8 +29,8 @@ import java.time.Instant
 private const val SECONDS_IN_DAY = 86400L
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-interface IntensitiesContractTest {
-    val scheduler: Scheduler
+abstract class IntensitiesContractTest {
+    abstract val scheduler: Scheduler
 
     @Test
     @Order(1)
@@ -72,7 +72,8 @@ interface IntensitiesContractTest {
 
     @Test
     fun `responds with not found error when queried with too late time`() {
-        val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(3 * SECONDS_IN_DAY), null, null))
+        val chargeTime =
+            scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(3 * SECONDS_IN_DAY), null, null))
 
         assertThat(chargeTime.chargeTime, equalTo(null))
         assertThat(chargeTime.error!!, equalTo("No data for time slot"))
@@ -80,7 +81,13 @@ interface IntensitiesContractTest {
 
     @Test
     fun `responds with best time in range of current time and end time`() {
-        val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), getTestInstant().plusSeconds(3000), null))
+        val chargeTime = scheduler.getBestChargeTime(
+            ChargeDetails(
+                getTestInstant().plusSeconds(60),
+                getTestInstant().plusSeconds(3000),
+                null
+            )
+        )
 
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000)))
         assertThat(chargeTime.error, equalTo(null))
@@ -88,7 +95,13 @@ interface IntensitiesContractTest {
 
     @Test
     fun `responds with best time to charge when queried with current time and duration`() {
-        val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), getTestInstant().plusSeconds(6000), 75))
+        val chargeTime = scheduler.getBestChargeTime(
+            ChargeDetails(
+                getTestInstant().plusSeconds(60),
+                getTestInstant().plusSeconds(6000),
+                75
+            )
+        )
 
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500)))
         assertThat(chargeTime.error, equalTo(null))
@@ -97,13 +110,13 @@ interface IntensitiesContractTest {
 
 fun getTestInstant(): Instant = Instant.ofEpochSecond(1727727697L)
 
-class FakeSchedulerTest : IntensitiesContractTest {
+class FakeSchedulerTest : IntensitiesContractTest() {
     override val scheduler =
         PythonScheduler(FakeScheduler(mapOf(getTestInstant().plusSeconds(60) to getTestInstant().plusSeconds(3600))) {})
 }
 
 @Disabled
-class IntensitiesTest : IntensitiesContractTest {
+class IntensitiesTest : IntensitiesContractTest() {
     override val scheduler = PythonScheduler(schedulerClient())
 }
 
@@ -123,7 +136,11 @@ class FakeScheduler(validChargeTimes: Map<Instant, Instant>, intensitiesUpdated:
                 )
             ).defaulted("end", null)(request)
             val duration = Query.int().defaulted("duration", 30)(request)
-            val response = validChargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end, duration) } ?: ChargeTime(null, "No data for time slot")
+            val response =
+                validChargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end, duration) } ?: ChargeTime(
+                    null,
+                    "No data for time slot"
+                )
             if (response.error == null) {
                 Response(OK).with(chargeTimeLens of response)
             } else {
