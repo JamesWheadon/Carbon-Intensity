@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
+import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -109,6 +110,7 @@ private fun getCarbonIntensitiesForDate(
 
 interface Scheduler {
     fun sendIntensities(intensities: Intensities): ErrorResponse?
+    fun trainDuration(duration: Int): ErrorResponse?
     fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
 }
 
@@ -120,6 +122,11 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         } else {
             errorResponseLens(response)
         }
+    }
+
+    override fun trainDuration(duration: Int): ErrorResponse? {
+        httpHandler(Request(PATCH, "/intensities/train?duration=$duration"))
+        return null
     }
 
     override fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime {

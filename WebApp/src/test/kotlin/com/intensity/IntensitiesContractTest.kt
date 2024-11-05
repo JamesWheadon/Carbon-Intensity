@@ -5,6 +5,7 @@ import com.natpryce.hamkrest.contains
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
+import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -47,6 +48,15 @@ abstract class IntensitiesContractTest {
         val errorResponse = scheduler.sendIntensities(Intensities(List(49) { 212 }, getTestInstant()))
 
         assertThat(errorResponse!!.error, contains("too long".toRegex()))
+    }
+
+    @Test
+    fun `responds with no content when duration trained`() {
+        scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+
+        val response = scheduler.trainDuration(30)
+
+        assertThat(response, equalTo(null))
     }
 
     @Test
@@ -162,6 +172,9 @@ class FakeScheduler(validChargeTimes: Map<Instant, Instant>, intensitiesUpdated:
                     errorResponseLens of ErrorResponse(errorMessage)
                 )
             }
+        },
+        "/intensities" bind PATCH to {
+            Response(NO_CONTENT)
         }
     )
 
