@@ -62,6 +62,8 @@ abstract class IntensitiesContractTest {
     @Test
     fun `responds with best time to charge when queried with current time`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.trainDuration(30)
+
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
 
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(SECONDS_IN_DAY)))
@@ -71,6 +73,8 @@ abstract class IntensitiesContractTest {
     @Test
     fun `responds with not found error when queried with too early time`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.trainDuration(30)
+
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().minusSeconds(60), null, null))
 
         assertThat(chargeTime.chargeTime, equalTo(null))
@@ -80,6 +84,8 @@ abstract class IntensitiesContractTest {
     @Test
     fun `responds with not found error when queried with too late time`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.trainDuration(30)
+
         val chargeTime =
             scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(3 * SECONDS_IN_DAY), null, null))
 
@@ -90,6 +96,8 @@ abstract class IntensitiesContractTest {
     @Test
     fun `responds with best time in range of current time and end time`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.trainDuration(30)
+
         val chargeTime = scheduler.getBestChargeTime(
             ChargeDetails(
                 getTestInstant().plusSeconds(60),
@@ -105,6 +113,8 @@ abstract class IntensitiesContractTest {
     @Test
     fun `responds with best time to charge when queried with current time and duration`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.trainDuration(75)
+
         val chargeTime = scheduler.getBestChargeTime(
             ChargeDetails(
                 getTestInstant().plusSeconds(60),
