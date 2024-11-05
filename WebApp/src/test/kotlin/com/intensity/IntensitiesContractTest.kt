@@ -60,6 +60,15 @@ abstract class IntensitiesContractTest {
     }
 
     @Test
+    fun `responds with error when attempt to train with no data`() {
+        scheduler.deleteData()
+
+        val response = scheduler.trainDuration(30)
+
+        assertThat(response!!.error, equalTo("No intensity data for scheduler"))
+    }
+
+    @Test
     fun `responds with best time to charge when queried with current time`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
         scheduler.trainDuration(30)
@@ -162,6 +171,7 @@ class FakeScheduler(
     previouslyTrained: MutableSet<Int>
 ) : HttpHandler {
     private val trainedDurations = previouslyTrained
+    private var data = false
     val routes = routes(
         "/charge-time" bind GET to { request ->
             val current = Query.map(
@@ -187,6 +197,7 @@ class FakeScheduler(
         },
         "/intensities" bind POST to { request ->
             trainedDurations.clear()
+            data = true
             val requestBody = intensitiesLens(request)
             if (requestBody.intensities.size == 48) {
                 intensitiesUpdated()
@@ -203,8 +214,12 @@ class FakeScheduler(
             }
         },
         "/intensities/train" bind PATCH to { request ->
-            trainedDurations.add(Query.int().required("duration")(request))
-            Response(NO_CONTENT)
+            if (data) {
+                trainedDurations.add(Query.int().required("duration")(request))
+                Response(NO_CONTENT)
+            } else {
+                Response(NOT_FOUND).with(chargeTimeLens of ChargeTime(null, "No intensity data for scheduler"))
+            }
         }
     )
 

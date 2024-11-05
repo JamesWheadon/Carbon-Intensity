@@ -301,6 +301,16 @@ def test_training_trains_for_closest_duration_to_request():
     assert fake.durations_trained == [20]
 
 
+def test_delete_data():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+
+    response = tester.delete("/intensities", content_type="application/json")
+
+    assert response.status_code == 204
+    assert response.get_json() is None
+
+
 class TestScheduler(Scheduler):
     __test__ = False
 

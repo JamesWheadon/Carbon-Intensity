@@ -37,6 +37,11 @@ class Scheduler:
             return False
         return True
 
+    def clear_data(self):
+        self.env = None
+        self.intensities_date = None
+        self.durations_trained.clear()
+
 
 class UseTimeScheduler(Scheduler):
     def __init__(self):

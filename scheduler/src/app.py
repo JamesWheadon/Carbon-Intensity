@@ -58,6 +58,11 @@ def create_app(scheduler):
             return {"intensities": intensities["intensities"], "date": from_datetime(intensities["date"])}, 200
         return {"error": "No intensity data for scheduler"}, 404
 
+    @app.route("/intensities", methods=["DELETE"])
+    def clear_data():
+        app.config["SCHEDULER"].clear_data()
+        return '', 204
+
     @app.route("/intensities/train", methods=["PATCH"])
     def train_for_duration():
         duration = request.args.get("duration", type=int)

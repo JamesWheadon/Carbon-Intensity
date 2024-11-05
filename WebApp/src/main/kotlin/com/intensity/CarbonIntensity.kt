@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
+import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
@@ -113,6 +114,7 @@ interface Scheduler {
     fun sendIntensities(intensities: Intensities): ErrorResponse?
     fun trainDuration(duration: Int): ErrorResponse?
     fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
+    fun deleteData()
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
@@ -126,8 +128,12 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
     }
 
     override fun trainDuration(duration: Int): ErrorResponse? {
-        httpHandler(Request(PATCH, "/intensities/train?duration=$duration"))
-        return null
+        val response = httpHandler(Request(PATCH, "/intensities/train?duration=$duration"))
+        return if (response.status == Status.NO_CONTENT) {
+            null
+        } else {
+            errorResponseLens(response)
+        }
     }
 
     override fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime {
@@ -141,6 +147,10 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
             query += "&duration=${chargeDetails.duration}"
         }
         return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?$query")))
+    }
+
+    override fun deleteData() {
+        httpHandler(Request(DELETE, "/intensities"))
     }
 }
 
