@@ -314,8 +314,6 @@ class TestScheduler(Scheduler):
     def train(self, duration):
         if not self.env:
             raise TypeError("No intensity data for scheduler")
-        if duration not in self.durations:
-            raise ValueError("Invalid duration")
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):

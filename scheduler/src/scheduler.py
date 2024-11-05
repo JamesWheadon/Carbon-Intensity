@@ -55,6 +55,8 @@ class UseTimeScheduler(Scheduler):
         self.env = CarbonIntensityEnv(intensities)
 
     def train(self, duration):
+        if not self.env:
+            raise TypeError("No intensity data for scheduler")
         duration_index = self.durations.index(duration)
         for episode in range(self.num_episodes):
             state = 0
