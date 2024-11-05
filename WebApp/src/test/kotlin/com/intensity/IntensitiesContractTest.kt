@@ -145,6 +145,16 @@ abstract class IntensitiesContractTest {
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500)))
         assertThat(chargeTime.error, equalTo(null))
     }
+
+    @Test
+    fun `responds with scheduler intensities data`() {
+        scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+
+        val chargeTime = scheduler.getIntensitiesData()
+
+        assertThat(chargeTime.intensities, equalTo(List(48) { 212 }))
+        assertThat(chargeTime.date, equalTo(getTestInstant()))
+    }
 }
 
 fun getTestInstant(): Instant = Instant.ofEpochSecond(1727727697L)
@@ -171,7 +181,7 @@ class FakeScheduler(
     previouslyTrained: MutableSet<Int>
 ) : HttpHandler {
     private val trainedDurations = previouslyTrained
-    private var data = false
+    private var data: Intensities? = null
     val routes = routes(
         "/charge-time" bind GET to { request ->
             val current = Query.map(
@@ -197,10 +207,10 @@ class FakeScheduler(
         },
         "/intensities" bind POST to { request ->
             trainedDurations.clear()
-            data = true
             val requestBody = intensitiesLens(request)
             if (requestBody.intensities.size == 48) {
                 intensitiesUpdated()
+                data = requestBody
                 Response(NO_CONTENT)
             } else {
                 val errorMessage = if (requestBody.intensities.size > 48) {
@@ -213,8 +223,12 @@ class FakeScheduler(
                 )
             }
         },
+        "/intensities" bind GET to { request ->
+            trainedDurations.clear()
+            Response(OK).with(intensitiesLens of data!!)
+        },
         "/intensities/train" bind PATCH to { request ->
-            if (data) {
+            if (data != null) {
                 trainedDurations.add(Query.int().required("duration")(request))
                 Response(NO_CONTENT)
             } else {

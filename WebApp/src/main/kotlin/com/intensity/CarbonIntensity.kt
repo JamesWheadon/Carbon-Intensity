@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
-import org.http4k.core.Method
 import org.http4k.core.Method.DELETE
+import org.http4k.core.Method.GET
 import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
@@ -114,6 +114,7 @@ interface Scheduler {
     fun sendIntensities(intensities: Intensities): ErrorResponse?
     fun trainDuration(duration: Int): ErrorResponse?
     fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
+    fun getIntensitiesData(): SchedulerIntensitiesData
     fun deleteData()
 }
 
@@ -146,7 +147,11 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         if (chargeDetails.duration != null) {
             query += "&duration=${chargeDetails.duration}"
         }
-        return chargeTimeLens(httpHandler(Request(Method.GET, "/charge-time?$query")))
+        return chargeTimeLens(httpHandler(Request(GET, "/charge-time?$query")))
+    }
+
+    override fun getIntensitiesData(): SchedulerIntensitiesData {
+        return schedulerIntensitiesDataLens(httpHandler(Request(GET, "/intensities")))
     }
 
     override fun deleteData() {
@@ -164,17 +169,17 @@ interface NationalGrid {
 
 class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
     override fun currentIntensity(): HalfHourData {
-        val currentIntensity = httpHandler(Request(Method.GET, "/intensity"))
+        val currentIntensity = httpHandler(Request(GET, "/intensity"))
         return nationalGridDataLens(currentIntensity).data.first()
     }
 
     override fun currentDayIntensity(): NationalGridData {
-        val currentIntensity = httpHandler(Request(Method.GET, "/intensity/date"))
+        val currentIntensity = httpHandler(Request(GET, "/intensity/date"))
         return nationalGridDataLens(currentIntensity)
     }
 
     override fun dateIntensity(date: LocalDate): NationalGridData {
-        val dateIntensity = httpHandler(Request(Method.GET, "/intensity/date/$date"))
+        val dateIntensity = httpHandler(Request(GET, "/intensity/date/$date"))
         return nationalGridDataLens(dateIntensity)
     }
 }
@@ -187,6 +192,7 @@ private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.pl
 
 data class Intensities(val intensities: List<Int>, val date: Instant)
 data class ChargeTime(val chargeTime: Instant?, val error: String?)
+data class SchedulerIntensitiesData(val intensities: List<Int>?, val date: Instant?, val error: String?)
 data class ChargeTimeResponse(val chargeTime: Instant)
 data class ErrorResponse(val error: String)
 data class NationalGridData(val data: List<HalfHourData>)
@@ -198,6 +204,7 @@ private fun ChargeTime.toResponse() = ChargeTimeResponse(this.chargeTime!!)
 val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()
 val intensitiesLens = SchedulerJackson.autoBody<Intensities>().toLens()
 val chargeTimeLens = SchedulerJackson.autoBody<ChargeTime>().toLens()
+val schedulerIntensitiesDataLens = SchedulerJackson.autoBody<SchedulerIntensitiesData>().toLens()
 val chargeTimeResponseLens = SchedulerJackson.autoBody<ChargeTimeResponse>().toLens()
 val errorResponseLens = Jackson.autoBody<ErrorResponse>().toLens()
 val nationalGridDataLens = NationalGridJackson.autoBody<NationalGridData>().toLens()
