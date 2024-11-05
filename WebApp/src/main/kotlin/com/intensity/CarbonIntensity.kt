@@ -77,6 +77,7 @@ private fun getChargeTime(
     var bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     if (bestChargeTime.chargeTime == null) {
         updateScheduler(chargeDetails, nationalGrid, scheduler)
+        scheduler.trainDuration(chargeDetails.duration ?: 30)
         bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     }
     return if (bestChargeTime.chargeTime != null) {

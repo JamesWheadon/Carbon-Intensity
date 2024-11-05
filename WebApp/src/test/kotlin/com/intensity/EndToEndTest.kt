@@ -23,11 +23,13 @@ class EndToEndTest {
         1000,
         PythonScheduler(
             FakeScheduler(
-                validChargeTimes
-            ) {
-                validChargeTimes.clear()
-                validChargeTimes[Instant.parse("2024-09-02T10:30:00Z")] = Instant.parse("2024-10-02T13:00:00Z")
-            }
+                validChargeTimes,
+                {
+                    validChargeTimes.clear()
+                    validChargeTimes[Instant.parse("2024-09-02T10:30:00Z")] = Instant.parse("2024-10-02T13:00:00Z")
+                },
+                mutableSetOf(30, 60)
+            )
         ),
         NationalGridCloud(
             FakeNationalGrid()
@@ -140,7 +142,10 @@ class EndToEndTest {
         )
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.body.toString(), equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30")))
+        assertThat(
+            response.body.toString(),
+            equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30"))
+        )
     }
 
     @Test
@@ -151,12 +156,19 @@ class EndToEndTest {
         )
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.body.toString(), equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30")))
+        assertThat(
+            response.body.toString(),
+            equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30"))
+        )
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
-    private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp"}"""
-    private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String, duration: Int) = """{"startTime":"$startTimestamp","endTime": "$endTimestamp","duration":$duration}"""
+    private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String) =
+        """{"startTime":"$startTimestamp","endTime": "$endTimestamp"}"""
+
+    private fun getChargeTimeBody(startTimestamp: String, endTimestamp: String, duration: Int) =
+        """{"startTime":"$startTimestamp","endTime": "$endTimestamp","duration":$duration}"""
+
     private fun getChargeTimeResponse(chargeTimestamp: String) = """{"chargeTime":"$chargeTimestamp"}"""
     private fun getErrorResponse(message: String) = """{"error":"$message"}"""
 }
