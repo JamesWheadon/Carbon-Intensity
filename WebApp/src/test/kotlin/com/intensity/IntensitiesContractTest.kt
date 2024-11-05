@@ -150,10 +150,19 @@ abstract class IntensitiesContractTest {
     fun `responds with scheduler intensities data`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
 
-        val chargeTime = scheduler.getIntensitiesData()
+        val intensitiesData = scheduler.getIntensitiesData()
 
-        assertThat(chargeTime.intensities, equalTo(List(48) { 212 }))
-        assertThat(chargeTime.date, equalTo(getTestInstant()))
+        assertThat(intensitiesData.intensities, equalTo(List(48) { 212 }))
+        assertThat(intensitiesData.date, equalTo(getTestInstant()))
+    }
+
+    @Test
+    fun `responds with error when no intensities data in scheduler`() {
+        scheduler.deleteData()
+
+        val response = scheduler.getIntensitiesData()
+
+        assertThat(response.error, equalTo("No intensity data for scheduler"))
     }
 }
 
@@ -223,9 +232,12 @@ class FakeScheduler(
                 )
             }
         },
-        "/intensities" bind GET to { request ->
-            trainedDurations.clear()
-            Response(OK).with(intensitiesLens of data!!)
+        "/intensities" bind GET to {
+            if (data != null) {
+                Response(OK).with(intensitiesLens of data!!)
+            } else {
+                Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("No intensity data for scheduler"))
+            }
         },
         "/intensities/train" bind PATCH to { request ->
             if (data != null) {
