@@ -16,13 +16,14 @@ import java.time.Instant
 class EndToEndTest {
     private val client = JavaHttpClient()
     private val scheduler = FakeScheduler()
+    private val nationalGrid = FakeNationalGrid()
     private val server = carbonIntensityServer(
         1000,
         PythonScheduler(
             scheduler
         ),
         NationalGridCloud(
-            FakeNationalGrid()
+            nationalGrid
         )
     )
 
@@ -51,7 +52,7 @@ class EndToEndTest {
     }
 
     @Test
-    fun `responds with optimal charge time using the scheduler service with end time`() {
+    fun `responds with optimal charge time with end time`() {
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -65,7 +66,7 @@ class EndToEndTest {
     }
 
     @Test
-    fun `responds with optimal charge time using the scheduler service with end time and duration`() {
+    fun `responds with optimal charge time with end time and duration`() {
         scheduler.hasTrainedForDuration(60)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -87,6 +88,7 @@ class EndToEndTest {
 
         assertThat(response.status, equalTo(OK))
         assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:00:00")))
+        assertThat(scheduler.data, isNotNull())
     }
 
     @Test
@@ -98,6 +100,7 @@ class EndToEndTest {
 
         assertThat(response.status, equalTo(OK))
         assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:00:00")))
+        assertThat(scheduler.data, isNotNull())
     }
 
     @Test
@@ -109,6 +112,7 @@ class EndToEndTest {
 
         assertThat(response.status, equalTo(OK))
         assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:15:00")))
+        assertThat(scheduler.data, isNotNull())
     }
 
     @Test

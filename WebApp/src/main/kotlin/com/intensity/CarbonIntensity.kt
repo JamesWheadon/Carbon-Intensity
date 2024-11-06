@@ -95,7 +95,7 @@ private fun updateScheduler(
 ) {
     val dateIntensity = getCarbonIntensitiesForDate(chargeDetails, nationalGrid)
     val intensities = Intensities(
-        dateIntensity.data.map { halfHour -> halfHour.intensity.forecast.toInt() },
+        dateIntensity.data.map { halfHour -> halfHour.intensity.forecast },
         chargeDetails.startTime.truncatedTo(DAYS)
     )
     scheduler.sendIntensities(intensities)
@@ -162,22 +162,10 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
 fun schedulerClient() = ClientFilters.SetHostFrom(Uri.of("http://localhost:8000")).then(JavaHttpClient())
 
 interface NationalGrid {
-    fun currentIntensity(): HalfHourData
-    fun currentDayIntensity(): NationalGridData
     fun dateIntensity(date: LocalDate): NationalGridData
 }
 
 class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
-    override fun currentIntensity(): HalfHourData {
-        val currentIntensity = httpHandler(Request(GET, "/intensity"))
-        return nationalGridDataLens(currentIntensity).data.first()
-    }
-
-    override fun currentDayIntensity(): NationalGridData {
-        val currentIntensity = httpHandler(Request(GET, "/intensity/date"))
-        return nationalGridDataLens(currentIntensity)
-    }
-
     override fun dateIntensity(date: LocalDate): NationalGridData {
         val dateIntensity = httpHandler(Request(GET, "/intensity/date/$date"))
         return nationalGridDataLens(dateIntensity)
@@ -197,7 +185,7 @@ data class ChargeTimeResponse(val chargeTime: Instant)
 data class ErrorResponse(val error: String)
 data class NationalGridData(val data: List<HalfHourData>)
 data class HalfHourData(val from: Instant, val to: Instant, val intensity: Intensity)
-data class Intensity(val forecast: Long, val actual: Long?, val index: String)
+data class Intensity(val forecast: Int, val actual: Int?, val index: String)
 
 private fun ChargeTime.toResponse() = ChargeTimeResponse(this.chargeTime!!)
 
