@@ -171,11 +171,7 @@ fun getTestInstant(): Instant = Instant.ofEpochSecond(1727727697L)
 class FakeSchedulerTest : IntensitiesContractTest() {
     override val scheduler =
         PythonScheduler(
-            FakeScheduler(
-                mapOf(getTestInstant().plusSeconds(60) to getTestInstant().plusSeconds(3600)),
-                {},
-                mutableSetOf()
-            )
+            FakeScheduler()
         )
 }
 
@@ -184,13 +180,11 @@ class IntensitiesTest : IntensitiesContractTest() {
     override val scheduler = PythonScheduler(schedulerClient())
 }
 
-class FakeScheduler(
-    validChargeTimes: Map<Instant, Instant>,
-    intensitiesUpdated: () -> Unit,
-    previouslyTrained: MutableSet<Int>
-) : HttpHandler {
-    private val trainedDurations = previouslyTrained
-    private var data: Intensities? = null
+class FakeScheduler : HttpHandler {
+    private val chargeTimes = mutableMapOf<Instant, Instant>()
+    private val errorChargeTime = mutableListOf<Instant>()
+    private val trainedDurations = mutableSetOf<Int>()
+    var data: Intensities? = null
     val routes = routes(
         "/charge-time" bind GET to { request ->
             val current = Query.map(
@@ -206,19 +200,20 @@ class FakeScheduler(
                 )
             ).defaulted("end", null)(request)
             val duration = Query.int().defaulted("duration", 30)(request)
-            val response =
-                validChargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end, duration) }
-            if (response != null && trainedDurations.contains(duration)) {
-                Response(OK).with(chargeTimeLens of response)
-            } else {
+            if (data == null || !trainedDurations.contains(duration) || current.isBefore(data!!.date)
+                || current.isAfter(data!!.date.plusSeconds(SECONDS_IN_DAY)) || errorChargeTime.contains(current)
+            ) {
                 Response(NOT_FOUND).with(chargeTimeLens of ChargeTime(null, "No data for time slot"))
+            } else {
+                val response = chargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end, duration) }
+                    ?: getChargeTime(current.plusSeconds(duration * 60L), end, duration)
+                Response(OK).with(chargeTimeLens of response)
             }
         },
         "/intensities" bind POST to { request ->
             trainedDurations.clear()
             val requestBody = intensitiesLens(request)
             if (requestBody.intensities.size == 48) {
-                intensitiesUpdated()
                 data = requestBody
                 Response(NO_CONTENT)
             } else {
@@ -248,6 +243,18 @@ class FakeScheduler(
             }
         }
     )
+
+    fun hasTrainedForDuration(duration: Int) {
+        trainedDurations.add(duration)
+    }
+
+    fun hasBestChargeTimeForStart(startTimeToBestTime: Pair<Instant, Instant>) {
+        chargeTimes[startTimeToBestTime.first] = startTimeToBestTime.second
+    }
+
+    fun canNotGetChargeTimeFor(badTime: Instant) {
+        errorChargeTime.add(badTime)
+    }
 
     private fun getChargeTime(chargeTime: Instant, end: Instant?, duration: Int): ChargeTime {
         val actionTime = if (end != null && end.minusSeconds(duration * 60L) < chargeTime) {

@@ -15,21 +15,11 @@ import java.time.Instant
 
 class EndToEndTest {
     private val client = JavaHttpClient()
-    private val validChargeTimes = mutableMapOf(
-        Instant.parse("2024-09-30T19:55:00Z") to Instant.parse("2024-09-30T21:00:00Z"),
-        Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z")
-    )
+    private val scheduler = FakeScheduler()
     private val server = carbonIntensityServer(
         1000,
         PythonScheduler(
-            FakeScheduler(
-                validChargeTimes,
-                {
-                    validChargeTimes.clear()
-                    validChargeTimes[Instant.parse("2024-09-02T10:30:00Z")] = Instant.parse("2024-10-02T13:00:00Z")
-                },
-                mutableSetOf(30, 60)
-            )
+            scheduler
         ),
         NationalGridCloud(
             FakeNationalGrid()
@@ -48,17 +38,9 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time`() {
-        val response = client(
-            Request(POST, "http://localhost:${server.port()}/charge-time")
-                .body(getChargeTimeBody("2024-09-30T19:55:00"))
-        )
+        scheduler.hasTrainedForDuration(30)
+        scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
-        assertThat(response.status, equalTo(OK))
-        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-30T21:00:00")))
-    }
-
-    @Test
-    fun `responds with optimal charge time using the scheduler service`() {
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
                 .body(getChargeTimeBody("2024-09-30T21:20:00"))
@@ -70,6 +52,9 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time using the scheduler service with end time`() {
+        scheduler.hasTrainedForDuration(30)
+        scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
+
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
                 .body(getChargeTimeBody("2024-09-30T21:20:00", "2024-09-30T23:30:00"))
@@ -81,6 +66,9 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time using the scheduler service with end time and duration`() {
+        scheduler.hasTrainedForDuration(60)
+        scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
+
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
                 .body(getChargeTimeBody("2024-09-30T21:20:00", "2024-09-30T23:30:00", 60))
@@ -98,7 +86,7 @@ class EndToEndTest {
         )
 
         assertThat(response.status, equalTo(OK))
-        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-10-02T13:00:00")))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:00:00")))
     }
 
     @Test
@@ -109,7 +97,7 @@ class EndToEndTest {
         )
 
         assertThat(response.status, equalTo(OK))
-        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T12:00:00")))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:00:00")))
     }
 
     @Test
@@ -125,13 +113,16 @@ class EndToEndTest {
 
     @Test
     fun `responds with not found and error if can't calculate best charge time`() {
+        scheduler.canNotGetChargeTimeFor(Instant.parse("2024-10-02T10:31:00Z"))
+
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
-                .body(getChargeTimeBody("2024-09-02T10:31:00"))
+                .body(getChargeTimeBody("2024-10-02T10:31:00"))
         )
 
         assertThat(response.status, equalTo(NOT_FOUND))
         assertThat(response.body.toString(), equalTo(getErrorResponse("unable to find charge time")))
+        assertThat(scheduler.data, isNotNull())
     }
 
     @Test
