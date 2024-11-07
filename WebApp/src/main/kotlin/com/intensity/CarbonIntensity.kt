@@ -64,6 +64,10 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                     } else {
                         Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
                     }
+                },
+                "intensities" bind GET to {
+                    val intensitiesData = scheduler.getIntensitiesData()
+                    Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesData.intensities!!))
                 }
             )
         )
@@ -178,6 +182,7 @@ fun nationalGridClient() = ClientFilters.SetHostFrom(Uri.of("https://api.carboni
 data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?)
 private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.plusSeconds(duration?.times(60L) ?: 0)
 
+data class IntensitiesResponse(val intensities: List<Int>)
 data class Intensities(val intensities: List<Int>, val date: Instant)
 data class ChargeTime(val chargeTime: Instant?, val error: String?)
 data class SchedulerIntensitiesData(val intensities: List<Int>?, val date: Instant?, val error: String?)
@@ -189,6 +194,7 @@ data class Intensity(val forecast: Int, val actual: Int?, val index: String)
 
 private fun ChargeTime.toResponse() = ChargeTimeResponse(this.chargeTime!!)
 
+val intensitiesResponseLens = Jackson.autoBody<IntensitiesResponse>().toLens()
 val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()
 val intensitiesLens = SchedulerJackson.autoBody<Intensities>().toLens()
 val chargeTimeLens = SchedulerJackson.autoBody<ChargeTime>().toLens()

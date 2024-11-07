@@ -265,5 +265,9 @@ class FakeScheduler : HttpHandler {
         return ChargeTime(actionTime, null)
     }
 
+    fun hasIntensityData(intensities: Intensities) {
+        data = intensities
+    }
+
     override fun invoke(request: Request): Response = routes(request)
 }

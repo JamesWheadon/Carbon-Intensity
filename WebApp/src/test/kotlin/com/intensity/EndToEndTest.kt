@@ -3,6 +3,7 @@ package com.intensity
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.client.JavaHttpClient
+import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
@@ -155,6 +156,18 @@ class EndToEndTest {
             response.body.toString(),
             equalTo(getErrorResponse("end time must be after start time by at least the charge duration, default 30"))
         )
+    }
+
+    @Test
+    fun `returns intensity data from the scheduler`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+
+        val response = client(
+            Request(GET, "http://localhost:${server.port()}/intensities")
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(response.body.toString(), equalTo("""{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212]}"""))
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
