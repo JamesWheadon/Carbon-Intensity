@@ -13,6 +13,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 class EndToEndTest {
     private val client = JavaHttpClient()
@@ -167,7 +169,25 @@ class EndToEndTest {
         )
 
         assertThat(response.status, equalTo(OK))
-        assertThat(response.body.toString(), equalTo("""{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212]}"""))
+        assertThat(
+            response.body.toString(),
+            equalTo("""{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212]}""")
+        )
+    }
+
+    @Test
+    fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
+        nationalGrid.setDateData(LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London")).toInstant(), List(48) { 210 }, List(48) { null })
+
+        val response = client(
+            Request(GET, "http://localhost:${server.port()}/intensities")
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response.body.toString(),
+            equalTo("""{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210]}""")
+        )
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""

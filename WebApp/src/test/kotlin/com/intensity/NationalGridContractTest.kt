@@ -48,12 +48,18 @@ class NationalGridTest : NationalGridContractTest() {
 }
 
 class FakeNationalGrid : HttpHandler {
+    private var dayData: NationalGridData? = null
+
     val routes = routes(
         "/intensity/date/{date}" bind GET to { request ->
-            val date = LocalDate.parse(request.path("date")!!)
-            val startTime = date.atStartOfDay(ZoneId.of(TIMEZONE)).toInstant()
-            val dataWindows = createHalfHourWindows(startTime)
-            Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+            if (dayData != null) {
+                Response(OK).with(nationalGridDataLens of dayData!!)
+            } else {
+                val date = LocalDate.parse(request.path("date")!!)
+                val startTime = date.atStartOfDay(ZoneId.of(TIMEZONE)).toInstant()
+                val dataWindows = createHalfHourWindows(startTime)
+                Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+            }
         }
     )
 
@@ -80,6 +86,22 @@ class FakeNationalGrid : HttpHandler {
         return Pair(
             truncatedToMinutes.minusSeconds(minutesPastNearestHalHour * 60L),
             truncatedToMinutes.plusSeconds((30 - minutesPastNearestHalHour) * 60L)
+        )
+    }
+
+    fun setDateData(startOfDay: Instant, forecasts: List<Int>, actual: List<Int?>) {
+        dayData = NationalGridData(
+            forecasts.zip(actual).mapIndexed { i, data ->
+                val (start, end) = halfHourWindow(startOfDay.plusSeconds(i * SECONDS_IN_HALF_HOUR))
+                val index = when {
+                    data.first <= 40 -> "very low"
+                    data.first <= 80 -> "low"
+                    data.first <= 120 -> "moderate"
+                    data.first <= 160 -> "high"
+                    else -> "very high"
+                }
+                HalfHourData(start, end, Intensity(data.first, data.second, index))
+            }
         )
     }
 
