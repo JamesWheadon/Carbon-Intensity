@@ -165,7 +165,7 @@ class EndToEndTest {
         scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
 
         val response = client(
-            Request(GET, "http://localhost:${server.port()}/intensities")
+            Request(POST, "http://localhost:${server.port()}/intensities")
         )
 
         assertThat(response.status, equalTo(OK))
@@ -180,7 +180,7 @@ class EndToEndTest {
         nationalGrid.setDateData(LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London")).toInstant(), List(48) { 210 }, List(48) { null })
 
         val response = client(
-            Request(GET, "http://localhost:${server.port()}/intensities")
+            Request(POST, "http://localhost:${server.port()}/intensities")
         )
 
         assertThat(response.status, equalTo(OK))

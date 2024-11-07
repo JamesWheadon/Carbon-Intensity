@@ -65,7 +65,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                         Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
                     }
                 },
-                "intensities" bind GET to {
+                "intensities" bind POST to {
                     val intensitiesData = scheduler.getIntensitiesData()
                     if (intensitiesData.intensities == null) {
                         val currentDate = LocalDate.now()
