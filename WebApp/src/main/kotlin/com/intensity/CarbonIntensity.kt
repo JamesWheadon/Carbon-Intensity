@@ -67,11 +67,11 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                 },
                 "intensities" bind POST to {
                     val intensitiesData = scheduler.getIntensitiesData()
-                    if (intensitiesData.intensities == null) {
-                        val currentDate = LocalDate.now()
-                        val gridData = nationalGrid.dateIntensity(currentDate)
+                    val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
+                    if (intensitiesData.intensities == null || intensitiesData.date!!.isBefore(startOfDay)) {
+                        val gridData = nationalGrid.dateIntensity(LocalDate.now())
                         val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
-                        scheduler.sendIntensities(Intensities(intensitiesForecast, currentDate.atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()))
+                        scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
                         Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesForecast))
                     } else {
                         Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesData.intensities))

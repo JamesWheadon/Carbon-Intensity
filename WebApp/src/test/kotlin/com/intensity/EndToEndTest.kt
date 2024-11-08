@@ -3,7 +3,6 @@ package com.intensity
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.client.JavaHttpClient
-import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
@@ -162,7 +161,7 @@ class EndToEndTest {
 
     @Test
     fun `returns intensity data from the scheduler`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
@@ -178,6 +177,25 @@ class EndToEndTest {
     @Test
     fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
         nationalGrid.setDateData(LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London")).toInstant(), List(48) { 210 }, List(48) { null })
+
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/intensities")
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response.body.toString(),
+            equalTo("""{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210]}""")
+        )
+    }
+
+    @Test
+    fun `calls national grid and updates scheduler if scheduler is out of date`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        nationalGrid.setDateData(
+            LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London")).toInstant(),
+            List(48) { 210 },
+            List(48) { null })
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
