@@ -37,10 +37,8 @@ import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit.DAYS
 
 fun main() {
     val server = carbonIntensityServer(
@@ -103,28 +101,6 @@ private fun getChargeTime(
     } else {
         Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
     }
-}
-
-private fun updateScheduler(
-    chargeDetails: ChargeDetails,
-    nationalGrid: NationalGrid,
-    scheduler: Scheduler
-) {
-    val dateIntensity = getCarbonIntensitiesForDate(chargeDetails, nationalGrid)
-    val intensities = Intensities(
-        dateIntensity.data.map { halfHour -> halfHour.intensity.forecast },
-        chargeDetails.startTime.truncatedTo(DAYS)
-    )
-    scheduler.sendIntensities(intensities)
-}
-
-private fun getCarbonIntensitiesForDate(
-    chargeDetails: ChargeDetails,
-    nationalGrid: NationalGrid
-): NationalGridData {
-    val chargeDate = LocalDateTime.ofInstant(chargeDetails.startTime, ZoneOffset.UTC).toLocalDate()
-    val dateIntensity = nationalGrid.dateIntensity(chargeDate)
-    return dateIntensity
 }
 
 interface Scheduler {
