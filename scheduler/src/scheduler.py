@@ -111,7 +111,8 @@ class UseTimeScheduler(Scheduler):
         if action_index is None:
             return None
         action_to_take = np.argmax(
-            self.Q_table[self.durations.index(duration)][action_index][action_index:latest_action_index]) + action_index
+            self.Q_table[self.durations.index(duration)][action_index][
+            action_index:latest_action_index + 1]) + action_index
         return self.intensities_date + datetime.timedelta(seconds=int(action_to_take) * 900)
 
 

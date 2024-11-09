@@ -41,6 +41,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -55,6 +56,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -69,6 +71,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time and duration`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
         scheduler.hasTrainedForDuration(60)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 

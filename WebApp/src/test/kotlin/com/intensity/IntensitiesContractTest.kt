@@ -20,7 +20,6 @@ import org.http4k.lens.int
 import org.http4k.lens.map
 import org.http4k.routing.bind
 import org.http4k.routing.routes
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
@@ -84,7 +83,7 @@ abstract class IntensitiesContractTest {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
         scheduler.trainDuration(30)
 
-        val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().minusSeconds(60), null, null))
+        val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().minusSeconds(30 * 60), null, null))
 
         assertThat(chargeTime.chargeTime, equalTo(null))
         assertThat(chargeTime.error!!, equalTo("No data for time slot"))
@@ -109,7 +108,7 @@ abstract class IntensitiesContractTest {
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
 
         assertThat(chargeTime.chargeTime, equalTo(null))
-        assertThat(chargeTime.error!!, equalTo("No data for time slot"))
+        assertThat(chargeTime.error!!, equalTo("Duration has not been trained"))
     }
 
     @Test
@@ -125,6 +124,7 @@ abstract class IntensitiesContractTest {
             )
         )
 
+        println(chargeTime)
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000)))
         assertThat(chargeTime.error, equalTo(null))
     }
@@ -142,6 +142,7 @@ abstract class IntensitiesContractTest {
             )
         )
 
+        println(chargeTime)
         assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500)))
         assertThat(chargeTime.error, equalTo(null))
     }
@@ -175,7 +176,7 @@ class FakeSchedulerTest : IntensitiesContractTest() {
         )
 }
 
-@Disabled
+//@Disabled
 class IntensitiesTest : IntensitiesContractTest() {
     override val scheduler = PythonScheduler(schedulerClient())
 }
@@ -200,10 +201,16 @@ class FakeScheduler : HttpHandler {
                 )
             ).defaulted("end", null)(request)
             val duration = Query.int().defaulted("duration", 30)(request)
-            if (data == null || !trainedDurations.contains(duration) || current.isBefore(data!!.date)
-                || current.isAfter(data!!.date.plusSeconds(SECONDS_IN_DAY)) || errorChargeTime.contains(current)
+            if (!trainedDurations.contains(duration)) {
+                Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("Duration has not been trained"))
+            } else if (end != null && end.isBefore(current.plusSeconds(duration * 60L))) {
+                Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("End must be after current plus duration"))
+            } else if (
+                current.isBefore(data!!.date)
+                || current.isAfter(data!!.date.plusSeconds(SECONDS_IN_DAY))
+                || errorChargeTime.contains(current)
             ) {
-                Response(NOT_FOUND).with(chargeTimeLens of ChargeTime(null, "No data for time slot"))
+                Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("No data for time slot"))
             } else {
                 val response = chargeTimes[current]?.let { chargeTime -> getChargeTime(chargeTime, end, duration) }
                     ?: getChargeTime(current.plusSeconds(duration * 60L), end, duration)
@@ -239,7 +246,7 @@ class FakeScheduler : HttpHandler {
                 trainedDurations.add(Query.int().required("duration")(request))
                 Response(NO_CONTENT)
             } else {
-                Response(NOT_FOUND).with(chargeTimeLens of ChargeTime(null, "No intensity data for scheduler"))
+                Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("No intensity data for scheduler"))
             }
         }
     )
