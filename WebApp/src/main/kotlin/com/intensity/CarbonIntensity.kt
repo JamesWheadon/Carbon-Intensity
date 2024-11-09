@@ -3,7 +3,7 @@ package com.intensity
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import dev.forkhandles.result4k.Failure
-import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.valueOrNull
 import org.http4k.client.JavaHttpClient
@@ -95,13 +95,13 @@ private fun getChargeTime(
     nationalGrid: NationalGrid
 ): Response {
     var bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
-    if (bestChargeTime.chargeTime == null) {
+    if (bestChargeTime.valueOrNull() == null) {
         updateScheduler(chargeDetails, nationalGrid, scheduler)
         scheduler.trainDuration(chargeDetails.duration ?: 30)
         bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     }
-    return if (bestChargeTime.chargeTime != null) {
-        Response(OK).with(chargeTimeResponseLens of bestChargeTime.toResponse())
+    return if (bestChargeTime.valueOrNull() != null) {
+        Response(OK).with(chargeTimeResponseLens of ChargeTimeResponse(bestChargeTime.valueOrNull()!!.chargeTime!!))
     } else {
         Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
     }
@@ -130,15 +130,15 @@ private fun getCarbonIntensitiesForDate(
 }
 
 interface Scheduler {
-    fun sendIntensities(intensities: Intensities): Result4k<Nothing?, String>
-    fun trainDuration(duration: Int): Result4k<Nothing?, String>
-    fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
-    fun getIntensitiesData(): Result4k<SchedulerIntensitiesData, String>
+    fun sendIntensities(intensities: Intensities): Result<Nothing?, String>
+    fun trainDuration(duration: Int): Result<Nothing?, String>
+    fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, String>
+    fun getIntensitiesData(): Result<SchedulerIntensitiesData, String>
     fun deleteData()
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
-    override fun sendIntensities(intensities: Intensities): Result4k<Nothing?, String> {
+    override fun sendIntensities(intensities: Intensities): Result<Nothing?, String> {
         val response = httpHandler(Request(POST, "/intensities").with(intensitiesLens of intensities))
         return if (response.status == Status.NO_CONTENT) {
             Success(null)
@@ -147,7 +147,7 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun trainDuration(duration: Int): Result4k<Nothing?, String> {
+    override fun trainDuration(duration: Int): Result<Nothing?, String> {
         val response = httpHandler(Request(PATCH, "/intensities/train?duration=$duration"))
         return if (response.status == Status.NO_CONTENT) {
             Success(null)
@@ -156,7 +156,7 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime {
+    override fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, String> {
         val timestamp = formatWith(schedulerPattern).format(chargeDetails.startTime)
         var query = "current=$timestamp"
         if (chargeDetails.endTime != null) {
@@ -166,10 +166,15 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         if (chargeDetails.duration != null) {
             query += "&duration=${chargeDetails.duration}"
         }
-        return chargeTimeLens(httpHandler(Request(GET, "/charge-time?$query")))
+        val response = httpHandler(Request(GET, "/charge-time?$query"))
+        return if (response.status == OK) {
+            Success(chargeTimeLens(response))
+        } else {
+            Failure(errorResponseLens(response).error)
+        }
     }
 
-    override fun getIntensitiesData(): Result4k<SchedulerIntensitiesData, String> {
+    override fun getIntensitiesData(): Result<SchedulerIntensitiesData, String> {
         val response = httpHandler(Request(GET, "/intensities"))
         return if (response.status.successful) {
             Success(schedulerIntensitiesDataLens(response))
@@ -211,8 +216,6 @@ data class ErrorResponse(val error: String)
 data class NationalGridData(val data: List<HalfHourData>)
 data class HalfHourData(val from: Instant, val to: Instant, val intensity: Intensity)
 data class Intensity(val forecast: Int, val actual: Int?, val index: String)
-
-private fun ChargeTime.toResponse() = ChargeTimeResponse(this.chargeTime!!)
 
 val intensitiesResponseLens = Jackson.autoBody<IntensitiesResponse>().toLens()
 val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()

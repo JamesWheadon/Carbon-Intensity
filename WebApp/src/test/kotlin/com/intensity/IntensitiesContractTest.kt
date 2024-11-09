@@ -76,8 +76,10 @@ abstract class IntensitiesContractTest {
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
 
-        assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(SECONDS_IN_DAY)))
-        assertThat(chargeTime.error, equalTo(null))
+        assertThat(
+            chargeTime.valueOrNull()!!.chargeTime!!,
+            inTimeRange(getTestInstant(), getTestInstant().plusSeconds(SECONDS_IN_DAY))
+        )
     }
 
     @Test
@@ -87,8 +89,7 @@ abstract class IntensitiesContractTest {
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().minusSeconds(30 * 60), null, null))
 
-        assertThat(chargeTime.chargeTime, equalTo(null))
-        assertThat(chargeTime.error!!, equalTo("No data for time slot"))
+        assertThat(chargeTime.failureOrNull()!!, equalTo("No data for time slot"))
     }
 
     @Test
@@ -99,8 +100,7 @@ abstract class IntensitiesContractTest {
         val chargeTime =
             scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(3 * SECONDS_IN_DAY), null, null))
 
-        assertThat(chargeTime.chargeTime, equalTo(null))
-        assertThat(chargeTime.error!!, equalTo("No data for time slot"))
+        assertThat(chargeTime.failureOrNull()!!, equalTo("No data for time slot"))
     }
 
     @Test
@@ -109,8 +109,7 @@ abstract class IntensitiesContractTest {
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
 
-        assertThat(chargeTime.chargeTime, equalTo(null))
-        assertThat(chargeTime.error!!, equalTo("Duration has not been trained"))
+        assertThat(chargeTime.failureOrNull()!!, equalTo("Duration has not been trained"))
     }
 
     @Test
@@ -127,8 +126,10 @@ abstract class IntensitiesContractTest {
         )
 
         println(chargeTime)
-        assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000)))
-        assertThat(chargeTime.error, equalTo(null))
+        assertThat(
+            chargeTime.valueOrNull()!!.chargeTime!!,
+            inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000))
+        )
     }
 
     @Test
@@ -145,8 +146,10 @@ abstract class IntensitiesContractTest {
         )
 
         println(chargeTime)
-        assertThat(chargeTime.chargeTime!!, inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500)))
-        assertThat(chargeTime.error, equalTo(null))
+        assertThat(
+            chargeTime.valueOrNull()!!.chargeTime!!,
+            inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500))
+        )
     }
 
     @Test
