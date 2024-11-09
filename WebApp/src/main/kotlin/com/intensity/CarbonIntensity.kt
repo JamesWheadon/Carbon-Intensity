@@ -2,6 +2,9 @@ package com.intensity
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import dev.forkhandles.result4k.Failure
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.Success
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.DELETE
@@ -123,7 +126,7 @@ private fun getCarbonIntensitiesForDate(
 }
 
 interface Scheduler {
-    fun sendIntensities(intensities: Intensities): ErrorResponse?
+    fun sendIntensities(intensities: Intensities): Result4k<Nothing?, String>
     fun trainDuration(duration: Int): ErrorResponse?
     fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
     fun getIntensitiesData(): SchedulerIntensitiesData
@@ -131,12 +134,12 @@ interface Scheduler {
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
-    override fun sendIntensities(intensities: Intensities): ErrorResponse? {
+    override fun sendIntensities(intensities: Intensities): Result4k<Nothing?, String> {
         val response = httpHandler(Request(POST, "/intensities").with(intensitiesLens of intensities))
         return if (response.status == Status.NO_CONTENT) {
-            null
+            Success(null)
         } else {
-            errorResponseLens(response)
+            Failure(errorResponseLens(response).error)
         }
     }
 

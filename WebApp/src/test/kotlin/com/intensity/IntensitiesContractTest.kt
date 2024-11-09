@@ -3,6 +3,7 @@ package com.intensity
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.contains
 import com.natpryce.hamkrest.equalTo
+import dev.forkhandles.result4k.failureOrNull
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.PATCH
@@ -30,23 +31,23 @@ abstract class IntensitiesContractTest {
 
     @Test
     fun `responds with no content when intensities updated`() {
-        val errorResponse = scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
+        val response = scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
 
-        assertThat(errorResponse, equalTo(null))
+        assertThat(response, isSuccess())
     }
 
     @Test
     fun `responds with bad request when too few intensities sent`() {
         val errorResponse = scheduler.sendIntensities(Intensities(List(47) { 212 }, getTestInstant()))
 
-        assertThat(errorResponse!!.error, contains("too short".toRegex()))
+        assertThat(errorResponse.failureOrNull()!!, contains("too short".toRegex()))
     }
 
     @Test
     fun `responds with bad request when too many intensities sent`() {
         val errorResponse = scheduler.sendIntensities(Intensities(List(49) { 212 }, getTestInstant()))
 
-        assertThat(errorResponse!!.error, contains("too long".toRegex()))
+        assertThat(errorResponse.failureOrNull()!!, contains("too long".toRegex()))
     }
 
     @Test
