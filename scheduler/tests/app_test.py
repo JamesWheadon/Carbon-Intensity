@@ -18,7 +18,7 @@ def test_charge_time_calls_scheduler_for_action():
     response = tester.get("/charge-time?current=2024-09-28T17:59:00", content_type="application/json")
 
     assert response.status_code == 200
-    assert response.get_json() == {"chargeTime": "2024-09-28T19:00:00"}
+    assert response.get_json() == {"chargeTime": "2024-09-28T19:15:00"}
 
 
 def test_charge_time_uses_end_timestamp_as_upper_limit_if_received():
@@ -51,10 +51,10 @@ def test_charge_time_uses_duration_for_action_time():
     response = tester.get("/charge-time?current=2024-09-28T17:59:00&duration=75", content_type="application/json")
 
     assert response.status_code == 200
-    assert response.get_json() == {"chargeTime": "2024-09-28T20:30:00"}
+    assert response.get_json() == {"chargeTime": "2024-09-28T20:45:00"}
 
 
-def test_charge_time_returns_not_found_when_out_of_range():
+def test_charge_time_returns_not_found_when_after_data():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
     test_data = {
@@ -83,7 +83,7 @@ def test_charge_time_returns_not_found_when_before_data():
     response = tester.get("/charge-time?current=2024-09-25T17:59:00", content_type="application/json")
 
     assert response.status_code == 404
-    assert response.get_json() == {"error": "Charge time request is out of data time range"}
+    assert response.get_json() == {"error": "No data for time slot"}
 
 
 def test_charge_time_returns_not_found_when_duration_not_trained():
@@ -333,12 +333,11 @@ class TestScheduler(Scheduler):
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
         self.validate_request(timestamp, duration, end_timestamp)
-        action_index = self.action_index_from_timestamp(timestamp)
-        end_action_index = min(self.action_index_from_timestamp(end_timestamp), 95) if end_timestamp is not None else 95
-        if action_index >= 96:
+        action_index, latest_action_index = self.indexes_from_start_and_end(timestamp, duration, end_timestamp)
+        if action_index is None:
             return None
         if duration == 5:
             i = 11
         else:
             i = 5
-        return self.intensities_date + timedelta(seconds=min(action_index + i, end_action_index - duration) * 900)
+        return self.intensities_date + timedelta(seconds=min(action_index + i, latest_action_index) * 900)

@@ -1,4 +1,5 @@
 import datetime
+import math
 import random
 
 import numpy as np
@@ -6,6 +7,7 @@ import numpy as np
 
 class Scheduler:
     def __init__(self):
+        self.num_time_slots = 96
         self.durations = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
         self.durations_trained = []
         self.intensities_date = None
@@ -16,9 +18,21 @@ class Scheduler:
         self.env = CarbonIntensityEnv(intensities)
         self.durations_trained.clear()
 
-    def action_index_from_timestamp(self, timestamp):
+    def indexes_from_start_and_end(self, timestamp, duration, end_timestamp=None):
+        action_index = self.earliest_index_from_timestamp(timestamp)
+        if action_index not in range(0, self.num_time_slots - duration):
+            return None, None
+        latest_action_index = min(self.latest_index_from_timestamp(end_timestamp) - duration,
+                                  self.num_time_slots - duration) if end_timestamp is not None else self.num_time_slots - duration
+        return action_index, latest_action_index
+
+    def earliest_index_from_timestamp(self, timestamp):
         minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
-        return int(minutes_diff // 15)
+        return math.ceil(minutes_diff / 15)
+
+    def latest_index_from_timestamp(self, timestamp):
+        minutes_diff = (timestamp - self.intensities_date).total_seconds() // 60.0
+        return math.floor(minutes_diff / 15)
 
     def get_intensities(self):
         if self.env is None:
@@ -33,9 +47,8 @@ class Scheduler:
             raise ValueError("End must be after current plus duration")
         if duration not in self.durations_trained:
             raise UntrainedDurationError("Duration has not been trained")
-        if self.intensities_date is None or timestamp < self.intensities_date:
-            raise InvalidChargeTimeError("Charge time request is out of data time range")
-        return True
+        # if self.intensities_date is None or timestamp < self.intensities_date:
+        #     raise InvalidChargeTimeError("Charge time request is out of data time range")
 
     def clear_data(self):
         self.env = None
@@ -62,7 +75,6 @@ class UseTimeScheduler(Scheduler):
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.num_episodes = 500
-        self.num_time_slots = 96
         self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
 
     def calculate_schedules(self, intensities, intensities_date):
@@ -97,15 +109,13 @@ class UseTimeScheduler(Scheduler):
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
         self.validate_request(timestamp, duration, end_timestamp)
-        action_index = self.action_index_from_timestamp(timestamp)
-        end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration,
-                               self.num_time_slots + 1 - duration) if end_timestamp is not None else self.num_time_slots + 1 - duration
-        try:
-            action_to_take = np.argmax(self.Q_table[self.durations.index(duration)][action_index][
-                                       action_index:end_action_index]) + action_index
-            return self.intensities_date + datetime.timedelta(seconds=int(action_to_take) * 900)
-        except IndexError:
+        action_index, latest_action_index = self.indexes_from_start_and_end(timestamp, duration, end_timestamp)
+        if action_index is None:
             return None
+        action_to_take = np.argmax(
+            self.Q_table[self.durations.index(duration)][action_index][action_index:latest_action_index]) + action_index
+        return self.intensities_date + datetime.timedelta(seconds=int(action_to_take) * 900)
+
 
     def print_q_table(self):
         np.set_printoptions(edgeitems=30, linewidth=100000, threshold=self.num_time_slots * self.num_time_slots)
