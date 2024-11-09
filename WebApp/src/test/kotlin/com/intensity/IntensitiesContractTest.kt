@@ -4,6 +4,7 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.contains
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.failureOrNull
+import dev.forkhandles.result4k.valueOrNull
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.PATCH
@@ -154,8 +155,9 @@ abstract class IntensitiesContractTest {
 
         val intensitiesData = scheduler.getIntensitiesData()
 
-        assertThat(intensitiesData.intensities, equalTo(List(48) { 212 }))
-        assertThat(intensitiesData.date, equalTo(getTestInstant()))
+        assertThat(intensitiesData, isSuccess())
+        assertThat(intensitiesData.valueOrNull()!!.intensities, equalTo(List(48) { 212 }))
+        assertThat(intensitiesData.valueOrNull()!!.date, equalTo(getTestInstant()))
     }
 
     @Test
@@ -164,7 +166,7 @@ abstract class IntensitiesContractTest {
 
         val response = scheduler.getIntensitiesData()
 
-        assertThat(response.error, equalTo("No intensity data for scheduler"))
+        assertThat(response.failureOrNull()!!, equalTo("No intensity data for scheduler"))
     }
 }
 

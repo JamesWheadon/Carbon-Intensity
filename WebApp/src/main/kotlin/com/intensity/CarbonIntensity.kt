@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.Success
+import dev.forkhandles.result4k.valueOrNull
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.DELETE
@@ -71,13 +72,16 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                 "intensities" bind POST to {
                     val intensitiesData = scheduler.getIntensitiesData()
                     val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
-                    if (intensitiesData.intensities == null || intensitiesData.date!!.isBefore(startOfDay)) {
+                    if (intensitiesData.valueOrNull()?.intensities == null || intensitiesData.valueOrNull()?.date?.isBefore(
+                            startOfDay
+                        ) != false
+                    ) {
                         val gridData = nationalGrid.dateIntensity(LocalDate.now())
                         val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
                         scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
                         Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesForecast))
                     } else {
-                        Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesData.intensities))
+                        Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesData.valueOrNull()!!.intensities!!))
                     }
                 }
             )
@@ -129,7 +133,7 @@ interface Scheduler {
     fun sendIntensities(intensities: Intensities): Result4k<Nothing?, String>
     fun trainDuration(duration: Int): Result4k<Nothing?, String>
     fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
-    fun getIntensitiesData(): SchedulerIntensitiesData
+    fun getIntensitiesData(): Result4k<SchedulerIntensitiesData, String>
     fun deleteData()
 }
 
@@ -165,8 +169,13 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         return chargeTimeLens(httpHandler(Request(GET, "/charge-time?$query")))
     }
 
-    override fun getIntensitiesData(): SchedulerIntensitiesData {
-        return schedulerIntensitiesDataLens(httpHandler(Request(GET, "/intensities")))
+    override fun getIntensitiesData(): Result4k<SchedulerIntensitiesData, String> {
+        val response = httpHandler(Request(GET, "/intensities"))
+        return if (response.status.successful) {
+            Success(schedulerIntensitiesDataLens(response))
+        } else {
+            Failure(errorResponseLens(response).error)
+        }
     }
 
     override fun deleteData() {
