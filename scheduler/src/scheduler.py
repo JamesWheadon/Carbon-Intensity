@@ -47,8 +47,6 @@ class Scheduler:
             raise ValueError("End must be after current plus duration")
         if duration not in self.durations_trained:
             raise UntrainedDurationError("Duration has not been trained")
-        # if self.intensities_date is None or timestamp < self.intensities_date:
-        #     raise InvalidChargeTimeError("Charge time request is out of data time range")
 
     def clear_data(self):
         self.env = None
