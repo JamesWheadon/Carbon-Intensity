@@ -127,7 +127,7 @@ private fun getCarbonIntensitiesForDate(
 
 interface Scheduler {
     fun sendIntensities(intensities: Intensities): Result4k<Nothing?, String>
-    fun trainDuration(duration: Int): ErrorResponse?
+    fun trainDuration(duration: Int): Result4k<Nothing?, String>
     fun getBestChargeTime(chargeDetails: ChargeDetails): ChargeTime
     fun getIntensitiesData(): SchedulerIntensitiesData
     fun deleteData()
@@ -143,12 +143,12 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun trainDuration(duration: Int): ErrorResponse? {
+    override fun trainDuration(duration: Int): Result4k<Nothing?, String> {
         val response = httpHandler(Request(PATCH, "/intensities/train?duration=$duration"))
         return if (response.status == Status.NO_CONTENT) {
-            null
+            Success(null)
         } else {
-            errorResponseLens(response)
+            Failure(errorResponseLens(response).error)
         }
     }
 

@@ -56,7 +56,7 @@ abstract class IntensitiesContractTest {
 
         val response = scheduler.trainDuration(30)
 
-        assertThat(response, equalTo(null))
+        assertThat(response, isSuccess())
     }
 
     @Test
@@ -65,7 +65,7 @@ abstract class IntensitiesContractTest {
 
         val response = scheduler.trainDuration(30)
 
-        assertThat(response!!.error, equalTo("No intensity data for scheduler"))
+        assertThat(response.failureOrNull()!!, equalTo("No intensity data for scheduler"))
     }
 
     @Test
