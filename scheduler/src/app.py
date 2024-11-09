@@ -4,7 +4,7 @@ from flask import Flask, request
 from flask_expects_json import expects_json
 from jsonschema.exceptions import ValidationError
 
-from src.scheduler import UseTimeScheduler
+from src.scheduler import UseTimeScheduler, InvalidChargeTimeError, UntrainedDurationError
 
 intensities_schema = {
     'type': 'object',
@@ -85,6 +85,14 @@ def create_app(scheduler):
     @app.errorhandler(ValueError)
     def handle_value_error(error):
         return {'error': str(error)}, 400
+
+    @app.errorhandler(InvalidChargeTimeError)
+    def handle_value_error(error):
+        return {'error': str(error)}, 404
+
+    @app.errorhandler(UntrainedDurationError)
+    def handle_value_error(error):
+        return {'error': str(error)}, 404
 
     return app
 

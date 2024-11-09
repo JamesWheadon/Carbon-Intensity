@@ -1,5 +1,5 @@
-import random
 import datetime
+import random
 
 import numpy as np
 
@@ -32,15 +32,25 @@ class Scheduler:
         if end_timestamp is not None and end_timestamp < timestamp + datetime.timedelta(minutes=duration * 15):
             raise ValueError("End must be after current plus duration")
         if duration not in self.durations_trained:
-            return False
+            raise UntrainedDurationError("Duration has not been trained")
         if self.intensities_date is None or timestamp < self.intensities_date:
-            return False
+            raise InvalidChargeTimeError("Charge time request is out of data time range")
         return True
 
     def clear_data(self):
         self.env = None
         self.intensities_date = None
         self.durations_trained.clear()
+
+
+class UntrainedDurationError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class InvalidChargeTimeError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class UseTimeScheduler(Scheduler):
@@ -86,8 +96,7 @@ class UseTimeScheduler(Scheduler):
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
-        if not self.validate_request(timestamp, duration, end_timestamp):
-            return None
+        self.validate_request(timestamp, duration, end_timestamp)
         action_index = self.action_index_from_timestamp(timestamp)
         end_action_index = min(self.action_index_from_timestamp(end_timestamp) + 1 - duration,
                                self.num_time_slots + 1 - duration) if end_timestamp is not None else self.num_time_slots + 1 - duration

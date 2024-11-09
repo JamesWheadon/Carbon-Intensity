@@ -83,17 +83,22 @@ def test_charge_time_returns_not_found_when_before_data():
     response = tester.get("/charge-time?current=2024-09-25T17:59:00", content_type="application/json")
 
     assert response.status_code == 404
-    assert response.get_json() == {"error": "No data for time slot"}
+    assert response.get_json() == {"error": "Charge time request is out of data time range"}
 
 
-def test_charge_time_returns_not_found_when_no_data():
+def test_charge_time_returns_not_found_when_duration_not_trained():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-26T01:00:00"
+    }
+    tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
 
     response = tester.get("/charge-time?current=2024-09-25T17:59:00", content_type="application/json")
 
     assert response.status_code == 404
-    assert response.get_json() == {"error": "No data for time slot"}
+    assert response.get_json() == {"error": "Duration has not been trained"}
 
 
 def test_charge_time_returns_bad_request_when_end_before_start():
@@ -327,8 +332,7 @@ class TestScheduler(Scheduler):
         self.durations_trained.append(duration)
 
     def best_action_for(self, timestamp, duration, end_timestamp=None):
-        if not self.validate_request(timestamp, duration, end_timestamp):
-            return None
+        self.validate_request(timestamp, duration, end_timestamp)
         action_index = self.action_index_from_timestamp(timestamp)
         end_action_index = min(self.action_index_from_timestamp(end_timestamp), 95) if end_timestamp is not None else 95
         if action_index >= 96:
