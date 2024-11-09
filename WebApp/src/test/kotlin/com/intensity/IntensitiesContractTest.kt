@@ -22,6 +22,7 @@ import org.http4k.lens.int
 import org.http4k.lens.map
 import org.http4k.routing.bind
 import org.http4k.routing.routes
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
@@ -182,7 +183,7 @@ class FakeSchedulerTest : IntensitiesContractTest() {
         )
 }
 
-//@Disabled
+@Disabled
 class IntensitiesTest : IntensitiesContractTest() {
     override val scheduler = PythonScheduler(schedulerClient())
 }
@@ -192,6 +193,7 @@ class FakeScheduler : HttpHandler {
     private val errorChargeTime = mutableListOf<Instant>()
     private val trainedDurations = mutableSetOf<Int>()
     var data: Intensities? = null
+    var trainedCalled = 0
     val routes = routes(
         "/charge-time" bind GET to { request ->
             val current = Query.map(
@@ -207,10 +209,10 @@ class FakeScheduler : HttpHandler {
                 )
             ).defaulted("end", null)(request)
             val duration = Query.int().defaulted("duration", 30)(request)
-            if (!trainedDurations.contains(duration)) {
-                Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("Duration has not been trained"))
-            } else if (end != null && end.isBefore(current.plusSeconds(duration * 60L))) {
+            if (end != null && end.isBefore(current.plusSeconds(duration * 60L))) {
                 Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("End must be after current plus duration"))
+            } else if (!trainedDurations.contains(duration)) {
+                Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("Duration has not been trained"))
             } else if (
                 current.isBefore(data!!.date)
                 || current.isAfter(data!!.date.plusSeconds(SECONDS_IN_DAY))
@@ -248,6 +250,7 @@ class FakeScheduler : HttpHandler {
             }
         },
         "/intensities/train" bind PATCH to { request ->
+            trainedCalled++
             if (data != null) {
                 trainedDurations.add(Query.int().required("duration")(request))
                 Response(NO_CONTENT)

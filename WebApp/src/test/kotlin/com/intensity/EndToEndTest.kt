@@ -127,6 +127,20 @@ class EndToEndTest {
     }
 
     @Test
+    fun `only calls scheduler to train for duration when error is about untrained duration`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTrainedForDuration(30)
+        scheduler.canNotGetChargeTimeFor(Instant.parse("2024-09-30T21:20:00Z"))
+
+        client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(getChargeTimeBody("2024-09-30T21:20:00"))
+        )
+
+        assertThat(scheduler.trainedCalled, equalTo(0))
+    }
+
+    @Test
     fun `responds with not found and error if can't calculate best charge time`() {
         scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)

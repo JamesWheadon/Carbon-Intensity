@@ -94,7 +94,7 @@ private fun getChargeTime(
     chargeDetails: ChargeDetails
 ): Response {
     var bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
-    if (bestChargeTime.valueOrNull() == null) {
+    if (bestChargeTime == Failure("Duration has not been trained")) {
         scheduler.trainDuration(chargeDetails.duration ?: 30)
         bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     }
