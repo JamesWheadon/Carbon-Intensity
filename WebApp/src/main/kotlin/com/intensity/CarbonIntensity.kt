@@ -81,7 +81,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                         scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
                         Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesForecast))
                     } else {
-                        Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesData.valueOrNull()!!.intensities!!))
+                        Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesData.valueOrNull()!!.intensities))
                     }
                 }
             )
@@ -101,7 +101,7 @@ private fun getChargeTime(
         bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     }
     return if (bestChargeTime.valueOrNull() != null) {
-        Response(OK).with(chargeTimeResponseLens of ChargeTimeResponse(bestChargeTime.valueOrNull()!!.chargeTime!!))
+        Response(OK).with(chargeTimeResponseLens of ChargeTimeResponse(bestChargeTime.valueOrNull()!!.chargeTime))
     } else {
         Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("unable to find charge time"))
     }
@@ -209,8 +209,8 @@ private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.pl
 
 data class IntensitiesResponse(val intensities: List<Int>)
 data class Intensities(val intensities: List<Int>, val date: Instant)
-data class ChargeTime(val chargeTime: Instant?, val error: String?)
-data class SchedulerIntensitiesData(val intensities: List<Int>?, val date: Instant?, val error: String?)
+data class ChargeTime(val chargeTime: Instant)
+data class SchedulerIntensitiesData(val intensities: List<Int>, val date: Instant)
 data class ChargeTimeResponse(val chargeTime: Instant)
 data class ErrorResponse(val error: String)
 data class NationalGridData(val data: List<HalfHourData>)

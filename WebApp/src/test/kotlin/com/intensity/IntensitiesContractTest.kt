@@ -77,7 +77,7 @@ abstract class IntensitiesContractTest {
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
 
         assertThat(
-            chargeTime.valueOrNull()!!.chargeTime!!,
+            chargeTime.valueOrNull()!!.chargeTime,
             inTimeRange(getTestInstant(), getTestInstant().plusSeconds(SECONDS_IN_DAY))
         )
     }
@@ -127,7 +127,7 @@ abstract class IntensitiesContractTest {
 
         println(chargeTime)
         assertThat(
-            chargeTime.valueOrNull()!!.chargeTime!!,
+            chargeTime.valueOrNull()!!.chargeTime,
             inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000))
         )
     }
@@ -147,7 +147,7 @@ abstract class IntensitiesContractTest {
 
         println(chargeTime)
         assertThat(
-            chargeTime.valueOrNull()!!.chargeTime!!,
+            chargeTime.valueOrNull()!!.chargeTime,
             inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500))
         )
     }
@@ -275,7 +275,7 @@ class FakeScheduler : HttpHandler {
         } else {
             chargeTime
         }
-        return ChargeTime(actionTime, null)
+        return ChargeTime(actionTime)
     }
 
     fun hasIntensityData(intensities: Intensities) {
