@@ -41,7 +41,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -56,7 +56,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -71,7 +71,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time and duration`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(60)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -85,43 +85,51 @@ class EndToEndTest {
     }
 
     @Test
-    fun `calls national grid and updates intensities in scheduler when best charge time is not found`() {
+    fun `calls scheduler to train for duration when best charge time is not found`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
-                .body(getChargeTimeBody("2024-09-02T10:30:00"))
+                .body(getChargeTimeBody("2024-09-30T21:20:00"))
         )
 
         assertThat(response.status, equalTo(OK))
-        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:00:00")))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-30T21:50:00")))
         assertThat(scheduler.data, isNotNull())
     }
 
     @Test
-    fun `calls national grid and updates intensities in scheduler when best charge time is not found with end time`() {
+    fun `calls scheduler to train for duration when best charge time is not found with end time`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
-                .body(getChargeTimeBody("2024-09-02T10:30:00", "2024-09-02T12:30:00"))
+                .body(getChargeTimeBody("2024-09-30T21:20:00", "2024-09-30T22:00:00"))
         )
 
         assertThat(response.status, equalTo(OK))
-        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:00:00")))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-30T21:30:00")))
         assertThat(scheduler.data, isNotNull())
     }
 
     @Test
-    fun `calls national grid and updates intensities in scheduler when best charge time is not found with end time and duration`() {
+    fun `calls scheduler to train for duration when best charge time is not found with end time and duration`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
-                .body(getChargeTimeBody("2024-09-02T10:30:00", "2024-09-02T12:30:00", 75))
+                .body(getChargeTimeBody("2024-09-30T21:20:00", "2024-09-30T23:30:00", 60))
         )
 
         assertThat(response.status, equalTo(OK))
-        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-02T11:15:00")))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-09-30T22:20:00")))
         assertThat(scheduler.data, isNotNull())
     }
 
     @Test
     fun `responds with not found and error if can't calculate best charge time`() {
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTrainedForDuration(30)
         scheduler.canNotGetChargeTimeFor(Instant.parse("2024-10-02T10:31:00Z"))
 
         val response = client(

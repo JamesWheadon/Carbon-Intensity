@@ -64,7 +64,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                 "/charge-time" bind POST to { request ->
                     val chargeDetails = chargeDetailsLens(request)
                     if (chargeDetails.isValid()) {
-                        getChargeTime(scheduler, chargeDetails, nationalGrid)
+                        getChargeTime(scheduler, chargeDetails)
                     } else {
                         Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
                     }
@@ -91,12 +91,10 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
 
 private fun getChargeTime(
     scheduler: Scheduler,
-    chargeDetails: ChargeDetails,
-    nationalGrid: NationalGrid
+    chargeDetails: ChargeDetails
 ): Response {
     var bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     if (bestChargeTime.valueOrNull() == null) {
-        updateScheduler(chargeDetails, nationalGrid, scheduler)
         scheduler.trainDuration(chargeDetails.duration ?: 30)
         bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     }
