@@ -3,7 +3,7 @@ import { getIntensityData } from '../getIntensityData';
 
 jest.mock('axios');
 
-test('retrieves charge time for input', async () => {
+test('retrieves intensity data', async () => {
 	axios.post.mockImplementation(() => Promise.resolve({ data: { 'intensities': [212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175,212,150,175] } }));
 
 	const result = await getIntensityData();
