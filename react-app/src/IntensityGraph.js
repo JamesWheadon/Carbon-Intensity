@@ -6,8 +6,8 @@ function BarChart({ data }) {
     const svgRef = useRef();
 
     const margin = { top: 10, right: 0, bottom: 30, left: 60 };
-    const width = 800 - margin.left - margin.right;
-    const height = 300 - margin.top - margin.bottom;
+    const width = 1200 - margin.left - margin.right;
+    const height = 500 - margin.top - margin.bottom;
 
     useEffect(() => {
         const svg = select(svgRef.current);
@@ -46,10 +46,10 @@ function BarChart({ data }) {
             .attr("transform", "rotate(-90)")
             .attr("fill", "aqua")
             .text("gCO2/kWh");
-    }, [data]);
+    }, [data, width, height, margin.top, margin.left]);
     return (
         <div>
-            <svg ref={svgRef} width={800} height={300}>
+            <svg ref={svgRef} width={width + margin.left + margin.right} height={height + margin.top + margin.bottom}>
             </svg>
         </div>
     )
