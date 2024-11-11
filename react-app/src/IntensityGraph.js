@@ -2,7 +2,7 @@ import { select, scaleLinear, max, axisBottom, axisLeft, timeFormat, timeHour, s
 import React, { useRef, useEffect } from "react";
 import "./IntensityGraph.css"
 
-function BarChart({ data }) {
+function BarChart({ data, setDataPoint }) {
     const svgRef = useRef();
 
     const margin = { top: 10, right: 20, bottom: 30, left: 60 };
@@ -24,7 +24,13 @@ function BarChart({ data }) {
             .attr("width", width / data.length * 0.95)
             .attr("height", (d) => height - yScale(d.intensity))
             .attr("transform", `translate(${margin.left},${margin.top})`)
-            .attr("fill", "steelblue");
+            .attr("fill", "steelblue")
+            .on("mouseover", function(_, d) {
+                setDataPoint(d)
+            })
+            .on("click", function(_, d) {
+                setDataPoint(d)
+             });
 
         const xAxis = axisBottom(xScale)
         .ticks(timeHour.every(3))
@@ -53,7 +59,7 @@ function BarChart({ data }) {
             .attr("transform", "rotate(-90)")
             .attr("fill", "aqua")
             .text("gCO2/kWh");
-    }, [data, width, height, margin.top, margin.left]);
+    }, [data, width, height, margin.top, margin.left, setDataPoint]);
     return (
         <div>
             <svg ref={svgRef} width={width + margin.left + margin.right} height={height + margin.top + margin.bottom}>
