@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 class EndToEndTest {
     private val client = JavaHttpClient()
@@ -186,7 +188,8 @@ class EndToEndTest {
 
     @Test
     fun `returns intensity data from the scheduler`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, Instant.now()))
+        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
+        scheduler.hasIntensityData(Intensities(List(48) { 212 }, date.toInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
@@ -195,13 +198,20 @@ class EndToEndTest {
         assertThat(response.status, equalTo(OK))
         assertThat(
             response.body.toString(),
-            equalTo("""{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212]}""")
+            equalTo(
+                """{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212],"date":"${
+                    date.format(
+                        DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
+                    )
+                }"}"""
+            )
         )
     }
 
     @Test
     fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
-        nationalGrid.setDateData(LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London")).toInstant(), List(48) { 210 }, List(48) { null })
+        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
+        nationalGrid.setDateData(date.toInstant(), List(48) { 210 }, List(48) { null })
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
@@ -210,15 +220,22 @@ class EndToEndTest {
         assertThat(response.status, equalTo(OK))
         assertThat(
             response.body.toString(),
-            equalTo("""{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210]}""")
+            equalTo(
+                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
+                    date.format(
+                        DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
+                    )
+                }"}"""
+            )
         )
     }
 
     @Test
     fun `calls national grid and updates scheduler if scheduler is out of date`() {
         scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
         nationalGrid.setDateData(
-            LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London")).toInstant(),
+            date.toInstant(),
             List(48) { 210 },
             List(48) { null })
 
@@ -229,7 +246,13 @@ class EndToEndTest {
         assertThat(response.status, equalTo(OK))
         assertThat(
             response.body.toString(),
-            equalTo("""{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210]}""")
+            equalTo(
+                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
+                    date.format(
+                        DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
+                    )
+                }"}"""
+            )
         )
     }
 

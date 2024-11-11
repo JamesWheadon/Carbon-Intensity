@@ -80,9 +80,19 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                         val gridData = nationalGrid.dateIntensity(LocalDate.now())
                         val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
                         scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
-                        Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesForecast))
+                        Response(OK).with(
+                            intensitiesResponseLens of IntensitiesResponse(
+                                intensitiesForecast,
+                                startOfDay
+                            )
+                        )
                     } else {
-                        Response(OK).with(intensitiesResponseLens of IntensitiesResponse(intensitiesData.valueOrNull()!!.intensities))
+                        Response(OK).with(
+                            intensitiesResponseLens of IntensitiesResponse(
+                                intensitiesData.valueOrNull()!!.intensities,
+                                startOfDay
+                            )
+                        )
                     }
                 }
             )
@@ -184,7 +194,7 @@ fun nationalGridClient() = ClientFilters.SetHostFrom(Uri.of("https://api.carboni
 data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?)
 private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.plusSeconds(duration?.times(60L) ?: 0)
 
-data class IntensitiesResponse(val intensities: List<Int>)
+data class IntensitiesResponse(val intensities: List<Int>, val date: Instant)
 data class Intensities(val intensities: List<Int>, val date: Instant)
 data class ChargeTime(val chargeTime: Instant)
 data class SchedulerIntensitiesData(val intensities: List<Int>, val date: Instant)
@@ -194,7 +204,7 @@ data class NationalGridData(val data: List<HalfHourData>)
 data class HalfHourData(val from: Instant, val to: Instant, val intensity: Intensity)
 data class Intensity(val forecast: Int, val actual: Int?, val index: String)
 
-val intensitiesResponseLens = Jackson.autoBody<IntensitiesResponse>().toLens()
+val intensitiesResponseLens = SchedulerJackson.autoBody<IntensitiesResponse>().toLens()
 val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()
 val intensitiesLens = SchedulerJackson.autoBody<Intensities>().toLens()
 val chargeTimeLens = SchedulerJackson.autoBody<ChargeTime>().toLens()
