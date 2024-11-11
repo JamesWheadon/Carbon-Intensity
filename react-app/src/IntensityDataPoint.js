@@ -1,7 +1,7 @@
-function IntensityDataPoint({ dataPoint, clicked }) {
+function IntensityDataPoint({ dataPoint, clicked, clear }) {
     var clearButton = null;
     if (clicked) {
-        clearButton = <button>clear</button>
+        clearButton = <button onClick={clear}>clear</button>
     }
     return (
         <div>

@@ -14,3 +14,14 @@ test('renders button to clear data when data clicked', () => {
 
     expect(screen.getByText(/clear/i)).toBeInTheDocument()
 });
+
+test('clear button calls clear function', () => {
+    var clicked = true;
+    function clear() {
+        clicked = false
+    }
+	render(<IntensityDataPoint dataPoint={{"time": 1731364200000, "intensity": 100}} clicked={clicked} clear={clear}/>);
+
+    fireEvent.click(screen.getByText(/clear/i))
+    expect(clicked).toBe(false)
+});
