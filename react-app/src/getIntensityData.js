@@ -2,16 +2,14 @@ import axios from 'axios';
 
 export async function getIntensityData() {
     const response = await axios.post('http://localhost:9000/intensities');
-    return intensitiesToTimeData(response.data.intensities);
+    return intensitiesToTimeData(response.data.intensities, response.data.date);
 }
 
-function intensitiesToTimeData(intensities) {
-    console.log(typeof intensities);
+function intensitiesToTimeData(intensities, date) {
     return intensities.map((dataPoint, index) => {
         var h = Math.floor(index / 2);
-        var m = index % 2 === 0 ? '15' : '45';
+        const m = index % 2 === 0 ? '00' : '30';
         h = (h < 10) ? '0' + h : h;
-        m = (m < 10) ? '0' + m : m;
-        return { time: h + ':' + m, intensity: dataPoint };
+        return { time: Date.parse(date.substring(0, 10) + 'T' + h + ':' + m + ':00'), intensity: dataPoint };
     })
 }

@@ -17,6 +17,7 @@ function App() {
     }, [])
 
     if (data) {
+        console.log(data)
         dataGraph = <Barplot data={data} />
     }
 
