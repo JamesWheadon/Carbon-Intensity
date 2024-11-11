@@ -8,3 +8,9 @@ test('displays data point', () => {
     expect(screen.getByText(/22:30/i)).toBeInTheDocument()
     expect(screen.getByText(/100/i)).toBeInTheDocument()
 });
+
+test('renders button to clear data when data clicked', () => {
+	render(<IntensityDataPoint dataPoint={{"time": 1731364200000, "intensity": 100}} clicked={true}/>);
+
+    expect(screen.getByText(/clear/i)).toBeInTheDocument()
+});
