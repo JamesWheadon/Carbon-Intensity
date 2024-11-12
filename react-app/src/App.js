@@ -10,11 +10,7 @@ function App() {
     const [dataPoint, setDataPoint] = useState(null);
     var dataGraph = null
     var dataPointDisplay = null
-
-    function clear() {
-        setDataPoint(null);
-    }
-
+    
     useEffect(() => {
         async function graphData() {
             setData(await getIntensityData())
@@ -28,7 +24,7 @@ function App() {
     }
 
     if (dataPoint) {
-        dataPointDisplay = <IntensityDataPoint dataPoint={dataPoint} clear={clear}/>
+        dataPointDisplay = <IntensityDataPoint dataPoint={dataPoint}/>
     }
 
     return (
