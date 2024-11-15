@@ -10,7 +10,7 @@ function App() {
     const [dataPoint, setDataPoint] = useState(null);
     var dataGraph = null
     var dataPointDisplay = null
-    
+
     useEffect(() => {
         async function graphData() {
             setData(await getIntensityData())
@@ -32,7 +32,7 @@ function App() {
             <header className="App-header">
                 {dataGraph}
                 {dataPointDisplay}
-                <ChargeTime />
+                <ChargeTime intensityData={data}/>
             </header>
         </div>
     );

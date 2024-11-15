@@ -6,26 +6,28 @@ import ChargeTime from '../ChargeTime';
 
 jest.mock("axios");
 
-test('gets best charge time', async () => {
+const intensityData = Array(48).fill({time: new Date('2024-10-24'), intensity: 100});
+
+test('gets best charge time', () => {
     axios.post.mockImplementation(() => Promise.resolve({ data: { 'chargeTime': '2024-09-30T21:00:00' } }));
-    render(<ChargeTime />);
+    render(<ChargeTime intensityData={intensityData}/>);
 
     fireEvent.change(screen.getByLabelText(/Start time/i), { target: { value: '20:24' } });
     fireEvent.change(screen.getByLabelText(/End time/i), { target: { value: '23:12' } });
     userEvent.selectOptions(screen.getByLabelText(/Duration/i), '60 minutes');
     fireEvent.click(screen.getByText(/Calculate/i));
     
-    await waitFor(() => expect(screen.getByText(/Best Time: 21:00/i)).toBeInTheDocument());
+    waitFor(() => expect(screen.getByText(/Best Time: 21:00/i)).toBeInTheDocument());
 });
 
-test('displays error when can not get best charge time', async () => {
+test('displays error when can not get best charge time', () => {
 	axios.post.mockRejectedValueOnce();
-    render(<ChargeTime />);
+    render(<ChargeTime intensityData={intensityData}/>);
 
     fireEvent.change(screen.getByLabelText(/Start time/i), { target: { value: '20:24' } });
     fireEvent.change(screen.getByLabelText(/End time/i), { target: { value: '23:12' } });
     userEvent.selectOptions(screen.getByLabelText(/Duration/i), '60 minutes');
     fireEvent.click(screen.getByText(/Calculate/i));
     
-    await waitFor(() => expect(screen.getByText(/Could not get best charge time, please try again/i)).toBeInTheDocument());
+    waitFor(() => expect(screen.getByText(/Could not get best charge time, please try again/i)).toBeInTheDocument());
 });

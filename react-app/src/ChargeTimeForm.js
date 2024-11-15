@@ -2,10 +2,9 @@ import { useState } from 'react';
 import TimeRange from './TimeRange';
 import './ChargeTimeForm.css';
 
-function ChargeTimeForm({ getChargeTime }) {
+function ChargeTimeForm({ getChargeTime, duration, setDuration }) {
     const [start, setStart] = useState("0");
     const [end, setEnd] = useState("96");
-    const [duration, setDuration] = useState('30');
     const submit = (e) => {
         e.preventDefault();
         getChargeTime(getTimeStamp(start), getTimeStamp(end), duration);

@@ -8,13 +8,7 @@ export async function chargeTime(start, end, duration) {
 export async function getChargeTime(body) {
     try {
         const response = await axios.post('http://localhost:9000/charge-time', body);
-        const dateTime = new Date(response.data.chargeTime);
-
-        var h = dateTime.getHours();
-        var m = dateTime.getMinutes();
-        h = (h < 10) ? '0' + h : h;
-        m = (m < 10) ? '0' + m : m;
-        return { chargeTime: h + ':' + m };
+        return { chargeTime: new Date(response.data.chargeTime) };
     } catch (error) {
         return { error: "unable to get best charge time" };
     }
