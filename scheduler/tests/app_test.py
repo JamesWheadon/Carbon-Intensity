@@ -135,7 +135,7 @@ def test_charge_time_returns_bad_request_when_end_before_start_plus_duration():
     assert response.get_json() == {"error": "End must be after current plus duration"}
 
 
-def test_intensities_accepts_json_body_and_calculates_schedules():
+def test_intensities_accepts_json_body():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
     test_data = {
@@ -225,6 +225,109 @@ def test_intensities_returns_bad_request_when_date_is_invalid():
 
 
 def test_intensities_returns_bad_request_when_no_date_in_input():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24
+    }
+
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "'date' is a required property"}
+    assert fake.get_intensities() is None
+
+
+def test_intensities_accepts_json_body_and_calculates_schedules():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-26T01:00:00"
+    }
+
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 204
+    assert response.get_json() is None
+    assert fake.get_intensities()["intensities"] == [266, 312] * 24
+
+
+def test_multi_day_intensities_returns_bad_request_when_too_few_intensities():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266] * 47,
+        "date": "2024-09-26T01:00:00"
+    }
+
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 400
+    assert "too short" in response.get_json()["error"]
+    assert fake.get_intensities() is None
+
+
+def test_multi_day_intensities_returns_bad_request_when_too_many_intensities():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266] * 49,
+        "date": "2024-09-26T01:00:00"
+    }
+
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 400
+    assert "too long" in response.get_json()["error"]
+    assert fake.get_intensities() is None
+
+
+def test_multi_day_intensities_returns_bad_request_when_invalid_intensities():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": ["256"] * 48,
+        "date": "2024-09-26T01:00:00"
+    }
+
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "'256' is not of type 'integer'"}
+    assert fake.get_intensities() is None
+
+
+def test_multi_day_intensities_returns_bad_request_when_no_intensities_in_input():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "date": "2024-09-26T01:00:00"
+    }
+
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "'intensities' is a required property"}
+    assert fake.get_intensities() is None
+
+
+def test_multi_day_intensities_returns_bad_request_when_date_is_invalid():
+    fake = TestScheduler()
+    tester = create_app(fake).test_client()
+    test_data = {
+        "intensities": [266, 312] * 24,
+        "date": "2024-09-2T01:00:00"
+    }
+
+    response = tester.post("/intensities", data=json.dumps(test_data), content_type="application/json")
+
+    assert response.status_code == 400
+    assert "does not match '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'" in response.get_json()["error"]
+    assert fake.get_intensities() is None
+
+
+def test_multi_day_intensities_returns_bad_request_when_no_date_in_input():
     fake = TestScheduler()
     tester = create_app(fake).test_client()
     test_data = {

@@ -25,6 +25,25 @@ intensities_schema = {
     'required': ['intensities', 'date']
 }
 
+two_day_intensities_schema = {
+    'type': 'object',
+    'properties': {
+        'intensities': {
+            'type': 'array',
+            "items": {
+                "type": "integer"
+            },
+            "minItems": 96,
+            "maxItems": 96
+        },
+        'date': {
+            'type': 'string',
+            "pattern": '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
+        }
+    },
+    'required': ['intensities', 'date']
+}
+
 
 def create_app(scheduler):
     app = Flask(__name__)
@@ -46,6 +65,14 @@ def create_app(scheduler):
     @app.route("/intensities", methods=["POST"])
     @expects_json(intensities_schema)
     def set_intensities():
+        carbon_intensities = request.json["intensities"]
+        data_date = to_datetime(request.json["date"])
+        app.config["SCHEDULER"].set_intensities(carbon_intensities, data_date)
+        return '', 204
+
+    @app.route("/intensities/multi-day", methods=["POST"])
+    @expects_json(two_day_intensities_schema)
+    def set_two_day_intensities():
         carbon_intensities = request.json["intensities"]
         data_date = to_datetime(request.json["date"])
         app.config["SCHEDULER"].set_intensities(carbon_intensities, data_date)
