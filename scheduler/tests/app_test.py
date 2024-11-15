@@ -2,7 +2,7 @@ import json
 from datetime import timedelta
 
 from src.app import create_app
-from src.scheduler import Scheduler, CarbonIntensityEnv
+from src.scheduler import Scheduler
 
 
 def test_charge_time_calls_scheduler_for_action():
@@ -321,10 +321,6 @@ class TestScheduler(Scheduler):
 
     def __init__(self):
         super().__init__()
-
-    def calculate_schedules(self, intensities, intensities_date):
-        self.env = CarbonIntensityEnv(intensities)
-        self.intensities_date = intensities_date
 
     def train(self, duration):
         if not self.env:

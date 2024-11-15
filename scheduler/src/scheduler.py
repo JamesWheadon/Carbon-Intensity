@@ -9,6 +9,7 @@ class Scheduler:
     def __init__(self):
         self.num_time_slots = 96
         self.durations = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20]
+        self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
         self.durations_trained = []
         self.intensities_date = None
         self.env = None
@@ -17,6 +18,8 @@ class Scheduler:
         self.intensities_date = intensities_date
         self.env = CarbonIntensityEnv(intensities)
         self.durations_trained.clear()
+        self.num_time_slots = len(intensities * 2)
+        self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
 
     def indexes_from_start_and_end(self, timestamp, duration, end_timestamp=None):
         action_index = self.earliest_index_from_timestamp(timestamp)
@@ -73,11 +76,6 @@ class UseTimeScheduler(Scheduler):
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.num_episodes = 500
-        self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
-
-    def calculate_schedules(self, intensities, intensities_date):
-        self.intensities_date = intensities_date
-        self.env = CarbonIntensityEnv(intensities)
 
     def train(self, duration):
         if not self.env:
@@ -140,7 +138,7 @@ class CarbonIntensityEnv:
 
 if __name__ == "__main__":
     scheduler = UseTimeScheduler()
-    scheduler.calculate_schedules(
+    scheduler.set_intensities(
         [134, 175, 243, 117, 208, 125, 87, 202, 58, 145, 134, 222, 133, 236, 140, 222, 87, 207, 199, 125, 100, 218, 236,
          154, 215, 157, 151, 105, 107, 240, 53, 230, 249, 192, 70, 97, 99, 62, 116, 181, 144, 229, 127, 173, 69, 122,
          146, 75], datetime.datetime.fromisoformat('2024-10-15T01:00:00'))
