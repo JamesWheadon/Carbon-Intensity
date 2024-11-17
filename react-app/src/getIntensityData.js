@@ -6,10 +6,8 @@ export async function getIntensityData() {
 }
 
 function intensitiesToTimeData(intensities, date) {
+    const startDate = new Date(date);
     return intensities.map((dataPoint, index) => {
-        var h = Math.floor(index / 2);
-        const m = index % 2 === 0 ? '00' : '30';
-        h = (h < 10) ? '0' + h : h;
-        return { time: Date.parse(date.substring(0, 10) + 'T' + h + ':' + m + ':00'), intensity: dataPoint };
+        return { time: new Date(startDate.getTime() + index * 30 * 60000), intensity: dataPoint };
     })
 }
