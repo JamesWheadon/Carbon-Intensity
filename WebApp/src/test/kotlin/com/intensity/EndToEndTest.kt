@@ -43,7 +43,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -58,7 +58,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -73,7 +73,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time and duration`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(60)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -88,7 +88,7 @@ class EndToEndTest {
 
     @Test
     fun `calls scheduler to train for duration when best charge time is not found`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
@@ -102,7 +102,7 @@ class EndToEndTest {
 
     @Test
     fun `calls scheduler to train for duration when best charge time is not found with end time`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
@@ -116,7 +116,7 @@ class EndToEndTest {
 
     @Test
     fun `calls scheduler to train for duration when best charge time is not found with end time and duration`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
@@ -130,7 +130,7 @@ class EndToEndTest {
 
     @Test
     fun `only calls scheduler to train for duration when error is about untrained duration`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.canNotGetChargeTimeFor(Instant.parse("2024-09-30T21:20:00Z"))
 
@@ -144,7 +144,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with not found and error if can't calculate best charge time`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.canNotGetChargeTimeFor(Instant.parse("2024-10-02T10:31:00Z"))
 
@@ -188,7 +188,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time starting the next day`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-10-01T21:20:00Z") to Instant.parse("2024-10-02T02:30:00Z"))
 
@@ -204,7 +204,7 @@ class EndToEndTest {
     @Test
     fun `returns intensity data from the scheduler`() {
         val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, date.toInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, date.toInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
@@ -247,7 +247,7 @@ class EndToEndTest {
 
     @Test
     fun `calls national grid and updates scheduler if scheduler is out of date`() {
-        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
         nationalGrid.setDateData(date.toInstant(), List(97) { 210 }, List(97) { null })
 

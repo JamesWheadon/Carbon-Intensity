@@ -31,29 +31,29 @@ abstract class SchedulerContractTest {
     abstract val scheduler: Scheduler
 
     @Test
-    fun `responds with no content when multi-day intensities updated`() {
-        val response = scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+    fun `responds with no content when intensities updated`() {
+        val response = scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
 
         assertThat(response, isSuccess())
     }
 
     @Test
-    fun `responds with bad request when too few intensities sent for multi-day`() {
-        val errorResponse = scheduler.sendMultiDayIntensities(Intensities(List(95) { 212 }, getTestInstant()))
+    fun `responds with bad request when too few intensities sent`() {
+        val errorResponse = scheduler.sendIntensities(Intensities(List(95) { 212 }, getTestInstant()))
 
         assertThat(errorResponse.failureOrNull()!!, contains("too short".toRegex()))
     }
 
     @Test
-    fun `responds with bad request when too many intensities sent for multi-day`() {
-        val errorResponse = scheduler.sendMultiDayIntensities(Intensities(List(97) { 212 }, getTestInstant()))
+    fun `responds with bad request when too many intensities sent`() {
+        val errorResponse = scheduler.sendIntensities(Intensities(List(97) { 212 }, getTestInstant()))
 
         assertThat(errorResponse.failureOrNull()!!, contains("too long".toRegex()))
     }
 
     @Test
     fun `responds with no content when duration trained`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
 
         val response = scheduler.trainDuration(30)
 
@@ -71,7 +71,7 @@ abstract class SchedulerContractTest {
 
     @Test
     fun `responds with best time to charge when queried with current time`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.trainDuration(30)
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
@@ -84,7 +84,7 @@ abstract class SchedulerContractTest {
 
     @Test
     fun `responds with not found error when queried with too early time`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.trainDuration(30)
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().minusSeconds(30 * 60), null, null))
@@ -94,7 +94,7 @@ abstract class SchedulerContractTest {
 
     @Test
     fun `responds with not found error when queried with too late time`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.trainDuration(30)
 
         val chargeTime =
@@ -104,8 +104,8 @@ abstract class SchedulerContractTest {
     }
 
     @Test
-    fun `responds with charge time when queried with time a day old when multi trained`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+    fun `responds with charge time when queried with time a day old`() {
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.trainDuration(30)
 
         val chargeTime =
@@ -119,7 +119,7 @@ abstract class SchedulerContractTest {
 
     @Test
     fun `responds with not found error when model not trained for duration`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
 
@@ -128,7 +128,7 @@ abstract class SchedulerContractTest {
 
     @Test
     fun `responds with best time in range of current time and end time`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.trainDuration(30)
 
         val chargeTime = scheduler.getBestChargeTime(
@@ -147,7 +147,7 @@ abstract class SchedulerContractTest {
 
     @Test
     fun `responds with best time to charge when queried with current time and duration`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.trainDuration(75)
 
         val chargeTime = scheduler.getBestChargeTime(
@@ -166,7 +166,7 @@ abstract class SchedulerContractTest {
 
     @Test
     fun `responds with scheduler intensities data`() {
-        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.sendIntensities(Intensities(List(96) { 212 }, getTestInstant()))
 
         val intensitiesData = scheduler.getIntensitiesData()
 
@@ -203,7 +203,6 @@ class FakeScheduler : HttpHandler {
     private val chargeTimes = mutableMapOf<Instant, Instant>()
     private val errorChargeTime = mutableListOf<Instant>()
     private val trainedDurations = mutableSetOf<Int>()
-    private var daysTrained = 0
     var data: Intensities? = null
     var trainedCalled = 0
     val routes = routes(
@@ -227,7 +226,7 @@ class FakeScheduler : HttpHandler {
                 Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("Duration has not been trained"))
             } else if (
                 current.isBefore(data!!.date)
-                || current.isAfter(data!!.date.plusSeconds(daysTrained * SECONDS_IN_DAY))
+                || current.isAfter(data!!.date.plusSeconds(2 * SECONDS_IN_DAY))
                 || errorChargeTime.contains(current)
             ) {
                 Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("No data for time slot"))
@@ -237,9 +236,8 @@ class FakeScheduler : HttpHandler {
                 Response(OK).with(chargeTimeLens of response)
             }
         },
-        "/intensities/multi-day" bind POST to { request ->
+        "/intensities" bind POST to { request ->
             trainedDurations.clear()
-            daysTrained = 2
             val requestBody = intensitiesLens(request)
             if (requestBody.intensities.size == 96) {
                 data = requestBody
@@ -294,9 +292,8 @@ class FakeScheduler : HttpHandler {
         return ChargeTime(actionTime)
     }
 
-    fun hasTwoDayIntensityData(intensities: Intensities) {
+    fun hasIntensityData(intensities: Intensities) {
         data = intensities
-        daysTrained = 2
     }
 
     override fun invoke(request: Request): Response = routes(request)
