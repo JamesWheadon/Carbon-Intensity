@@ -77,7 +77,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                     ) {
                         val gridData = nationalGrid.fortyEightHourIntensity(startOfDay)
                         val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
-                        scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
+                        scheduler.sendMultiDayIntensities(Intensities(intensitiesForecast, startOfDay))
                         Response(OK).with(
                             intensitiesResponseLens of IntensitiesResponse(
                                 intensitiesForecast,
@@ -115,7 +115,6 @@ private fun getChargeTime(
 }
 
 interface Scheduler {
-    fun sendIntensities(intensities: Intensities): Result<Nothing?, String>
     fun sendMultiDayIntensities(intensities: Intensities): Result<Nothing?, String>
     fun trainDuration(duration: Int): Result<Nothing?, String>
     fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, String>
@@ -124,14 +123,6 @@ interface Scheduler {
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
-    override fun sendIntensities(intensities: Intensities): Result<Nothing?, String> {
-        val response = httpHandler(Request(POST, "/intensities").with(intensitiesLens of intensities))
-        return if (response.status == Status.NO_CONTENT) {
-            Success(null)
-        } else {
-            Failure(errorResponseLens(response).error)
-        }
-    }
     override fun sendMultiDayIntensities(intensities: Intensities): Result<Nothing?, String> {
         val response = httpHandler(Request(POST, "/intensities/multi-day").with(intensitiesLens of intensities))
         return if (response.status == Status.NO_CONTENT) {

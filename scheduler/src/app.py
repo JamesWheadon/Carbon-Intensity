@@ -6,25 +6,6 @@ from jsonschema.exceptions import ValidationError
 
 from src.scheduler import UseTimeScheduler, InvalidChargeTimeError, UntrainedDurationError
 
-intensities_schema = {
-    'type': 'object',
-    'properties': {
-        'intensities': {
-            'type': 'array',
-            "items": {
-                "type": "integer"
-            },
-            "minItems": 48,
-            "maxItems": 48
-        },
-        'date': {
-            'type': 'string',
-            "pattern": '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
-        }
-    },
-    'required': ['intensities', 'date']
-}
-
 two_day_intensities_schema = {
     'type': 'object',
     'properties': {
@@ -61,14 +42,6 @@ def create_app(scheduler):
             return {"chargeTime": best_action.isoformat()}, 200
         else:
             return {"error": "No data for time slot"}, 404
-
-    @app.route("/intensities", methods=["POST"])
-    @expects_json(intensities_schema)
-    def set_intensities():
-        carbon_intensities = request.json["intensities"]
-        data_date = to_datetime(request.json["date"])
-        app.config["SCHEDULER"].set_intensities(carbon_intensities, data_date)
-        return '', 204
 
     @app.route("/intensities/multi-day", methods=["POST"])
     @expects_json(two_day_intensities_schema)
