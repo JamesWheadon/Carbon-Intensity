@@ -26,18 +26,6 @@ abstract class NationalGridContractTest {
     abstract val nationalGrid: NationalGrid
 
     @Test
-    fun `responds with forecast for the requested date`() {
-        val date = LocalDate.now(UTC).minusDays(1)
-        val dateIntensity = nationalGrid.dateIntensity(date)
-
-        assertThat(dateIntensity.data.size, equalTo(48))
-        assertThat(
-            date.atStartOfDay().toInstant(UTC),
-            inTimeRange(dateIntensity.data.first().from, dateIntensity.data.last().to)
-        )
-    }
-
-    @Test
     fun `responds with forecast for the requested 48 hour period`() {
         val time = LocalDate.now().atStartOfDay(UTC.normalized()).toInstant()
         val intensities = nationalGrid.fortyEightHourIntensity(time)
@@ -63,34 +51,21 @@ class FakeNationalGrid : HttpHandler {
     private var dayData: NationalGridData? = null
 
     val routes = routes(
-        "/intensity/date/{date}" bind GET to { request ->
-            if (dayData != null) {
-                Response(OK).with(nationalGridDataLens of dayData!!.copy(data = dayData!!.data.subList(0, 48)))
-            } else {
-                val date = LocalDate.parse(request.path("date")!!)
-                val startTime = date.atStartOfDay(ZoneId.of(TIMEZONE)).toInstant()
-                val dataWindows = createHalfHourWindows(startTime, 48)
-                Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
-            }
-        },
         "/intensity/{time}/fw48h" bind GET to { request ->
             if (dayData != null) {
                 Response(OK).with(nationalGridDataLens of dayData!!)
             } else {
                 val startTime = Instant.parse(request.path("time")!!)
-                val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60), 97)
+                val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60))
                 Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
             }
         }
     )
 
-    private fun createHalfHourWindows(
-        startTime: Instant,
-        slots: Int
-    ): MutableList<HalfHourData> {
+    private fun createHalfHourWindows(startTime: Instant): MutableList<HalfHourData> {
         val currentTime = Instant.now()
         val dataWindows = mutableListOf<HalfHourData>()
-        for (window in 0 until slots) {
+        for (window in 0 until 97) {
             val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
             val actualIntensity = if (windowStart.isBefore(currentTime)) {
                 60

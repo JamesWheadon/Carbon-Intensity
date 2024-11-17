@@ -334,11 +334,6 @@ class FakeScheduler : HttpHandler {
         return ChargeTime(actionTime)
     }
 
-    fun hasIntensityData(intensities: Intensities) {
-        data = intensities
-        daysTrained = 1
-    }
-
     fun hasTwoDayIntensityData(intensities: Intensities) {
         data = intensities
         daysTrained = 2
