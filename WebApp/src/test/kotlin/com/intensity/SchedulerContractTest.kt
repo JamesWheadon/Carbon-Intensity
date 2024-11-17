@@ -28,7 +28,7 @@ import java.time.Instant
 
 private const val SECONDS_IN_DAY = 86400L
 
-abstract class IntensitiesContractTest {
+abstract class SchedulerContractTest {
     abstract val scheduler: Scheduler
 
     @Test
@@ -176,7 +176,7 @@ abstract class IntensitiesContractTest {
 
 fun getTestInstant(): Instant = Instant.ofEpochSecond(1727727697L)
 
-class FakeSchedulerTest : IntensitiesContractTest() {
+class FakeSchedulerTest : SchedulerContractTest() {
     override val scheduler =
         PythonScheduler(
             FakeScheduler()
@@ -184,7 +184,7 @@ class FakeSchedulerTest : IntensitiesContractTest() {
 }
 
 @Disabled
-class IntensitiesTest : IntensitiesContractTest() {
+class SchedulerTest : SchedulerContractTest() {
     override val scheduler = PythonScheduler(schedulerClient())
 }
 
