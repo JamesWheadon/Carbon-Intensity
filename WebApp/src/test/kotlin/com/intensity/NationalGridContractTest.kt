@@ -36,6 +36,18 @@ abstract class NationalGridContractTest {
             inTimeRange(dateIntensity.data.first().from, dateIntensity.data.last().to)
         )
     }
+
+    @Test
+    fun `responds with forecast for the requested 48 hour period`() {
+        val time = LocalDate.now().atStartOfDay(UTC.normalized()).toInstant()
+        val intensities = nationalGrid.fortyEightHourIntensity(time)
+
+        assertThat(intensities.data.size, equalTo(96))
+        assertThat(
+            time,
+            inTimeRange(intensities.data.first().from, intensities.data.last().to)
+        )
+    }
 }
 
 class FakeNationalGridTest : NationalGridContractTest() {
@@ -57,18 +69,24 @@ class FakeNationalGrid : HttpHandler {
             } else {
                 val date = LocalDate.parse(request.path("date")!!)
                 val startTime = date.atStartOfDay(ZoneId.of(TIMEZONE)).toInstant()
-                val dataWindows = createHalfHourWindows(startTime)
+                val dataWindows = createHalfHourWindows(startTime, 48)
                 Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
             }
+        },
+        "/intensity/{time}/fw48h" bind GET to { request ->
+            val startTime = Instant.parse(request.path("time")!!)
+            val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60), 97)
+            Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
         }
     )
 
     private fun createHalfHourWindows(
-        startTime: Instant
+        startTime: Instant,
+        slots: Int
     ): MutableList<HalfHourData> {
         val currentTime = Instant.now()
         val dataWindows = mutableListOf<HalfHourData>()
-        for (window in 0 until 48) {
+        for (window in 0 until slots) {
             val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
             val actualIntensity = if (windowStart.isBefore(currentTime)) {
                 60
