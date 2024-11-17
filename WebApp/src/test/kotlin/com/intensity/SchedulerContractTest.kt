@@ -133,7 +133,6 @@ abstract class SchedulerContractTest {
         val chargeTime =
             scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(1 * SECONDS_IN_DAY), null, null))
 
-        println(chargeTime)
         assertThat(
             chargeTime.valueOrNull()!!.chargeTime,
             inTimeRange(getTestInstant().plusSeconds(SECONDS_IN_DAY), getTestInstant().plusSeconds(2 * SECONDS_IN_DAY))
@@ -181,7 +180,6 @@ abstract class SchedulerContractTest {
             )
         )
 
-        println(chargeTime)
         assertThat(
             chargeTime.valueOrNull()!!.chargeTime,
             inTimeRange(getTestInstant(), getTestInstant().plusSeconds(1500))

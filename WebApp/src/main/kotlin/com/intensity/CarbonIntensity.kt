@@ -61,7 +61,6 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
         CatchLensFailure.then(
             routes(
                 "/charge-time" bind POST to { request ->
-                    println(request)
                     val chargeDetails = chargeDetailsLens(request)
                     if (chargeDetails.isValid()) {
                         getChargeTime(scheduler, chargeDetails)
@@ -70,7 +69,6 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                     }
                 },
                 "intensities" bind POST to {
-                    println(it)
                     val intensitiesData = scheduler.getIntensitiesData()
                     val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
                     if (intensitiesData.valueOrNull()?.intensities == null || intensitiesData.valueOrNull()?.date?.isBefore(
