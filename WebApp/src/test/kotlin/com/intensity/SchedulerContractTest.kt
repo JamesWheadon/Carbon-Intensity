@@ -53,6 +53,27 @@ abstract class SchedulerContractTest {
     }
 
     @Test
+    fun `responds with no content when multi-day intensities updated`() {
+        val response = scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+
+        assertThat(response, isSuccess())
+    }
+
+    @Test
+    fun `responds with bad request when too few intensities sent for multi-day`() {
+        val errorResponse = scheduler.sendMultiDayIntensities(Intensities(List(95) { 212 }, getTestInstant()))
+
+        assertThat(errorResponse.failureOrNull()!!, contains("too short".toRegex()))
+    }
+
+    @Test
+    fun `responds with bad request when too many intensities sent for multi-day`() {
+        val errorResponse = scheduler.sendMultiDayIntensities(Intensities(List(97) { 212 }, getTestInstant()))
+
+        assertThat(errorResponse.failureOrNull()!!, contains("too long".toRegex()))
+    }
+
+    @Test
     fun `responds with no content when duration trained`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
 
@@ -233,6 +254,23 @@ class FakeScheduler : HttpHandler {
                 Response(NO_CONTENT)
             } else {
                 val errorMessage = if (requestBody.intensities.size > 48) {
+                    "${requestBody.intensities} is too long"
+                } else {
+                    "${requestBody.intensities} is too short"
+                }
+                Response(BAD_REQUEST).with(
+                    errorResponseLens of ErrorResponse(errorMessage)
+                )
+            }
+        },
+        "/intensities/multi-day" bind POST to { request ->
+            trainedDurations.clear()
+            val requestBody = intensitiesLens(request)
+            if (requestBody.intensities.size == 96) {
+                data = requestBody
+                Response(NO_CONTENT)
+            } else {
+                val errorMessage = if (requestBody.intensities.size > 96) {
                     "${requestBody.intensities} is too long"
                 } else {
                     "${requestBody.intensities} is too short"
