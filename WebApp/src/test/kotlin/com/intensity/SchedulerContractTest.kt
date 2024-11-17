@@ -336,6 +336,12 @@ class FakeScheduler : HttpHandler {
 
     fun hasIntensityData(intensities: Intensities) {
         data = intensities
+        daysTrained = 1
+    }
+
+    fun hasTwoDayIntensityData(intensities: Intensities) {
+        data = intensities
+        daysTrained = 2
     }
 
     override fun invoke(request: Request): Response = routes(request)

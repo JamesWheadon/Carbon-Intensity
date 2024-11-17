@@ -75,7 +75,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
                             startOfDay
                         ) != false
                     ) {
-                        val gridData = nationalGrid.dateIntensity(LocalDate.now())
+                        val gridData = nationalGrid.fortyEightHourIntensity(startOfDay)
                         val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
                         scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
                         Response(OK).with(

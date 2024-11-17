@@ -65,7 +65,7 @@ class FakeNationalGrid : HttpHandler {
     val routes = routes(
         "/intensity/date/{date}" bind GET to { request ->
             if (dayData != null) {
-                Response(OK).with(nationalGridDataLens of dayData!!)
+                Response(OK).with(nationalGridDataLens of dayData!!.copy(data = dayData!!.data.subList(0, 48)))
             } else {
                 val date = LocalDate.parse(request.path("date")!!)
                 val startTime = date.atStartOfDay(ZoneId.of(TIMEZONE)).toInstant()
@@ -74,9 +74,13 @@ class FakeNationalGrid : HttpHandler {
             }
         },
         "/intensity/{time}/fw48h" bind GET to { request ->
-            val startTime = Instant.parse(request.path("time")!!)
-            val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60), 97)
-            Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+            if (dayData != null) {
+                Response(OK).with(nationalGridDataLens of dayData!!)
+            } else {
+                val startTime = Instant.parse(request.path("time")!!)
+                val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60), 97)
+                Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+            }
         }
     )
 

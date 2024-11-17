@@ -43,7 +43,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -58,7 +58,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -73,7 +73,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with optimal charge time with end time and duration`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(60)
         scheduler.hasBestChargeTimeForStart(Instant.parse("2024-09-30T21:20:00Z") to Instant.parse("2024-10-01T02:30:00Z"))
 
@@ -88,7 +88,7 @@ class EndToEndTest {
 
     @Test
     fun `calls scheduler to train for duration when best charge time is not found`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
@@ -102,7 +102,7 @@ class EndToEndTest {
 
     @Test
     fun `calls scheduler to train for duration when best charge time is not found with end time`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
@@ -116,7 +116,7 @@ class EndToEndTest {
 
     @Test
     fun `calls scheduler to train for duration when best charge time is not found with end time and duration`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
@@ -130,7 +130,7 @@ class EndToEndTest {
 
     @Test
     fun `only calls scheduler to train for duration when error is about untrained duration`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.canNotGetChargeTimeFor(Instant.parse("2024-09-30T21:20:00Z"))
 
@@ -144,7 +144,7 @@ class EndToEndTest {
 
     @Test
     fun `responds with not found and error if can't calculate best charge time`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)
         scheduler.canNotGetChargeTimeFor(Instant.parse("2024-10-02T10:31:00Z"))
 
@@ -187,9 +187,24 @@ class EndToEndTest {
     }
 
     @Test
+    fun `responds with optimal charge time starting the next day`() {
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.hasTrainedForDuration(30)
+        scheduler.hasBestChargeTimeForStart(Instant.parse("2024-10-01T21:20:00Z") to Instant.parse("2024-10-02T02:30:00Z"))
+
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(getChargeTimeBody("2024-10-01T21:20:00"))
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(response.body.toString(), equalTo(getChargeTimeResponse("2024-10-02T02:30:00")))
+    }
+
+    @Test
     fun `returns intensity data from the scheduler`() {
         val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, date.toInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, date.toInstant()))
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
@@ -199,7 +214,7 @@ class EndToEndTest {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212],"date":"${
+                """{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212],"date":"${
                     date.format(
                         DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
                     )
@@ -211,7 +226,7 @@ class EndToEndTest {
     @Test
     fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
         val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
-        nationalGrid.setDateData(date.toInstant(), List(48) { 210 }, List(48) { null })
+        nationalGrid.setDateData(date.toInstant(), List(97) { 210 }, List(97) { null })
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
@@ -221,7 +236,7 @@ class EndToEndTest {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
+                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
                     date.format(
                         DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
                     )
@@ -232,12 +247,9 @@ class EndToEndTest {
 
     @Test
     fun `calls national grid and updates scheduler if scheduler is out of date`() {
-        scheduler.hasIntensityData(Intensities(List(48) { 212 }, getTestInstant()))
+        scheduler.hasTwoDayIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
-        nationalGrid.setDateData(
-            date.toInstant(),
-            List(48) { 210 },
-            List(48) { null })
+        nationalGrid.setDateData(date.toInstant(), List(97) { 210 }, List(97) { null })
 
         val response = client(
             Request(POST, "http://localhost:${server.port()}/intensities")
@@ -247,7 +259,7 @@ class EndToEndTest {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
+                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
                     date.format(
                         DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
                     )
