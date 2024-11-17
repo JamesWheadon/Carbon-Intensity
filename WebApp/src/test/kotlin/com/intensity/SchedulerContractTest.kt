@@ -126,6 +126,21 @@ abstract class SchedulerContractTest {
     }
 
     @Test
+    fun `responds with charge time when queried with time a day old when multi trained`() {
+        scheduler.sendMultiDayIntensities(Intensities(List(96) { 212 }, getTestInstant()))
+        scheduler.trainDuration(30)
+
+        val chargeTime =
+            scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(1 * SECONDS_IN_DAY), null, null))
+
+        println(chargeTime)
+        assertThat(
+            chargeTime.valueOrNull()!!.chargeTime,
+            inTimeRange(getTestInstant().plusSeconds(SECONDS_IN_DAY), getTestInstant().plusSeconds(2 * SECONDS_IN_DAY))
+        )
+    }
+
+    @Test
     fun `responds with not found error when model not trained for duration`() {
         scheduler.sendIntensities(Intensities(List(48) { 212 }, getTestInstant()))
 
@@ -147,7 +162,6 @@ abstract class SchedulerContractTest {
             )
         )
 
-        println(chargeTime)
         assertThat(
             chargeTime.valueOrNull()!!.chargeTime,
             inTimeRange(getTestInstant(), getTestInstant().plusSeconds(3000))
@@ -213,6 +227,7 @@ class FakeScheduler : HttpHandler {
     private val chargeTimes = mutableMapOf<Instant, Instant>()
     private val errorChargeTime = mutableListOf<Instant>()
     private val trainedDurations = mutableSetOf<Int>()
+    private var daysTrained = 0
     var data: Intensities? = null
     var trainedCalled = 0
     val routes = routes(
@@ -236,7 +251,7 @@ class FakeScheduler : HttpHandler {
                 Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("Duration has not been trained"))
             } else if (
                 current.isBefore(data!!.date)
-                || current.isAfter(data!!.date.plusSeconds(SECONDS_IN_DAY))
+                || current.isAfter(data!!.date.plusSeconds(daysTrained * SECONDS_IN_DAY))
                 || errorChargeTime.contains(current)
             ) {
                 Response(NOT_FOUND).with(errorResponseLens of ErrorResponse("No data for time slot"))
@@ -248,6 +263,7 @@ class FakeScheduler : HttpHandler {
         },
         "/intensities" bind POST to { request ->
             trainedDurations.clear()
+            daysTrained = 1
             val requestBody = intensitiesLens(request)
             if (requestBody.intensities.size == 48) {
                 data = requestBody
@@ -265,6 +281,7 @@ class FakeScheduler : HttpHandler {
         },
         "/intensities/multi-day" bind POST to { request ->
             trainedDurations.clear()
+            daysTrained = 2
             val requestBody = intensitiesLens(request)
             if (requestBody.intensities.size == 96) {
                 data = requestBody
