@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export async function chargeTime(start, end, duration) {
-    const body = createChargeTimeBody(start, end, duration, new Date());
+    const body = createChargeTimeBody(start, end, duration);
     return getChargeTime(body);
 }
 
@@ -14,17 +14,15 @@ export async function getChargeTime(body) {
     }
 }
 
-export function createChargeTimeBody(start, end, duration, date) {
+export function createChargeTimeBody(start, end, duration) {
     const body = {
-        'startTime': timeToDateTime(start, date),
-        'endTime': timeToDateTime(end, date),
+        'startTime': format(start),
+        'endTime': format(end),
         'duration': Number(duration)
     };
     return body;
 }
 
-function timeToDateTime(time, date) {
-    const [hours, minutes] = time.split(':').map(Number);
-    date.setHours(hours, minutes, 0, 0);
-    return date.toISOString().replace('.000Z', '');
+function format(datetime) {
+    return datetime.toISOString().replace('.000Z', '');
 }

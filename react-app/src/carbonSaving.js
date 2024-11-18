@@ -1,14 +1,18 @@
 export function dateTimeToDisplayTime(dateTime) {
-    var h = dateTime.getHours();
-    var m = dateTime.getMinutes();
-    h = (h < 10) ? '0' + h : h;
-    m = (m < 10) ? '0' + m : m;
-    return h + ':' + m
+    const h = twoDigitDisplay(dateTime.getHours());
+    const m = twoDigitDisplay(dateTime.getMinutes());
+    const d = twoDigitDisplay(dateTime.getDate());
+    const month = twoDigitDisplay(dateTime.getMonth() + 1);
+    return h + ':' + m + " " + d + "/" + month
 }
 
-export function getCarbonSaving(chargeTime, intensityData, duration) {
-    const chargeMinutes = chargeTime.getHours() * 4 + Math.floor(chargeTime.getMinutes() / 15);
-    const currentMinutes = new Date(Date.now()).getHours() * 4 + Math.floor(new Date(Date.now()).getMinutes() / 15);
+export function getCarbonSaving(chargeTime, intensityData, duration, comparisonDate) {
+    console.log(intensityData[0].time)
+    console.log(chargeTime)
+    const chargeMinutes = Math.floor((chargeTime - intensityData[0].time) / (15 * 60000));
+    const currentMinutes = Math.floor((comparisonDate - intensityData[0].time) / (15 * 60000));
+    console.log(chargeMinutes);
+    console.log(currentMinutes);
     var chargeTotal = 0;
     var currentTotal = 0;
     for (var i = 0; i < duration / 15; i++) {
@@ -16,4 +20,8 @@ export function getCarbonSaving(chargeTime, intensityData, duration) {
         currentTotal += intensityData[Math.floor((currentMinutes + i) / 2)].intensity;
     }
     return (currentTotal - chargeTotal) / Math.floor(duration / 15);
+}
+
+function twoDigitDisplay(value) {
+    return (value < 10) ? "0" + value : value;
 }

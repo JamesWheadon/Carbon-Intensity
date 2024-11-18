@@ -26,7 +26,7 @@ test('creates charge time body', () => {
 	const date = new Date('2024-10-28');
 
 	if (date.getTimezoneOffset() == 0) {
-		const result = createChargeTimeBody('20:12', '23:34', '60', date);
+		const result = createChargeTimeBody(new Date('2024-10-28:20:12'), new Date('2024-10-28T23:34'), '60');
 
 		expect(result).toStrictEqual(body);
 	}
@@ -41,7 +41,7 @@ test('creates charge time body in BST', () => {
 	const date = new Date('2024-10-24');
     
 	if (date.getTimezoneOffset() == -60) {
-		const result = createChargeTimeBody('20:12', '23:34', '60', date);
+		const result = createChargeTimeBody(new Date('2024-10-24:20:12'), new Date('2024-10-24T23:34'), '60');
 
 		expect(result).toStrictEqual(body);
 	}
@@ -50,7 +50,7 @@ test('creates charge time body in BST', () => {
 test('creates body from form output and gets charge time', async () => {
 	axios.post.mockImplementation(() => Promise.resolve({ data: { 'chargeTime': '2024-09-30T21:00:00' } }));
 
-	const result = await chargeTime('20:12', '23:34', '60');
+	const result = await chargeTime(new Date('2024-10-30:20:12'), new Date('2024-10-30T23:34'), '60');
 
 	expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', expect.objectContaining({ 'duration': 60 }));
 	expect(result).toStrictEqual({chargeTime: new Date("2024-09-30T20:00:00.000Z")});
@@ -59,7 +59,7 @@ test('creates body from form output and gets charge time', async () => {
 test('catches request error and returns error body', async () => {
 	axios.post.mockRejectedValueOnce();
 
-	const result = await chargeTime('20:12', '23:34', '60');
+	const result = await chargeTime(new Date('2024-10-30:20:12'), new Date('2024-10-30T23:34'), '60');
 
 	expect(axios.post).toHaveBeenCalledWith('http://localhost:9000/charge-time', expect.objectContaining({ 'duration': 60 }));
 	expect(result).toStrictEqual({error: "unable to get best charge time"});

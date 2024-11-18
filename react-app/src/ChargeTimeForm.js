@@ -3,11 +3,11 @@ import TimeRange from './TimeRange';
 import './ChargeTimeForm.css';
 
 function ChargeTimeForm({ getChargeTime, duration, setDuration }) {
-    const [start, setStart] = useState("0");
-    const [end, setEnd] = useState("96");
+    const [start, setStart] = useState(0);
+    const [end, setEnd] = useState(192);
     const submit = (e) => {
         e.preventDefault();
-        getChargeTime(getTimeStamp(start), getTimeStamp(end), duration);
+        getChargeTime(getDate(start), getDate(end), duration);
     };
     return (
         <form onSubmit={submit}>
@@ -41,21 +41,34 @@ function ChargeTimeForm({ getChargeTime, duration, setDuration }) {
 }
 
 function TimePicker({ labelText, time, setTime }) {
-    const hours = Array.from({ length: 25 }, (_, i) => i.toString().padStart(2, "0"));
+    var days = [new Date(), new Date(new Date().getTime() + 24 * 60 * 60 * 1000)];
+    if (labelText === "End Time") {
+        days.push(new Date(new Date().getTime() + 48 * 60 * 60 * 1000));
+    }
+    const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
     const minutes = ["00", "15", "30", "45"];
+    const options = {
+        month: 'short',
+        day: 'numeric',
+    };
 
     return (
         <div id="picker">
             <label>{labelText}
-                <select value={hours[Math.floor(Number(time) / 4)]} onChange={(e) => setTime(Number(e.target.value) * 4 + Number(time) % 4)}>
-                    {hours.map((h) => (
-                        <option key={h} value={h}>{h}</option>
+                <select value={Math.floor((time % 96) / 4)} onChange={(e) => setTime(Number(e.target.value) * 4 + time % 4 + (Math.floor(time / 96) * 96))}>
+                    {hours.filter(m => time !== "192" || m === "00").map((h, i) => (
+                        <option key={i} value={i}>{h}</option>
                     ))}
                 </select>
                 :
-                <select value={minutes[Number(time) % 4]} onChange={(e) => setTime(Number(e.target.value) / 15 + Number(time) - Number(time) % 4)}>
-                    {minutes.filter(m => time !== "96" || m === "00").map((m) => (
-                        <option key={m} value={m}>{m}</option>
+                <select value={time % 4} onChange={(e) => setTime(Number(e.target.value) + time - time % 4)}>
+                    {minutes.filter(m => time !== "192" || m === "00").map((m, i) => (
+                        <option key={i} value={i}>{m}</option>
+                    ))}
+                </select>
+                <select value={Math.floor(time / 96)} onChange={(e) => setTime(Number(e.target.value) * 96 + time % 4 + Math.floor((time % 96) / 4) * 4)}>
+                    {days.filter((_, i) => i !== 2 || time % 96 === 0).map((d, i) => (
+                        <option key={i} value={i}>{d.toLocaleDateString(options)}</option>
                     ))}
                 </select>
             </label>
@@ -70,7 +83,7 @@ function moveStartSlider(newStart, end, duration, setStart) {
 }
 
 function moveEndSlider(newEnd, start, duration, setEnd) {
-    if (Number(newEnd) >= Number(start) + Number(duration) / 15) {
+    if (Number(newEnd) >= Number(start) + Number(duration) / 15 && Number(newEnd) <= 192) {
         setEnd(newEnd)
     }
 }
@@ -81,12 +94,10 @@ function changeDuration(newDuration, start, end, setDuration) {
     }
 }
 
-function getTimeStamp(numQuarters) {
-    var h = Math.floor(numQuarters / 4);
-    var m = numQuarters % 4 * 15;
-    h = (h < 10) ? '0' + h : h;
-    m = (m < 10) ? '0' + m : m;
-    return h + ':' + m;
+function getDate(numQuarters) {
+    const start = new Date();
+    start.setUTCHours(0,0,0,0);
+    return new Date(start.getTime() + numQuarters * 15 * 60 * 1000);
 }
 
 export default ChargeTimeForm;
