@@ -11,7 +11,7 @@ function BarChart({ data, setDataPoint }) {
 
     useEffect(() => {
         const svg = select(svgRef.current);
-        const xScale = scaleTime().domain([data[0].time, new Date(data[data.length - 1].time + 30 * 60000)]).range([0, width]);
+        const xScale = scaleTime().domain([data[0].time, new Date(data[data.length - 1].time.getTime() + 30 * 60000)]).range([0, width]);
         const yScale = scaleLinear().domain([0, max(data, (d) => d.intensity)]).range([height, 0]);
 
         svg.selectAll(".bar")

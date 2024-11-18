@@ -1,6 +1,6 @@
 function IntensityDataPoint({ dataPoint }) {
-    const startTime = new Date(dataPoint.time)
-    const endTime = new Date(dataPoint.time + 30 * 60000)
+    const startTime = dataPoint.time
+    const endTime = new Date(dataPoint.time.getTime() + 30 * 60000)
     const startTimeString = startTime.toTimeString().split(' ')[0].substring(0, 5)
     const endTimeString = endTime.toTimeString().split(' ')[0].substring(0, 5)
     var timeString = null
