@@ -25,7 +25,6 @@ import org.http4k.filter.ClientFilters
 import org.http4k.filter.CorsPolicy
 import org.http4k.filter.ServerFilters
 import org.http4k.filter.ServerFilters.CatchLensFailure
-import org.http4k.filter.debug
 import org.http4k.format.ConfigurableJackson
 import org.http4k.format.Jackson
 import org.http4k.format.asConfigurable
@@ -42,10 +41,12 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 fun main() {
+    val port = System.getenv("PORT")?.toIntOrNull() ?: 9000
+    val schedulerUrl = System.getenv("SCHEDULER_URL") ?: "http://localhost:8000"
     val server = carbonIntensityServer(
-        9000,
-        PythonScheduler(schedulerClient().debug()),
-        NationalGridCloud(nationalGridClient().debug())
+        port,
+        PythonScheduler(schedulerClient(schedulerUrl)),
+        NationalGridCloud(nationalGridClient())
     ).start()
     println("Server started on " + server.port())
 }
@@ -173,7 +174,7 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
     }
 }
 
-fun schedulerClient() = ClientFilters.SetHostFrom(Uri.of("http://localhost:8000")).then(JavaHttpClient())
+fun schedulerClient(schedulerUrl: String) = ClientFilters.SetHostFrom(Uri.of(schedulerUrl)).then(JavaHttpClient())
 
 interface NationalGrid {
     fun dateIntensity(date: LocalDate): NationalGridData

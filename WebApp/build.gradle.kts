@@ -48,6 +48,8 @@ jib {
         jvmFlags = listOf("-Xms512m", "-Xmx1024m")
         ports = listOf("8080")
         environment = mapOf(
+            "PORT" to "8080",
+            "BASE_URI" to "https://scheduler-1088477649607.europe-west2.run.app"
         )
     }
 }

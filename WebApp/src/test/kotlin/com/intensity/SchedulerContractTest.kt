@@ -22,6 +22,7 @@ import org.http4k.lens.int
 import org.http4k.lens.map
 import org.http4k.routing.bind
 import org.http4k.routing.routes
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
@@ -194,9 +195,9 @@ class FakeSchedulerTest : SchedulerContractTest() {
         )
 }
 
-//@Disabled
+@Disabled
 class SchedulerTest : SchedulerContractTest() {
-    override val scheduler = PythonScheduler(schedulerClient())
+    override val scheduler = PythonScheduler(schedulerClient("http://localhost:8000"))
 }
 
 class FakeScheduler : HttpHandler {
