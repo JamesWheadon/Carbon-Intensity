@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from flask import Flask, request
@@ -105,4 +106,4 @@ def from_datetime(datetime_object):
 
 
 if __name__ == "__main__":
-    create_app(UseTimeScheduler()).run(port=8000)
+    create_app(UseTimeScheduler()).run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

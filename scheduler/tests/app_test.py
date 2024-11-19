@@ -1,7 +1,7 @@
 import json
 from datetime import timedelta
 
-from src.app import create_app
+from main import create_app
 from src.scheduler import Scheduler
 
 

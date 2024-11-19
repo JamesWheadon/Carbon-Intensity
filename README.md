@@ -1,5 +1,14 @@
 # CarbonIntensity
 
+## Deploy Scheduler
+
+```shell
+cd scheduler
+gcloud run deploy --source . scheduler --project=eighth-sandbox-442218-k5 --region=europe-west2 
+```
+
+for the moment, yes to unauthenticated invocations
+
 ## Package
 ```
 ./gradlew jib
