@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.0"
+    id("com.google.cloud.tools.jib") version "3.4.4"
 }
 
 group = "org.example"
@@ -33,4 +34,20 @@ tasks.test {
 
 kotlin {
     jvmToolchain(17)
+}
+
+jib {
+    from {
+        image = "gcr.io/distroless/java17"
+    }
+    to {
+        image = "eu-west2-docker.pkg.dev/eighth-sandbox-442218-k5/images/web-app:latest"
+    }
+    container {
+        mainClass = "com.intensity.CarbonIntensityKt"
+        jvmFlags = listOf("-Xms512m", "-Xmx1024m")
+        ports = listOf("8080")
+        environment = mapOf(
+        )
+    }
 }
