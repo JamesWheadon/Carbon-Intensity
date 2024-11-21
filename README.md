@@ -17,10 +17,24 @@ Delete artifact registry for the scheduler in [artifact registry](https://consol
 gcloud run service delete scheduler --project=eighth-sandbox-442218-k5
 ```
 
-## Package
+## Deploying Web App
+
+```shell
+gcloud auth application-default login
 ```
+
+```shell
 ./gradlew jib
 ```
 
 More details on building JIB can be found at [https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin]()
 
+Image is pushed to [artifact registry](https://console.cloud.google.com/artifacts/docker/eighth-sandbox-442218-k5/europe-west2/cloud-run-source-deploy/web-app?inv=1&invt=AbiEwQ&project=eighth-sandbox-442218-k5)
+
+```shell
+gcloud run deploy web-app \
+    --image europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/web-app:latest \
+    --platform managed \
+    --region europe-west2 \
+    --allow-unauthenticated
+```

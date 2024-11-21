@@ -41,11 +41,10 @@ jib {
         image = "gcr.io/distroless/java17"
     }
     to {
-        image = "eu-west2-docker.pkg.dev/eighth-sandbox-442218-k5/images/web-app:latest"
+        image = "europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/web-app:latest"
     }
     container {
         mainClass = "com.intensity.CarbonIntensityKt"
-        jvmFlags = listOf("-Xms512m", "-Xmx1024m")
         ports = listOf("8080")
         environment = mapOf(
             "PORT" to "8080",
