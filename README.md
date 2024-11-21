@@ -38,3 +38,19 @@ gcloud run deploy web-app \
     --region europe-west2 \
     --allow-unauthenticated
 ```
+
+## Deployed React App
+
+Deployment is done using cloud build, a manual trigger exists to run the build.
+
+If there is a forbidden issue when accessing the app, check IAM policy for the service.
+```shell
+gcloud run services get-iam-policy react-app --region=europe-west2
+```
+If the roles/run.invoker is not present for allUsers, add the permission to all users.
+```shell
+gcloud run services add-iam-policy-binding react-app-service \
+    --member="allUsers" \
+    --role="roles/run.invoker" \
+    --region=us-central1
+```
