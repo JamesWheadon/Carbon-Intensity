@@ -1,0 +1,32 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '.',
+        '-t',
+        'europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/react-app:$SHORT_SHA',
+        '-f',
+        'Dockerfile',
+        '--build-arg'
+      ]
+
+  # Push the Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/react-app:$SHORT_SHA']
+
+  # Deploy the Docker image to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'react-app'
+      - '--region=europe-west2'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--image=europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/react-app:$SHORT_SHA'
+      - '--port=8080'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
