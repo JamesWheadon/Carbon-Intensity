@@ -1,32 +1,23 @@
 steps:
-  # Build the Docker image
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      [
-        'build',
-        '.',
-        '-t',
-        'europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/react-app:$SHORT_SHA',
-        '-f',
-        'Dockerfile',
-        '--build-arg'
-      ]
+# Step 1: Build the Docker image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/your-repo/react-app', '.']
 
-  # Push the Docker image to Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/react-app:$SHORT_SHA']
+# Step 2: Push the Docker image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/your-repo/react-app']
 
-  # Deploy the Docker image to Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'react-app'
-      - '--region=europe-west2'
-      - '--platform=managed'
-      - '--allow-unauthenticated'
-      - '--image=europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/react-app:$SHORT_SHA'
-      - '--port=8080'
+# Step 3: Deploy the Docker image to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args:
+    [
+      'run', 'deploy', 'react-app-service', # Replace with your Cloud Run service name
+      '--image', 'us-central1-docker.pkg.dev/$PROJECT_ID/your-repo/react-app',
+      '--platform', 'managed',
+      '--region', 'us-central1', # Replace with your region
+      '--allow-unauthenticated'
+    ]
 
-options:
-  logging: CLOUD_LOGGING_ONLY
+images:
+- 'us-central1-docker.pkg.dev/$PROJECT_ID/your-repo/react-app'
