@@ -1,5 +1,5 @@
 # Stage 1: Build React app
-FROM node:23-bookworm-slim as build
+FROM node:18 as build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
