@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export async function getIntensityData() {
-    const response = await axios.post('http://localhost:9000/intensities');
+    const response = await axios.post(`${process.env.REACT_APP_WEB_APP}/intensities`);
     return intensitiesToTimeData(response.data.intensities, response.data.date);
 }
 

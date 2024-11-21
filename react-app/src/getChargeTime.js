@@ -7,7 +7,7 @@ export async function chargeTime(start, end, duration) {
 
 export async function getChargeTime(body) {
     try {
-        const response = await axios.post('http://localhost:9000/charge-time', body);
+        const response = await axios.post(`${process.env.REACT_APP_WEB_APP}/charge-time`, body);
         return { chargeTime: new Date(response.data.chargeTime) };
     } catch (error) {
         return { error: "unable to get best charge time" };
