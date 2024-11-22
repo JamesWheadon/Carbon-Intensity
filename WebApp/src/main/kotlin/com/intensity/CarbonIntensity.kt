@@ -193,16 +193,10 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
 fun schedulerClient(schedulerUrl: String) = ClientFilters.SetHostFrom(Uri.of(schedulerUrl)).then(JavaHttpClient())
 
 interface NationalGrid {
-    fun dateIntensity(date: LocalDate): NationalGridData
     fun fortyEightHourIntensity(time: Instant): NationalGridData
 }
 
 class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
-    override fun dateIntensity(date: LocalDate): NationalGridData {
-        val dateIntensity = httpHandler(Request(GET, "/intensity/date/$date"))
-        return nationalGridDataLens(dateIntensity)
-    }
-
     override fun fortyEightHourIntensity(time: Instant): NationalGridData {
         val dateIntensity = httpHandler(Request(GET, "/intensity/$time/fw48h"))
         val intensityData = nationalGridDataLens(dateIntensity)
