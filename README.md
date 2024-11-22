@@ -1,5 +1,7 @@
 # CarbonIntensity
 
+App is available at https://react-app-7vauz33abq-nw.a.run.app/
+
 ## Deploy Scheduler
 
 ```shell
