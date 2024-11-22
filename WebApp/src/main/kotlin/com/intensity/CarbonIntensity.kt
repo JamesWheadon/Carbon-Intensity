@@ -62,31 +62,7 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
         CatchLensFailure.then(
             routes(
                 chargeTimes(scheduler),
-                "intensities" bind POST to {
-                    val intensitiesData = scheduler.getIntensitiesData()
-                    val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
-                    if (intensitiesData.valueOrNull()?.intensities == null || intensitiesData.valueOrNull()?.date?.isBefore(
-                            startOfDay
-                        ) != false
-                    ) {
-                        val gridData = nationalGrid.fortyEightHourIntensity(startOfDay)
-                        val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
-                        scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
-                        Response(OK).with(
-                            intensitiesResponseLens of IntensitiesResponse(
-                                intensitiesForecast,
-                                startOfDay
-                            )
-                        )
-                    } else {
-                        Response(OK).with(
-                            intensitiesResponseLens of IntensitiesResponse(
-                                intensitiesData.valueOrNull()!!.intensities,
-                                startOfDay
-                            )
-                        )
-                    }
-                }
+                intensities(scheduler, nationalGrid)
             )
         )
     )
@@ -119,6 +95,40 @@ private fun retrieveChargeTime(
             errorResponseLens of ErrorResponse("unable to find charge time")
         )
     }
+}
+
+private fun intensities(
+    scheduler: Scheduler,
+    nationalGrid: NationalGrid
+) = "intensities" bind POST to {
+    val intensitiesData = scheduler.getIntensitiesData()
+    val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
+    val intensitiesForecast = if (intensitiesData.forCurrentDay(startOfDay)) {
+        updateSchedulerIntensities(nationalGrid, startOfDay, scheduler)
+    } else {
+        intensitiesData.valueOrNull()!!.intensities
+    }
+    Response(OK).with(
+        intensitiesResponseLens of IntensitiesResponse(
+            intensitiesForecast,
+            startOfDay
+        )
+    )
+}
+
+private fun Result<SchedulerIntensitiesData, String>.forCurrentDay(
+    startOfDay: Instant?
+) = (valueOrNull()?.intensities == null || valueOrNull()?.date?.isBefore(startOfDay) != false)
+
+private fun updateSchedulerIntensities(
+    nationalGrid: NationalGrid,
+    startOfDay: Instant,
+    scheduler: Scheduler
+): List<Int> {
+    val gridData = nationalGrid.fortyEightHourIntensity(startOfDay)
+    val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
+    scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
+    return intensitiesForecast
 }
 
 interface Scheduler {
