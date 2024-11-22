@@ -48,7 +48,7 @@ jib {
         ports = listOf("8080")
         environment = mapOf(
             "PORT" to "8080",
-            "BASE_URI" to "https://scheduler-1088477649607.europe-west2.run.app"
+            "SCHEDULER_URL" to "https://scheduler-1088477649607.europe-west2.run.app"
         )
     }
 }

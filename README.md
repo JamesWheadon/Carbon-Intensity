@@ -36,7 +36,8 @@ gcloud run deploy web-app \
     --image europe-west2-docker.pkg.dev/eighth-sandbox-442218-k5/cloud-run-source-deploy/web-app:latest \
     --platform managed \
     --region europe-west2 \
-    --allow-unauthenticated
+    --allow-unauthenticated \
+    --update-env-vars SCHEDULER_URL=https://scheduler-1088477649607.europe-west2.run.app
 ```
 
 ## Deployed React App
