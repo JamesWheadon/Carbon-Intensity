@@ -214,7 +214,7 @@ class EndToEndTest {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":[212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212,212],"date":"${
+                """{"intensities":${intensityList(212)},"date":"${
                     date.format(
                         DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
                     )
@@ -236,7 +236,7 @@ class EndToEndTest {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
+                """{"intensities":${intensityList(210)},"date":"${
                     date.format(
                         DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
                     )
@@ -259,7 +259,7 @@ class EndToEndTest {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":[210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210,210],"date":"${
+                """{"intensities":${intensityList(210)},"date":"${
                     date.format(
                         DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
                     )
@@ -277,4 +277,7 @@ class EndToEndTest {
 
     private fun getChargeTimeResponse(chargeTimestamp: String) = """{"chargeTime":"$chargeTimestamp"}"""
     private fun getErrorResponse(message: String) = """{"error":"$message"}"""
+
+    private fun intensityList(intensity: Int) =
+        List(96) { intensity }.joinToString(prefix = "[", separator = ",", postfix = "]")
 }

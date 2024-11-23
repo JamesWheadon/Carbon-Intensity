@@ -103,7 +103,7 @@ private fun intensities(
 ) = "intensities" bind POST to {
     val intensitiesData = scheduler.getIntensitiesData()
     val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
-    val intensitiesForecast = if (!intensitiesData.notForCurrentDay(startOfDay)) {
+    val intensitiesForecast = if (intensitiesData.forCurrentDay(startOfDay)) {
         intensitiesData.valueOrNull()!!.intensities
     } else {
         updateSchedulerIntensities(nationalGrid, startOfDay, scheduler)
@@ -116,9 +116,9 @@ private fun intensities(
     )
 }
 
-private fun Result<SchedulerIntensitiesData, String>.notForCurrentDay(
+private fun Result<SchedulerIntensitiesData, String>.forCurrentDay(
     startOfDay: Instant?
-) = (valueOrNull()?.intensities == null || valueOrNull()?.date?.isBefore(startOfDay) != false)
+) = valueOrNull() != null && valueOrNull()!!.date == startOfDay
 
 private fun updateSchedulerIntensities(
     nationalGrid: NationalGrid,
