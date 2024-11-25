@@ -3,11 +3,15 @@ package com.intensity
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.client.JavaHttpClient
+import org.http4k.core.ContentType
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Status.Companion.UNSUPPORTED_MEDIA_TYPE
+import org.http4k.core.body.form
+import org.http4k.lens.contentType
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -197,6 +201,24 @@ class EndToEndTest {
         assertThat(
             response.bodyString(),
             equalTo(getErrorResponse("incorrect request body or headers"))
+        )
+    }
+
+    @Test
+    fun `responds with bad request and error when incorrect content type`() {
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .contentType(ContentType.MULTIPART_FORM_DATA)
+                .form(
+                    "startTime" to "2024-09-02T10:31:00",
+                    "endTime" to "2024-09-02T10:56:00"
+                )
+        )
+
+        assertThat(response.status, equalTo(UNSUPPORTED_MEDIA_TYPE))
+        assertThat(
+            response.bodyString(),
+            equalTo(getErrorResponse("invalid content type"))
         )
     }
 

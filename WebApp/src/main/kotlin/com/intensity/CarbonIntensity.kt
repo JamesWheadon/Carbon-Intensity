@@ -1,5 +1,6 @@
 package com.intensity
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -10,6 +11,7 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Status.Companion.UNSUPPORTED_MEDIA_TYPE
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.filter.CorsPolicy
@@ -55,8 +57,11 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
     )
 }
 
-private fun failedToParseRequest(ignored: LensFailure): Response {
-    return Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("incorrect request body or headers"))
+private fun failedToParseRequest(failure: LensFailure): Response {
+    return when (failure.cause) {
+        is MismatchedInputException -> Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("incorrect request body or headers"))
+        else -> Response(UNSUPPORTED_MEDIA_TYPE).with(errorResponseLens of ErrorResponse("invalid content type"))
+    }
 }
 
 private fun chargeTimes(scheduler: Scheduler) = "/charge-time" bind POST to { request ->
