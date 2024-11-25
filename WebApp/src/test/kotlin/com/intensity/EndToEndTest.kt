@@ -187,6 +187,20 @@ class EndToEndTest {
     }
 
     @Test
+    fun `responds with bad request and error when no start timestamp`() {
+        val response = client(
+            Request(POST, "http://localhost:${server.port()}/charge-time")
+                .body(""""endTime": "${"2024-09-02T10:56:00"}","duration":${30}}""")
+        )
+
+        assertThat(response.status, equalTo(BAD_REQUEST))
+        assertThat(
+            response.bodyString(),
+            equalTo(getErrorResponse("incorrect request body or headers"))
+        )
+    }
+
+    @Test
     fun `responds with optimal charge time starting the next day`() {
         scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
         scheduler.hasTrainedForDuration(30)

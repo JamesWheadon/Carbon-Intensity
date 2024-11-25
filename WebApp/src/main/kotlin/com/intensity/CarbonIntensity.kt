@@ -16,6 +16,7 @@ import org.http4k.filter.CorsPolicy
 import org.http4k.filter.ServerFilters
 import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.format.Jackson
+import org.http4k.lens.LensFailure
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.http4k.server.Http4kServer
@@ -45,13 +46,17 @@ fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: Nationa
 
 fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request) -> Response {
     return corsMiddleware.then(
-        CatchLensFailure.then(
+        CatchLensFailure(::failedToParseRequest).then(
             routes(
                 chargeTimes(scheduler),
                 intensities(scheduler, nationalGrid)
             )
         )
     )
+}
+
+private fun failedToParseRequest(ignored: LensFailure): Response {
+    return Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("incorrect request body or headers"))
 }
 
 private fun chargeTimes(scheduler: Scheduler) = "/charge-time" bind POST to { request ->
