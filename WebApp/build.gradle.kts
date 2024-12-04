@@ -19,6 +19,7 @@ dependencies {
     implementation(platform("org.http4k:http4k-bom:5.32.1.0"))
     implementation("org.http4k:http4k-core:${http4kVersion}")
     implementation("org.http4k:http4k-format-jackson:${http4kVersion}")
+    implementation("org.http4k:http4k-contract:${http4kVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}")
     implementation("dev.forkhandles:result4k:2.20.0.0")
 

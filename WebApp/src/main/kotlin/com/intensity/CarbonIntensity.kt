@@ -5,6 +5,14 @@ import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.valueOrNull
+import org.http4k.contract.ContractRoute
+import org.http4k.contract.ErrorResponseRenderer
+import org.http4k.contract.PreFlightExtraction.Companion.None
+import org.http4k.contract.contract
+import org.http4k.contract.meta
+import org.http4k.contract.openapi.ApiInfo
+import org.http4k.contract.openapi.v3.OpenApi3
+import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -16,11 +24,8 @@ import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.filter.CorsPolicy
 import org.http4k.filter.ServerFilters
-import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.format.Jackson
 import org.http4k.lens.LensFailure
-import org.http4k.routing.bind
-import org.http4k.routing.routes
 import org.http4k.server.Http4kServer
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
@@ -48,13 +53,22 @@ fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: Nationa
 
 fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request) -> Response {
     return corsMiddleware.then(
-        CatchLensFailure(::failedToParseRequest).then(
-            routes(
-                chargeTimes(scheduler),
-                intensities(scheduler, nationalGrid)
-            )
-        )
+        contractRoutes(scheduler, nationalGrid)
     )
+}
+
+private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {
+    renderer = OpenApi3(
+        apiInfo = ApiInfo("Carbon Intensity Calculator", "v1.0"),
+        json = Jackson,
+        errorResponseRenderer = object : ErrorResponseRenderer {
+            override fun badRequest(lensFailure: LensFailure) = failedToParseRequest(lensFailure)
+        }
+    )
+    descriptionPath = "/openapi.json"
+    preFlightExtraction = None
+    routes += chargeTimes(scheduler)
+    routes += intensities(scheduler, nationalGrid)
 }
 
 private fun failedToParseRequest(failure: LensFailure): Response {
@@ -64,14 +78,28 @@ private fun failedToParseRequest(failure: LensFailure): Response {
     }
 }
 
-private fun chargeTimes(scheduler: Scheduler) = "/charge-time" bind POST to { request ->
-    val chargeDetails = chargeDetailsLens(request)
-    if (chargeDetails.isValid()) {
-        retrieveChargeTime(scheduler, chargeDetails)
-    } else {
-        Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
+private fun chargeTimes(scheduler: Scheduler) =
+    "/charge-time" meta {
+        summary = "get best time to consume electricity"
+        description =
+            "finds the best time to consume electricity given the start time and the 48 hour data in the scheduler"
+        consumes += APPLICATION_JSON
+        produces += APPLICATION_JSON
+        receiving(
+            chargeDetailsLens to ChargeDetails(
+                Instant.parse("2024-09-30T21:20:00Z"),
+                Instant.parse("2024-10-01T02:30:00Z"),
+                60
+            )
+        )
+    } bindContract POST to { request ->
+        val chargeDetails = chargeDetailsLens(request)
+        if (chargeDetails.isValid()) {
+            retrieveChargeTime(scheduler, chargeDetails)
+        } else {
+            Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
+        }
     }
-}
 
 private fun retrieveChargeTime(
     scheduler: Scheduler,
@@ -96,7 +124,8 @@ private fun retrieveChargeTime(
 private fun intensities(
     scheduler: Scheduler,
     nationalGrid: NationalGrid
-) = "intensities" bind POST to {
+): ContractRoute = "intensities" meta {
+} bindContract POST to { _: Request ->
     val intensitiesData = scheduler.getIntensitiesData()
     val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
     val intensitiesForecast = if (intensitiesData.forCurrentDay(startOfDay)) {

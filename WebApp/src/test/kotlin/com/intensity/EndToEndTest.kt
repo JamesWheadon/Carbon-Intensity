@@ -4,6 +4,7 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.ContentType
+import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
@@ -302,6 +303,16 @@ class EndToEndTest {
                 }"}"""
             )
         )
+    }
+
+    @Test
+    fun `openapi document renders`() {
+        val response = client(
+            Request(GET, "http://localhost:${server.port()}/openapi.json")
+        )
+
+        println(response)
+        assertThat(response.status, equalTo(OK))
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
