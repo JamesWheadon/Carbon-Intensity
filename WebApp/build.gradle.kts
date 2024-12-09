@@ -27,6 +27,7 @@ dependencies {
     testImplementation("org.http4k:http4k-testing-hamkrest:${http4kVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    implementation("org.http4k:http4k-testing-approval:${http4kVersion}")
 }
 
 tasks.test {

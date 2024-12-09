@@ -8,9 +8,14 @@ import dev.forkhandles.result4k.valueOrNull
 import org.http4k.contract.ContractRoute
 import org.http4k.contract.ErrorResponseRenderer
 import org.http4k.contract.PreFlightExtraction.Companion.None
+import org.http4k.contract.Tag
 import org.http4k.contract.contract
 import org.http4k.contract.meta
 import org.http4k.contract.openapi.ApiInfo
+import org.http4k.contract.openapi.ApiRenderer
+import org.http4k.contract.openapi.OpenAPIJackson
+import org.http4k.contract.openapi.OpenApiVersion
+import org.http4k.contract.openapi.v3.AutoJsonToJsonSchema
 import org.http4k.contract.openapi.v3.OpenApi3
 import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Method.POST
@@ -60,10 +65,14 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request)
 private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {
     renderer = OpenApi3(
         apiInfo = ApiInfo("Carbon Intensity Calculator", "v1.0"),
-        json = Jackson,
+        json = OpenAPIJackson,
+        extensions = emptyList(),
+        apiRenderer = ApiRenderer.Auto(OpenAPIJackson, AutoJsonToJsonSchema(OpenAPIJackson, emptyMap())),
         errorResponseRenderer = object : ErrorResponseRenderer {
             override fun badRequest(lensFailure: LensFailure) = failedToParseRequest(lensFailure)
-        }
+        },
+        servers = emptyList(),
+        version = OpenApiVersion._3_0_0
     )
     descriptionPath = "/openapi.json"
     preFlightExtraction = None
@@ -81,6 +90,7 @@ private fun failedToParseRequest(failure: LensFailure): Response {
 private fun chargeTimes(scheduler: Scheduler) =
     "/charge-time" meta {
         summary = "get best time to consume electricity"
+        tags += Tag("Optimisation")
         description =
             "finds the best time to consume electricity given the start time and the 48 hour data in the scheduler"
         consumes += APPLICATION_JSON
@@ -92,6 +102,7 @@ private fun chargeTimes(scheduler: Scheduler) =
                 60
             )
         )
+        returning(OK, chargeTimeResponseLens to ChargeTimeResponse(Instant.parse("2024-09-30T11:30:00Z")))
     } bindContract POST to { request ->
         val chargeDetails = chargeDetailsLens(request)
         if (chargeDetails.isValid()) {
@@ -125,6 +136,19 @@ private fun intensities(
     scheduler: Scheduler,
     nationalGrid: NationalGrid
 ): ContractRoute = "intensities" meta {
+    summary = "Intensity data for the current 48 hour period"
+    description =
+        "Retrieves the intensity data for the current 48 hour period used in the model"
+    tags += Tag("Data")
+    consumes += APPLICATION_JSON
+    produces += APPLICATION_JSON
+    returning(
+        OK,
+        intensitiesResponseLens to IntensitiesResponse(
+            List(48) { 100 },
+            Instant.parse("2024-09-30T00:00:00Z")
+        )
+    )
 } bindContract POST to { _: Request ->
     val intensitiesData = scheduler.getIntensitiesData()
     val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()

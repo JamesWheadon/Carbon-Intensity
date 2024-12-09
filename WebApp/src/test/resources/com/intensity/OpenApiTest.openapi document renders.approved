@@ -1,0 +1,337 @@
+{
+  "info": {
+    "title": "Carbon Intensity Calculator",
+    "version": "v1.0"
+  },
+  "tags": [
+    {
+      "name": "Data"
+    },
+    {
+      "name": "Optimisation"
+    }
+  ],
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/charge-time": {
+      "post": {
+        "summary": "get best time to consume electricity",
+        "description": "finds the best time to consume electricity given the start time and the 48 hour data in the scheduler",
+        "tags": [
+          "Optimisation"
+        ],
+        "parameters": [
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "startTime": "2024-09-30T21:20:00",
+                "endTime": "2024-10-01T02:30:00",
+                "duration": 60
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ChargeDetails"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "chargeTime": "2024-09-30T11:30:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ChargeTimeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+        ],
+        "operationId": "postCharge_time",
+        "deprecated": false
+      }
+    },
+    "/intensities": {
+      "post": {
+        "summary": "Intensity data for the current 48 hour period",
+        "description": "Retrieves the intensity data for the current 48 hour period used in the model",
+        "tags": [
+          "Data"
+        ],
+        "parameters": [
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "intensities": [
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100,
+                    100
+                  ],
+                  "date": "2024-09-30T00:00:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/IntensitiesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+        ],
+        "operationId": "postIntensities",
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChargeTimeResponse": {
+        "properties": {
+          "chargeTime": {
+            "example": "2024-09-30T11:30:00Z",
+            "format": "date-time",
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "example": {
+          "chargeTime": "2024-09-30T11:30:00Z"
+        },
+        "type": "object",
+        "required": [
+          "chargeTime"
+        ]
+      },
+      "ChargeDetails": {
+        "properties": {
+          "startTime": {
+            "example": "2024-09-30T21:20:00Z",
+            "format": "date-time",
+            "type": "string",
+            "nullable": false
+          },
+          "endTime": {
+            "example": "2024-10-01T02:30:00Z",
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "duration": {
+            "example": 60,
+            "format": "int32",
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "example": {
+          "startTime": "2024-09-30T21:20:00Z",
+          "endTime": "2024-10-01T02:30:00Z",
+          "duration": 60
+        },
+        "type": "object",
+        "required": [
+          "startTime"
+        ]
+      },
+      "IntensitiesResponse": {
+        "properties": {
+          "intensities": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "example": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "type": "array",
+            "nullable": false
+          },
+          "date": {
+            "example": "2024-09-30T00:00:00Z",
+            "format": "date-time",
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "example": {
+          "intensities": [
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100
+          ],
+          "date": "2024-09-30T00:00:00Z"
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "intensities"
+        ]
+      }
+    },
+    "securitySchemes": {
+    }
+  },
+  "openapi": "3.0.0"
+}
