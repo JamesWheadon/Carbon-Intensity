@@ -10,12 +10,16 @@ import org.http4k.contract.ErrorResponseRenderer
 import org.http4k.contract.PreFlightExtraction.Companion.None
 import org.http4k.contract.Tag
 import org.http4k.contract.contract
+import org.http4k.contract.jsonschema.v3.AutoJsonToJsonSchema
+import org.http4k.contract.jsonschema.v3.FieldHolder
+import org.http4k.contract.jsonschema.v3.FieldMetadata
+import org.http4k.contract.jsonschema.v3.FieldRetrieval
+import org.http4k.contract.jsonschema.v3.SimpleLookup
 import org.http4k.contract.meta
 import org.http4k.contract.openapi.ApiInfo
 import org.http4k.contract.openapi.ApiRenderer
 import org.http4k.contract.openapi.OpenAPIJackson
 import org.http4k.contract.openapi.OpenApiVersion
-import org.http4k.contract.openapi.v3.AutoJsonToJsonSchema
 import org.http4k.contract.openapi.v3.OpenApi3
 import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Method.POST
@@ -67,7 +71,19 @@ private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = c
         apiInfo = ApiInfo("Carbon Intensity Calculator", "v1.0"),
         json = OpenAPIJackson,
         extensions = emptyList(),
-        apiRenderer = ApiRenderer.Auto(OpenAPIJackson, AutoJsonToJsonSchema(OpenAPIJackson, emptyMap())),
+        apiRenderer = ApiRenderer.Auto(OpenAPIJackson,
+            AutoJsonToJsonSchema(OpenAPIJackson, FieldRetrieval.compose(
+                SimpleLookup(
+                    metadataRetrievalStrategy = { a, b ->
+                        when (a) {
+                            is ContractSchema -> a.schemas()[b] ?: FieldMetadata()
+                            is FieldHolder -> FieldMetadata("format" to "int32")
+                            else -> FieldMetadata()
+                        }
+                    }
+                )
+            ))
+        ),
         errorResponseRenderer = object : ErrorResponseRenderer {
             override fun badRequest(lensFailure: LensFailure) = failedToParseRequest(lensFailure)
         },
@@ -180,13 +196,36 @@ private fun updateSchedulerIntensities(
     return intensitiesForecast
 }
 
-data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?)
+data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?) : ContractSchema {
+    override fun schemas(): Map<String, FieldMetadata> =
+        mapOf(
+            "startTime" to FieldMetadata("format" to "date-time"),
+            "endTime" to FieldMetadata("format" to "date-time"),
+            "duration" to FieldMetadata("format" to "int32")
+        )
+}
 
 private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.plusSeconds(duration?.times(60L) ?: 0)
+data class IntensitiesResponse(val intensities: List<Int>, val date: Instant) : ContractSchema {
+    override fun schemas(): Map<String, FieldMetadata> =
+        mapOf(
+            "intensities" to FieldMetadata("minimum" to 48, "maximum" to 48),
+            "date" to FieldMetadata("format" to "date-time")
+        )
+}
 
-data class IntensitiesResponse(val intensities: List<Int>, val date: Instant)
-data class ChargeTimeResponse(val chargeTime: Instant)
+data class ChargeTimeResponse(val chargeTime: Instant) : ContractSchema {
+    override fun schemas(): Map<String, FieldMetadata> =
+        mapOf(
+            "chargeTime" to FieldMetadata("format" to "date-time")
+        )
+}
+
 data class ErrorResponse(val error: String)
+
+interface ContractSchema {
+    fun schemas(): Map<String, FieldMetadata>
+}
 
 val intensitiesResponseLens = SchedulerJackson.autoBody<IntensitiesResponse>().toLens()
 val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()
