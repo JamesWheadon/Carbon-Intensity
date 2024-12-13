@@ -260,8 +260,8 @@
               100,
               100
             ],
-            "maximum": 48,
-            "minimum": 48,
+            "maxItems": 48,
+            "minItems": 48,
             "type": "array",
             "nullable": false
           },

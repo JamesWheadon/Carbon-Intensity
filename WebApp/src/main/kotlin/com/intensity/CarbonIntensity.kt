@@ -209,7 +209,7 @@ private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.pl
 data class IntensitiesResponse(val intensities: List<Int>, val date: Instant) : ContractSchema {
     override fun schemas(): Map<String, FieldMetadata> =
         mapOf(
-            "intensities" to FieldMetadata("minimum" to 48, "maximum" to 48),
+            "intensities" to FieldMetadata("minItems" to 48, "maxItems" to 48),
             "date" to FieldMetadata("format" to "date-time")
         )
 }
