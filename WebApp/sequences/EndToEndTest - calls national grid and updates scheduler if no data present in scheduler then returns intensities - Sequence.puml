@@ -1,0 +1,26 @@
+@startuml
+title EndToEndTest - calls national grid and updates scheduler if no data present in scheduler then returns intensities
+participant "User"
+participant "App"
+participant "Scheduler"
+participant "National Grid"
+"User" -> "App": POST intensities
+activate "App"
+"App" -> "Scheduler": GET intensities
+activate "Scheduler"
+
+"Scheduler" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found
+deactivate "Scheduler"
+"App" -> "National Grid": GET intensity/{time}/fw48h
+activate "National Grid"
+
+"National Grid" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "National Grid"
+"App" -> "Scheduler": POST intensities
+activate "Scheduler"
+
+"Scheduler" -[#DarkGreen]> "App": <color:DarkGreen> 204 No Content
+deactivate "Scheduler"
+"App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
+deactivate "App"
+@enduml

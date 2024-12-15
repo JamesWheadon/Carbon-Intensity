@@ -23,11 +23,11 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}")
     implementation("dev.forkhandles:result4k:2.20.0.0")
 
-    testImplementation("org.http4k:http4k-testing-approval:${http4kVersion}")
-    testImplementation("org.http4k:http4k-testing-hamkrest:${http4kVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
-    implementation("org.http4k:http4k-testing-approval:${http4kVersion}")
+    testImplementation("org.http4k:http4k-testing-approval:${http4kVersion}")
+    testImplementation("org.http4k:http4k-testing-hamkrest:${http4kVersion}")
+    testImplementation("org.http4k:http4k-testing-tracerbullet:${http4kVersion}")
 }
 
 tasks.test {

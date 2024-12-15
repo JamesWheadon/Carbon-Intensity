@@ -2,11 +2,14 @@ package com.intensity
 
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
+import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
+import org.http4k.core.NoOp
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
@@ -47,19 +50,21 @@ class NationalGridTest : NationalGridContractTest() {
     override val nationalGrid = NationalGridCloud(nationalGridClient())
 }
 
-class FakeNationalGrid : HttpHandler {
+class FakeNationalGrid(events: Filter = Filter.NoOp) : HttpHandler {
     private var dayData: NationalGridData? = null
 
-    val routes = routes(
-        "/intensity/{time}/fw48h" bind GET to { request ->
-            if (dayData != null) {
-                Response(OK).with(nationalGridDataLens of dayData!!)
-            } else {
-                val startTime = Instant.parse(request.path("time")!!)
-                val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60))
-                Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+    val routes = events.then(
+        routes(
+            "/intensity/{time}/fw48h" bind GET to { request ->
+                if (dayData != null) {
+                    Response(OK).with(nationalGridDataLens of dayData!!)
+                } else {
+                    val startTime = Instant.parse(request.path("time")!!)
+                    val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60))
+                    Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+                }
             }
-        }
+        )
     )
 
     private fun createHalfHourWindows(startTime: Instant): MutableList<HalfHourData> {

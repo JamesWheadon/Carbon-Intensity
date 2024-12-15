@@ -1,0 +1,10 @@
+@startuml
+title EndToEndTest - responds with bad request and error if end time before start
+participant "User"
+participant "App"
+"User" -> "App": POST charge-time
+activate "App"
+
+"App" X-[#DarkOrange]> "User": <color:DarkOrange> 400 Bad Request
+deactivate "App"
+@enduml

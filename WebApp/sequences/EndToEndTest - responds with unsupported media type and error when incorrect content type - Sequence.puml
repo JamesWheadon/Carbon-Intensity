@@ -1,0 +1,10 @@
+@startuml
+title EndToEndTest - responds with unsupported media type and error when incorrect content type
+participant "User"
+participant "App"
+"User" -> "App": POST charge-time
+activate "App"
+
+"App" X-[#DarkOrange]> "User": <color:DarkOrange> 415 Unsupported Media Type
+deactivate "App"
+@enduml

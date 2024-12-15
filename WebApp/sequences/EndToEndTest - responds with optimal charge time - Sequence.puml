@@ -1,0 +1,15 @@
+@startuml
+title EndToEndTest - responds with optimal charge time
+participant "User"
+participant "App"
+participant "Scheduler"
+"User" -> "App": POST charge-time
+activate "App"
+"App" -> "Scheduler": GET charge-time
+activate "Scheduler"
+
+"Scheduler" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "Scheduler"
+"App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
+deactivate "App"
+@enduml
