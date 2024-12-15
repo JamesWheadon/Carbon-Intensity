@@ -205,7 +205,7 @@ class EndToEndTest {
     }
 
     @Test
-    fun `responds with bad request and error when incorrect content type`() {
+    fun `responds with unsupported media type and error when incorrect content type`() {
         val response = client(
             Request(POST, "http://localhost:${server.port()}/charge-time")
                 .contentType(ContentType.MULTIPART_FORM_DATA)
