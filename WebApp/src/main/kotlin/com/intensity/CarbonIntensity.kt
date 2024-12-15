@@ -22,6 +22,7 @@ import org.http4k.contract.openapi.OpenAPIJackson
 import org.http4k.contract.openapi.OpenApiVersion
 import org.http4k.contract.openapi.v3.OpenApi3
 import org.http4k.core.ContentType.Companion.APPLICATION_JSON
+import org.http4k.core.HttpHandler
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -60,7 +61,7 @@ fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: Nationa
     return carbonIntensity(scheduler, nationalGrid).asServer(SunHttp(port))
 }
 
-fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): (Request) -> Response {
+fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): HttpHandler {
     return corsMiddleware.then(
         contractRoutes(scheduler, nationalGrid)
     )
