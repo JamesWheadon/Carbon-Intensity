@@ -71,16 +71,21 @@ class EndToEndTest {
         TraceRenderPersistence.FileSystem(File("./sequences"))
     )
 
-    private val scheduler = FakeScheduler(serverStack(traceEvents("Scheduler").then(events)))
-    private val nationalGrid = FakeNationalGrid(serverStack(traceEvents("National Grid").then(events)))
+    private val scheduler = FakeScheduler()
+    private val nationalGrid = FakeNationalGrid()
     private val appClientStack = clientStack(traceEvents("App").then(events))
     private val server = serverStack(traceEvents("App").then(events)).then(
         carbonIntensity(
             PythonScheduler(
-                appClientStack.then(scheduler)
+                appClientStack.then(TracedHttpHandler(scheduler, serverStack(traceEvents("Scheduler").then(events))))
             ),
             NationalGridCloud(
-                appClientStack.then(nationalGrid)
+                appClientStack.then(
+                    TracedHttpHandler(
+                        nationalGrid,
+                        serverStack(traceEvents("National Grid").then(events))
+                    )
+                )
             )
         )
     )
