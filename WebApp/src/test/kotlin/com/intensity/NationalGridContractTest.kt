@@ -102,5 +102,5 @@ class FakeNationalGrid : HttpHandler {
         )
     }
 
-    override fun invoke(request: Request): Response = routes(request)
+    override fun invoke(request: Request) = routes(request)
 }

@@ -297,5 +297,5 @@ class FakeScheduler : HttpHandler {
         data = intensities
     }
 
-    override fun invoke(request: Request): Response = routes(request)
+    override fun invoke(request: Request) = routes(request)
 }

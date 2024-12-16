@@ -51,14 +51,14 @@ class EndToEndTest {
 
     private val scheduler = FakeScheduler()
     private val nationalGrid = FakeNationalGrid()
-    private val appClientStack = clientStack(traceEvents("App").then(events))
-    private val server = serverStack(traceEvents("App").then(events)).then(
+    private val appClientStack = clientStack("App", events)
+    private val server = serverStack("App", events).then(
         carbonIntensity(
             PythonScheduler(
-                appClientStack.then(scheduler.traced(serverStack(traceEvents("Scheduler").then(events))))
+                appClientStack.then(scheduler.traced(serverStack("Scheduler", events)))
             ),
             NationalGridCloud(
-                appClientStack.then(nationalGrid.traced(serverStack(traceEvents("National Grid").then(events))))
+                appClientStack.then(nationalGrid.traced(serverStack("National Grid", events)))
             )
         )
     )
@@ -337,24 +337,21 @@ class EndToEndTest {
 }
 
 private val actor = ActorResolver {
-    println(it)
     Actor(it.metadata["service"].toString(), ActorType.System)
 }
 
 private fun traceEvents(actorName: String) = AddZipkinTraces().then(AddServiceName(actorName))
 
-private fun clientStack(events: Events) =
+private fun clientStack(actorName: String, events: Events) =
     ClientFilters.RequestTracing()
-        .then(ReportHttpTransaction { events(Outgoing(it)) })
+        .then(ReportHttpTransaction { traceEvents(actorName).then(events)(Outgoing(it)) })
 
-private fun serverStack(events: Events) =
+private fun serverStack(actorName: String, events: Events) =
     ServerFilters.RequestTracing()
-        .then(ReportHttpTransaction { events(Incoming(it)) })
+        .then(ReportHttpTransaction { traceEvents(actorName).then(events)(Incoming(it)) })
 
-private class User(rawEvents: Events, rawHttp: HttpHandler) {
-    private val events = traceEvents("User").then(rawEvents)
-
-    private val http = ResetRequestTracing().then(clientStack(events)).then(rawHttp)
+private class User(events: Events, rawHttp: HttpHandler) {
+    private val http = ResetRequestTracing().then(clientStack("User", events)).then(rawHttp)
 
     fun call(request: Request) = http(request)
 }
