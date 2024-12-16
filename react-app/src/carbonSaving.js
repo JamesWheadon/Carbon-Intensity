@@ -1,10 +1,12 @@
 function ChargeTimeMessage({ chargeTime, intensityData, duration, comparisonTime }) {
     const saving = getCarbonSaving(chargeTime, intensityData, duration, comparisonTime);
-    const savingMessage = saving > 0 ? "Saving:" : "Extra Intensity:";
+    const savingMessage = saving > 0 ? <h3>Saving: {saving} gCO2/kWh</h3> 
+    : saving < 0 ? <h3>Extra Intensity: {Math.abs(saving)} gCO2/kWh</h3> 
+    : null;
     return (
         <div>
             <h3>Best Time: {dateTimeToDisplayTime(chargeTime)}</h3>
-            <h3>{savingMessage} {Math.abs(saving)} gCO2/kWh</h3>
+            {savingMessage}
         </div>
     );
 }
