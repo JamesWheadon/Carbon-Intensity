@@ -1,3 +1,12 @@
+function ChargeTimeMessage({ chargeTime, intensityData, duration, comparisonTime }) {
+    return (
+        <div>
+            <h3>Best Time: {dateTimeToDisplayTime(chargeTime)}</h3>
+            <h3>Saving: {getCarbonSaving(chargeTime, intensityData, duration, comparisonTime)} gCO2/kWh</h3>
+        </div>
+    );
+}
+
 export function dateTimeToDisplayTime(dateTime) {
     const h = twoDigitDisplay(dateTime.getHours());
     const m = twoDigitDisplay(dateTime.getMinutes());
@@ -21,3 +30,5 @@ export function getCarbonSaving(chargeTime, intensityData, duration, comparisonD
 function twoDigitDisplay(value) {
     return (value < 10) ? "0" + value : value;
 }
+
+export default ChargeTimeMessage
