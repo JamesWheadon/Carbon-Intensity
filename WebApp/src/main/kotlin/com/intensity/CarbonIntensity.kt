@@ -22,7 +22,6 @@ import org.http4k.contract.openapi.OpenAPIJackson
 import org.http4k.contract.openapi.OpenApiVersion
 import org.http4k.contract.openapi.v3.OpenApi3
 import org.http4k.core.ContentType.Companion.APPLICATION_JSON
-import org.http4k.core.HttpHandler
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -46,7 +45,7 @@ import java.time.format.DateTimeFormatter
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 9000
-    val schedulerUrl = System.getenv("SCHEDULER_URL") ?: "http://localhost:8000"
+    val schedulerUrl = System.getenv("SCHEDULER_URL") ?: "http://localhost:8080"
     val server = carbonIntensityServer(
         port,
         PythonScheduler(schedulerClient(schedulerUrl)),
@@ -61,11 +60,10 @@ fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: Nationa
     return carbonIntensity(scheduler, nationalGrid).asServer(SunHttp(port))
 }
 
-fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid): HttpHandler {
-    return corsMiddleware.then(
+fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid) =
+    corsMiddleware.then(
         contractRoutes(scheduler, nationalGrid)
     )
-}
 
 private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {
     renderer = OpenApi3(

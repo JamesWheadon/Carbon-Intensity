@@ -19,7 +19,7 @@ class Scheduler:
         self.env = CarbonIntensityEnv(intensities)
         self.durations_trained.clear()
         self.num_time_slots = len(intensities * 2)
-        self.Q_table = np.zeros((len(self.durations), self.num_time_slots, self.num_time_slots))
+        self.Q_table = np.zeros((len(self.durations), self.num_time_slots))
 
     def indexes_from_start_and_end(self, timestamp, duration, end_timestamp=None):
         action_index = self.earliest_index_from_timestamp(timestamp)
@@ -70,33 +70,30 @@ class InvalidChargeTimeError(Exception):
 class UseTimeScheduler(Scheduler):
     def __init__(self):
         super().__init__()
-        self.alpha = 0.1
+        self.alpha = 0.9
         self.gamma = 0.2
         self.epsilon = 1.0
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
-        self.num_episodes = 500
+        self.num_episodes = 2500
 
     def train(self, duration):
         if not self.env:
             raise TypeError("No intensity data for scheduler")
         duration_index = self.durations.index(duration)
         for episode in range(self.num_episodes):
-            state = 0
-            while state + duration < self.num_time_slots:
-                if random.uniform(0, 1) < self.epsilon:
-                    action = random.randint(state, self.num_time_slots - duration)
-                else:
-                    action = np.argmax(
-                        self.Q_table[duration_index][state][state:self.num_time_slots - duration + 1]) + state
+            if random.uniform(0, 1) < self.epsilon:
+                action = random.randint(0, self.num_time_slots - duration)
+            else:
+                action = np.argmax(self.Q_table[duration_index][0:self.num_time_slots - duration + 1])
 
-                reward = self.env.step(action, duration)
-                best_next_action = np.argmax(self.Q_table[duration_index][action])
-                self.Q_table[duration_index, state, action] = (
-                        self.Q_table[duration_index, state, action] + self.alpha *
-                        (reward + self.gamma * self.Q_table[duration_index, action, best_next_action] -
-                         self.Q_table[duration_index, state, action]))
-                state += 1
+            reward = self.env.step(action, duration)
+            best_next_action = np.argmax(self.Q_table[duration_index][action])
+            self.Q_table[duration_index, action] = (
+                    self.Q_table[duration_index, action] +
+                    self.alpha * (reward + self.gamma * self.Q_table[duration_index, best_next_action] -
+                                  self.Q_table[duration_index, action])
+            )
 
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
@@ -109,8 +106,8 @@ class UseTimeScheduler(Scheduler):
         if action_index is None:
             return None
         action_to_take = np.argmax(
-            self.Q_table[self.durations.index(duration)][action_index][
-            action_index:latest_action_index + 1]) + action_index
+            self.Q_table[self.durations.index(duration)][action_index:latest_action_index + 1]
+        ) + action_index
         return self.intensities_date + datetime.timedelta(seconds=int(action_to_take) * 900)
 
 
