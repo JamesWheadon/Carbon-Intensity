@@ -5,6 +5,7 @@ import com.natpryce.hamkrest.contains
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.failureOrNull
 import dev.forkhandles.result4k.valueOrNull
+import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
@@ -199,13 +200,13 @@ class SchedulerTest : SchedulerContractTest() {
     override val scheduler = PythonScheduler(schedulerClient("http://localhost:8000"))
 }
 
-class FakeScheduler : FakeHttpHandler {
+class FakeScheduler : HttpHandler {
     private val chargeTimes = mutableMapOf<Instant, Instant>()
     private val errorChargeTime = mutableListOf<Instant>()
     private val trainedDurations = mutableSetOf<Int>()
     var data: Intensities? = null
     var trainedCalled = 0
-    override val routes = routes(
+    val routes = routes(
         "/charge-time" bind GET to { request ->
             val current = Query.map(
                 BiDiMapping(

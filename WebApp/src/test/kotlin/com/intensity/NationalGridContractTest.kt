@@ -2,6 +2,7 @@ package com.intensity
 
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
+import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -46,10 +47,10 @@ class NationalGridTest : NationalGridContractTest() {
     override val nationalGrid = NationalGridCloud(nationalGridClient())
 }
 
-class FakeNationalGrid : FakeHttpHandler {
+class FakeNationalGrid : HttpHandler {
     private var dayData: NationalGridData? = null
 
-    override val routes = routes(
+    val routes = routes(
         "/intensity/{time}/fw48h" bind GET to { request ->
             if (dayData != null) {
                 Response(OK).with(nationalGridDataLens of dayData!!)

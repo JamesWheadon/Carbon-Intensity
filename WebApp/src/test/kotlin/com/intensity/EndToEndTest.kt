@@ -3,6 +3,7 @@ package com.intensity
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.ContentType.Companion.MULTIPART_FORM_DATA
+import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
@@ -40,29 +41,6 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-private val actor = ActorResolver {
-    println(it)
-    Actor(it.metadata["service"].toString(), ActorType.System)
-}
-
-private fun traceEvents(actorName: String) = AddZipkinTraces().then(AddServiceName(actorName))
-
-private fun clientStack(events: Events) =
-    ClientFilters.RequestTracing()
-        .then(ReportHttpTransaction { events(Outgoing(it)) })
-
-private fun serverStack(events: Events) =
-    ServerFilters.RequestTracing()
-        .then(ReportHttpTransaction { events(Incoming(it)) })
-
-private class User(rawEvents: Events, rawHttp: HttpHandler) {
-    private val events = traceEvents("User").then(rawEvents)
-
-    private val http = ResetRequestTracing().then(clientStack(events)).then(rawHttp)
-
-    fun call(request: Request) = http(request)
-}
-
 class EndToEndTest {
     @RegisterExtension
     val events = TracerBulletEvents(
@@ -77,15 +55,10 @@ class EndToEndTest {
     private val server = serverStack(traceEvents("App").then(events)).then(
         carbonIntensity(
             PythonScheduler(
-                appClientStack.then(TracedHttpHandler(scheduler, serverStack(traceEvents("Scheduler").then(events))))
+                appClientStack.then(scheduler.traced(serverStack(traceEvents("Scheduler").then(events))))
             ),
             NationalGridCloud(
-                appClientStack.then(
-                    TracedHttpHandler(
-                        nationalGrid,
-                        serverStack(traceEvents("National Grid").then(events))
-                    )
-                )
+                appClientStack.then(nationalGrid.traced(serverStack(traceEvents("National Grid").then(events))))
             )
         )
     )
@@ -362,3 +335,28 @@ class EndToEndTest {
     private fun intensityList(intensity: Int) =
         List(96) { intensity }.joinToString(prefix = "[", separator = ",", postfix = "]")
 }
+
+private val actor = ActorResolver {
+    println(it)
+    Actor(it.metadata["service"].toString(), ActorType.System)
+}
+
+private fun traceEvents(actorName: String) = AddZipkinTraces().then(AddServiceName(actorName))
+
+private fun clientStack(events: Events) =
+    ClientFilters.RequestTracing()
+        .then(ReportHttpTransaction { events(Outgoing(it)) })
+
+private fun serverStack(events: Events) =
+    ServerFilters.RequestTracing()
+        .then(ReportHttpTransaction { events(Incoming(it)) })
+
+private class User(rawEvents: Events, rawHttp: HttpHandler) {
+    private val events = traceEvents("User").then(rawEvents)
+
+    private val http = ResetRequestTracing().then(clientStack(events)).then(rawHttp)
+
+    fun call(request: Request) = http(request)
+}
+
+fun HttpHandler.traced(events: Filter) = events.then(this)
