@@ -11,7 +11,7 @@ function ChargeTimeMessage({ chargeTime, intensityData, duration, comparisonTime
     );
 }
 
-export function dateTimeToDisplayTime(dateTime) {
+function dateTimeToDisplayTime(dateTime) {
     const h = twoDigitDisplay(dateTime.getHours());
     const m = twoDigitDisplay(dateTime.getMinutes());
     const d = twoDigitDisplay(dateTime.getDate());
@@ -19,7 +19,7 @@ export function dateTimeToDisplayTime(dateTime) {
     return h + ':' + m + " " + d + "/" + month
 }
 
-export function getCarbonSaving(chargeTime, intensityData, duration, comparisonDate) {
+function getCarbonSaving(chargeTime, intensityData, duration, comparisonDate) {
     const chargeMinutes = Math.floor((chargeTime - intensityData[0].time) / (15 * 60000));
     const currentMinutes = Math.floor((comparisonDate - intensityData[0].time) / (15 * 60000));
     var chargeTotal = 0;

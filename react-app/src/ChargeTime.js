@@ -10,11 +10,7 @@ function ChargeTime({ intensityData }) {
 
     if (bestTime) {
         if ("chargeTime" in bestTime) {
-            chargeTimeMessage = 
-                <div>
-                    <h3>Best Time: {dateTimeToDisplayTime(bestTime.chargeTime)}</h3>
-                    <h3>Saving: {getCarbonSaving(bestTime.chargeTime, intensityData, duration, Date.now())} gCO2/kWh</h3>
-                </div>
+            chargeTimeMessage = <ChargeTimeMessage  chargeTime={bestTime.chargeTime} intensityData={intensityData} duration={duration} comparisonTime={Date.now()}/>
         } else if ("error" in bestTime) {
             chargeTimeMessage = <h3>Could not get best charge time, please try again</h3>
         }
