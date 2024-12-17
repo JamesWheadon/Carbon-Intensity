@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { chargeTime } from './getChargeTime';
-import { dateTimeToDisplayTime, getCarbonSaving } from './carbonSaving';
+import ChargeTimeMessage from './carbonSaving';
 import ChargeTimeForm from './ChargeTimeForm';
 
 function ChargeTime({ intensityData }) {
