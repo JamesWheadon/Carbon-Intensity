@@ -3,15 +3,20 @@ package com.intensity
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
+import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Uri
+import org.http4k.core.then
+import org.http4k.filter.ClientFilters
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -43,7 +48,7 @@ abstract class OctopusContractTest {
             "2023-03-26T01:29Z"
         )
 
-        assertThat(prices.results.map(HalfHourPrices::wholesalePrice), equalTo(listOf(27.2, 26.7, 26.9)))
+        assertThat(prices.results.map(HalfHourPrices::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
     }
 
     @Test
@@ -57,7 +62,7 @@ abstract class OctopusContractTest {
 
         assertThat(
             prices.results.map(HalfHourPrices::wholesalePrice),
-            equalTo(listOf(15.9, 17.8, 20.5, 13.6, 15.0, 24.7, 27.1, 13.4))
+            equalTo(listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2))
         )
         assertThat(prices.results.last().from, equalTo(Instant.parse("2023-03-28T01:00:00Z")))
         assertThat(prices.results.first().to, equalTo(Instant.parse("2023-03-28T05:00:00Z")))
@@ -84,10 +89,10 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
 class FakeOctopusTest : OctopusContractTest() {
     private val fakeOctopus = FakeOctopus().also { fake ->
         fake.setPricesFor("E-1R-AGILE-FLEX-22-11-25-C" to "2023-03-26T00:00:00Z", listOf(23.4, 26.0, 24.3))
-        fake.setPricesFor("E-1R-AGILE-FLEX-22-11-25-B" to "2023-03-26T00:00:00Z", listOf(27.2, 26.7, 26.9))
+        fake.setPricesFor("E-1R-AGILE-FLEX-22-11-25-B" to "2023-03-26T00:00:00Z", listOf(23.4, 26.0, 24.3))
         fake.setPricesFor(
             "E-1R-AGILE-FLEX-22-11-25-C" to "2023-03-28T01:00:00Z",
-            listOf(15.9, 17.8, 20.5, 13.6, 15.0, 24.7, 27.1, 13.4)
+            listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2)
         )
     }
 
@@ -96,6 +101,14 @@ class FakeOctopusTest : OctopusContractTest() {
             fakeOctopus
         )
 }
+
+@Disabled
+class OctopusTest : OctopusContractTest() {
+    override val octopus = OctopusCloud(octopusClient())
+}
+
+fun octopusClient() = ClientFilters.SetBaseUriFrom(Uri.of("https://api.octopus.energy/v1/products"))
+    .then(JavaHttpClient())
 
 class FakeOctopus : HttpHandler {
     private val tariffCodePrices = mutableMapOf<Pair<String, String>, List<Double>>()
@@ -121,7 +134,7 @@ class FakeOctopus : HttpHandler {
                 halfHourPrices.add(
                     """{
                             "value_exc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i]},
-                            "value_inc_vat":24.57,
+                            "value_inc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i] * 1.05},
                             "valid_from":"${periodFrom.plusSeconds(i * 1800L)}",
                             "valid_to":"${periodFrom.plusSeconds((i + 1) * 1800L)}",
                             "payment_method":null
