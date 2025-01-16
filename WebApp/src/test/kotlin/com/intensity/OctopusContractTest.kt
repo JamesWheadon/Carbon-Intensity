@@ -87,6 +87,21 @@ abstract class OctopusContractTest {
             equalTo(Failure("Incorrect Octopus product code"))
         )
     }
+
+    @Test
+    fun `handles no tariff existing`() {
+        val prices = octopus.prices(
+            "AGILE-FLEX-22-11-25",
+            "E-1R-AGILE-FLEX",
+            "2023-03-28T01:00Z",
+            "2023-03-28T04:59Z"
+        )
+
+        assertThat(
+            prices,
+            equalTo(Failure("Incorrect Octopus tariff code"))
+        )
+    }
 }
 
 interface Octopus {
@@ -108,7 +123,7 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
         )
         return when (response.status) {
             OK -> Success(pricesLens(response))
-            else -> Failure("Incorrect Octopus product code")
+            else -> octopusErrorLens(response).toFailure()
         }
     }
 }
@@ -153,7 +168,7 @@ class FakeOctopus : HttpHandler {
         "/{productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates" bind GET to { request ->
             val productCode = request.path("productCode")!!
             val tariffCode = request.path("tariffCode")!!
-            if (products.contains(productCode)) {
+            if (products.contains(productCode) && tariffCodePrices.keys.any { it.first == tariffCode }) {
                 val periodFrom =
                     Instant.ofEpochSecond(
                         parseTimestamp(request.query("period_from")!!).epochSecond / 1800 * 1800
@@ -188,6 +203,8 @@ class FakeOctopus : HttpHandler {
                         ${halfHourPrices.reversed().joinToString(",", "[", "]")}
                     }""".trimIndent()
                 )
+            } else if (products.contains(productCode)) {
+                Response(NOT_FOUND).body("""{"detail":"No ElectricityTariff matches the given query."}""")
             } else {
                 Response(NOT_FOUND).body("""{"detail":"No EnergyProduct matches the given query."}""")
             }
@@ -214,4 +231,14 @@ data class HalfHourPrices(
     @JsonProperty("valid_to") val to: Instant
 )
 
+data class OctopusError(val detail: String) {
+    fun toFailure() = Failure(
+        when (detail) {
+            "No ElectricityTariff matches the given query." -> "Incorrect Octopus tariff code"
+            else -> "Incorrect Octopus product code"
+        }
+    )
+}
+
 val pricesLens = Jackson.autoBody<Prices>().toLens()
+val octopusErrorLens = Jackson.autoBody<OctopusError>().toLens()
