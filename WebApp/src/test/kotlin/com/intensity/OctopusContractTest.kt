@@ -83,6 +83,13 @@ abstract class OctopusContractTest {
     }
 
     @Test
+    fun `can get product information`() {
+        val productDetails = octopus.product("AGILE-FLEX-22-11-25").valueOrNull()!!
+
+        assertThat(productDetails.tariffs["_A"]!!.monthly.code, equalTo("E-1R-AGILE-FLEX-22-11-25-A"))
+    }
+
+    @Test
     fun `handles no product existing`() {
         val prices = octopus.prices(
             "AGILE-FLEX",
@@ -147,6 +154,7 @@ abstract class OctopusContractTest {
 interface Octopus {
     fun prices(productCode: String, tariffCode: String, periodFrom: String, periodTo: String): Result<Prices, String>
     fun products(): Result<Products, String>
+    fun product(productCode: String): Result<ProductDetails, String>
 }
 
 class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
@@ -178,6 +186,19 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
                         "/"
                     )
                 )
+            )
+        )
+    }
+
+    override fun product(productCode: String): Result<ProductDetails, String> {
+        return Success(
+            productDetailsLens(
+                httpHandler(
+                    Request(
+                        GET,
+                        "/$productCode/"
+                    )
+                ).also { println(it) }
             )
         )
     }
@@ -235,6 +256,21 @@ class FakeOctopus : HttpHandler {
                             }
                         ]
                     }""".trimIndent()
+            )
+        },
+        "/{productCode}" bind GET to {
+            Response(OK).body(
+                """
+                    {
+                        "single_register_electricity_tariffs": {
+                            "_A": {
+                                "direct_debit_monthly": {
+                                    "code": "E-1R-AGILE-FLEX-22-11-25-A"
+                                }
+                            }
+                        }
+                    }
+                """.trimIndent()
             )
         },
         "/{productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates" bind GET to { request ->
@@ -324,6 +360,10 @@ data class Product(
     val brand: String
 )
 
+data class ProductDetails(@JsonProperty("single_register_electricity_tariffs") val tariffs: Map<String, TariffDetails>)
+data class TariffDetails(@JsonProperty("direct_debit_monthly") val monthly: TariffFees)
+data class TariffFees(val code: String)
+
 data class OctopusError(val detail: String) {
     fun toFailure() = Failure(
         when (detail) {
@@ -335,4 +375,5 @@ data class OctopusError(val detail: String) {
 
 val pricesLens = Jackson.autoBody<Prices>().toLens()
 val productsLens = Jackson.autoBody<Products>().toLens()
+val productDetailsLens = Jackson.autoBody<ProductDetails>().toLens()
 val octopusErrorLens = Jackson.autoBody<OctopusError>().toLens()
