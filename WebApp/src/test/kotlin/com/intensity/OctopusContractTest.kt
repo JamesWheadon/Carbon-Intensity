@@ -202,7 +202,8 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
         )
         return when (response.status) {
             OK -> Success(productDetailsLens(response))
-            else -> octopusErrorLens(response).toFailure()
+            NOT_FOUND -> octopusErrorLens(response).toFailure()
+            else -> Failure("Failure communicating with Octopus")
         }
     }
 }
@@ -236,6 +237,14 @@ class FakeOctopusTest : OctopusContractTest() {
         val products = octopus.products()
 
         assertThat(products, equalTo(Failure("Failure communicating with Octopus")))
+    }
+
+    @Test
+    fun `handles failure getting product details`() {
+        fakeOctopus.fail()
+        val productDetails = octopus.product("AGILE")
+
+        assertThat(productDetails, equalTo(Failure("Failure communicating with Octopus")))
     }
 }
 
