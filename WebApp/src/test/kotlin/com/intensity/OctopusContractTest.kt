@@ -13,6 +13,7 @@ import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Uri
@@ -188,16 +189,11 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
     }
 
     override fun products(): Result<Products, String> {
-        return Success(
-            productsLens(
-                httpHandler(
-                    Request(
-                        GET,
-                        "/"
-                    )
-                )
-            )
-        )
+        val response = httpHandler(Request(GET, "/"))
+        return when (response.status) {
+            OK -> Success(productsLens(response))
+            else -> Failure("Failure communicating with Octopus")
+        }
     }
 
     override fun product(productCode: String): Result<ProductDetails, String> {
@@ -233,6 +229,14 @@ class FakeOctopusTest : OctopusContractTest() {
         OctopusCloud(
             fakeOctopus
         )
+
+    @Test
+    fun `handles failure getting products`() {
+        fakeOctopus.fail()
+        val products = octopus.products()
+
+        assertThat(products, equalTo(Failure("Failure communicating with Octopus")))
+    }
 }
 
 @Disabled
@@ -246,6 +250,7 @@ fun octopusClient() = ClientFilters.SetBaseUriFrom(Uri.of("https://api.octopus.e
 class FakeOctopus : HttpHandler {
     private val products = mutableSetOf<String>()
     private val tariffCodePrices = mutableMapOf<Pair<String, String>, List<Double>>()
+    private var fail = false
 
     val routes = routes(
         "/" bind GET to {
@@ -354,7 +359,16 @@ class FakeOctopus : HttpHandler {
         tariffCodePrices[tariffCodeAtTime] = prices
     }
 
-    override fun invoke(request: Request) = routes(request)
+    fun fail() {
+        fail = true
+    }
+
+    override fun invoke(request: Request): Response {
+        return when (fail) {
+            true -> Response(INTERNAL_SERVER_ERROR)
+            false -> routes(request)
+        }
+    }
 }
 
 data class Prices(val results: List<HalfHourPrices>)
