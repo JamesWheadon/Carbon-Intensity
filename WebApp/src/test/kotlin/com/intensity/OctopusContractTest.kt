@@ -90,6 +90,16 @@ abstract class OctopusContractTest {
     }
 
     @Test
+    fun `handles no product details existing`() {
+        val productDetails = octopus.product("AGILE-FLEX")
+
+        assertThat(
+            productDetails,
+            equalTo(Failure("Incorrect Octopus product code"))
+        )
+    }
+
+    @Test
     fun `handles no product existing`() {
         val prices = octopus.prices(
             "AGILE-FLEX",
@@ -191,16 +201,13 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
     }
 
     override fun product(productCode: String): Result<ProductDetails, String> {
-        return Success(
-            productDetailsLens(
-                httpHandler(
-                    Request(
-                        GET,
-                        "/$productCode/"
-                    )
-                ).also { println(it) }
-            )
+        val response = httpHandler(
+            Request(GET, "/$productCode/")
         )
+        return when (response.status) {
+            OK -> Success(productDetailsLens(response))
+            else -> octopusErrorLens(response).toFailure()
+        }
     }
 }
 
@@ -258,20 +265,25 @@ class FakeOctopus : HttpHandler {
                     }""".trimIndent()
             )
         },
-        "/{productCode}" bind GET to {
-            Response(OK).body(
-                """
-                    {
-                        "single_register_electricity_tariffs": {
-                            "_A": {
-                                "direct_debit_monthly": {
-                                    "code": "E-1R-AGILE-FLEX-22-11-25-A"
+        "/{productCode}" bind GET to { request ->
+            val productCode = request.path("productCode")
+            if (products.contains(productCode)) {
+                Response(OK).body(
+                    """
+                        {
+                            "single_register_electricity_tariffs": {
+                                "_A": {
+                                    "direct_debit_monthly": {
+                                        "code": "E-1R-AGILE-FLEX-22-11-25-A"
+                                    }
                                 }
                             }
                         }
-                    }
-                """.trimIndent()
-            )
+                    """.trimIndent()
+                )
+            } else {
+                Response(NOT_FOUND).body("""{"detail":"No EnergyProduct matches the given query."}""")
+            }
         },
         "/{productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates" bind GET to { request ->
             val productCode = request.path("productCode")!!
