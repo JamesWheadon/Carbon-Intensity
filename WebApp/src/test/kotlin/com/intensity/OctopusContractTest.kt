@@ -76,6 +76,13 @@ abstract class OctopusContractTest {
     }
 
     @Test
+    fun `can get the existing products`() {
+        val products = octopus.products()
+
+        assertThat(products, isSuccess())
+    }
+
+    @Test
     fun `handles no product existing`() {
         val prices = octopus.prices(
             "AGILE-FLEX",
@@ -139,6 +146,7 @@ abstract class OctopusContractTest {
 
 interface Octopus {
     fun prices(productCode: String, tariffCode: String, periodFrom: String, periodTo: String): Result<Prices, String>
+    fun products(): Result<Products, String>
 }
 
 class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
@@ -159,6 +167,19 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
             BAD_REQUEST -> Failure("Invalid request")
             else -> octopusErrorLens(response).toFailure()
         }
+    }
+
+    override fun products(): Result<Products, String> {
+        return Success(
+            productsLens(
+                httpHandler(
+                    Request(
+                        GET,
+                        "/"
+                    )
+                )
+            )
+        )
     }
 }
 
@@ -199,6 +220,23 @@ class FakeOctopus : HttpHandler {
     private val tariffCodePrices = mutableMapOf<Pair<String, String>, List<Double>>()
 
     val routes = routes(
+        "/" bind GET to {
+            Response(OK).body(
+                """
+                    {
+                        "count":1,
+                        "next":null,
+                        "previous":null,
+                        "results":[
+                            {
+                                "code":"AGILE-24-10-01",
+                                "display_name":"Agile Octopus",
+                                "brand":"OCTOPUS_ENERGY"
+                            }
+                        ]
+                    }""".trimIndent()
+            )
+        },
         "/{productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates" bind GET to { request ->
             val productCode = request.path("productCode")!!
             val tariffCode = request.path("tariffCode")!!
@@ -232,23 +270,23 @@ class FakeOctopus : HttpHandler {
                     for (i in 0 until count) {
                         halfHourPrices.add(
                             """{
-                            "value_exc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i]},
-                            "value_inc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i] * 1.05},
-                            "valid_from":"${periodFrom.plusSeconds(i * 1800L)}",
-                            "valid_to":"${periodFrom.plusSeconds((i + 1) * 1800L)}",
-                            "payment_method":null
-                        }"""
+                                "value_exc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i]},
+                                "value_inc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i] * 1.05},
+                                "valid_from":"${periodFrom.plusSeconds(i * 1800L)}",
+                                "valid_to":"${periodFrom.plusSeconds((i + 1) * 1800L)}",
+                                "payment_method":null
+                            }"""
                         )
                     }
                     Response(OK).body(
                         """
-                    {
-                        "count":${count},
-                        "next":null,
-                        "previous":null,
-                        "results":
-                        ${halfHourPrices.reversed().joinToString(",", "[", "]")}
-                    }""".trimIndent()
+                        {
+                            "count":${count},
+                            "next":null,
+                            "previous":null,
+                            "results":
+                            ${halfHourPrices.reversed().joinToString(",", "[", "]")}
+                        }""".trimIndent()
                     )
                 }
             } else if (products.contains(productCode)) {
@@ -279,6 +317,13 @@ data class HalfHourPrices(
     @JsonProperty("valid_to") val to: Instant
 )
 
+data class Products(val results: List<Product>)
+data class Product(
+    val code: String,
+    @JsonProperty("display_name") val name: String,
+    val brand: String
+)
+
 data class OctopusError(val detail: String) {
     fun toFailure() = Failure(
         when (detail) {
@@ -289,4 +334,5 @@ data class OctopusError(val detail: String) {
 }
 
 val pricesLens = Jackson.autoBody<Prices>().toLens()
+val productsLens = Jackson.autoBody<Products>().toLens()
 val octopusErrorLens = Jackson.autoBody<OctopusError>().toLens()
