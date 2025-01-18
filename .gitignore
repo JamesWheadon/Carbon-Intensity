@@ -1,6 +1,6 @@
 /.idea/
-WebApp/.gradle/
-/WebApp/build/
+**/.gradle/
+**/build/
 
 /scheduler/scheduler.iml
 /scheduler/src/__pycache__

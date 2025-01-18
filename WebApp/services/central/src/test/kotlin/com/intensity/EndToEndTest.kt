@@ -46,7 +46,7 @@ class EndToEndTest {
     val events = TracerBulletEvents(
         listOf(HttpTracer(actor)),
         listOf(PumlSequenceDiagram),
-        TraceRenderPersistence.FileSystem(File("./sequences"))
+        TraceRenderPersistence.FileSystem(File("../../sequences"))
     )
 
     private val scheduler = FakeScheduler()
