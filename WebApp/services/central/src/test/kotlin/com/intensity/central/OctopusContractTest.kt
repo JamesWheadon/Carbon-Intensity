@@ -1,6 +1,7 @@
-package com.intensity
+package com.intensity.central
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intensity.coretest.isSuccess
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Failure

@@ -1,4 +1,4 @@
-package com.intensity
+package com.intensity.coretest
 
 import com.natpryce.hamkrest.MatchResult
 import com.natpryce.hamkrest.Matcher

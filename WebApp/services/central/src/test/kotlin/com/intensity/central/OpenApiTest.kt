@@ -1,5 +1,7 @@
-package com.intensity
+package com.intensity.central
 
+import com.intensity.nationalgrid.FakeNationalGrid
+import com.intensity.nationalgrid.NationalGridCloud
 import com.natpryce.hamkrest.and
 import com.natpryce.hamkrest.assertion.assertThat
 import org.http4k.client.JavaHttpClient

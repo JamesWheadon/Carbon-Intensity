@@ -1,7 +1,8 @@
-package com.intensity
+package com.intensity.nationalgrid
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.intensity.core.formatWith
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method

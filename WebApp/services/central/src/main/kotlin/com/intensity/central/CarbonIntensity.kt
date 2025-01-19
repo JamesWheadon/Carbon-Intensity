@@ -1,6 +1,9 @@
-package com.intensity
+package com.intensity.central
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
+import com.intensity.nationalgrid.NationalGrid
+import com.intensity.nationalgrid.NationalGridCloud
+import com.intensity.nationalgrid.nationalGridClient
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -41,7 +44,6 @@ import org.http4k.server.asServer
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 9000
@@ -230,6 +232,3 @@ val intensitiesResponseLens = SchedulerJackson.autoBody<IntensitiesResponse>().t
 val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()
 val chargeTimeResponseLens = SchedulerJackson.autoBody<ChargeTimeResponse>().toLens()
 val errorResponseLens = Jackson.autoBody<ErrorResponse>().toLens()
-
-fun formatWith(pattern: String): DateTimeFormatter = DateTimeFormatter.ofPattern(pattern)
-    .withZone(ZoneOffset.UTC)

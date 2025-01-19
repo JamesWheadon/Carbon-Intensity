@@ -1,5 +1,6 @@
 rootProject.name = "WebApp"
 
+includeSubProjects("libraries")
 includeSubProjects("services")
 
 fun includeSubProjects(directory: String) {

@@ -1,63 +1,32 @@
-package com.intensity
+package com.intensity.nationalgrid
 
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
 import org.http4k.core.HttpHandler
-import org.http4k.core.Method.GET
+import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
-import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Status
 import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit
 
 private const val TIMEZONE = "Europe/London"
 private const val SECONDS_IN_HALF_HOUR = 1800L
 
-abstract class NationalGridContractTest {
-    abstract val nationalGrid: NationalGrid
-
-    @Test
-    fun `responds with forecast for the requested 48 hour period`() {
-        val time = LocalDate.now().atStartOfDay(UTC.normalized()).toInstant()
-        val intensities = nationalGrid.fortyEightHourIntensity(time)
-
-        assertThat(intensities.data.size, equalTo(96))
-        assertThat(
-            time,
-            inTimeRange(intensities.data.first().from, intensities.data.last().to)
-        )
-    }
-}
-
-class FakeNationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGridCloud(FakeNationalGrid())
-}
-
-@Disabled
-class NationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGridCloud(nationalGridClient())
-}
-
 class FakeNationalGrid : HttpHandler {
     private var dayData: NationalGridData? = null
 
     val routes = routes(
-        "/intensity/{time}/fw48h" bind GET to { request ->
+        "/intensity/{time}/fw48h" bind Method.GET to { request ->
             if (dayData != null) {
-                Response(OK).with(nationalGridDataLens of dayData!!)
+                Response(Status.OK).with(nationalGridDataLens of dayData!!)
             } else {
                 val startTime = Instant.parse(request.path("time")!!)
                 val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60))
-                Response(OK).with(nationalGridDataLens of NationalGridData(dataWindows))
+                Response(Status.OK).with(nationalGridDataLens of NationalGridData(dataWindows))
             }
         }
     )
