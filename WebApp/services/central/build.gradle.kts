@@ -17,9 +17,10 @@ dependencies {
     implementation(platform("org.http4k:http4k-bom:$http4kBomVersion"))
 
     implementation(project(":libraries:core"))
-    implementation(project(":libraries:national-grid"))
-    implementation(project(":libraries:scheduler"))
     implementation(project(":libraries:open-api"))
+
+    implementation(project(":clients:national-grid"))
+    implementation(project(":clients:scheduler"))
 
     implementation("org.http4k:http4k-core:$http4kVersion")
     implementation("org.http4k:http4k-format-jackson:$http4kVersion")

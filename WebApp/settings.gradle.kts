@@ -1,5 +1,6 @@
 rootProject.name = "WebApp"
 
+includeSubProjects("clients")
 includeSubProjects("libraries")
 includeSubProjects("services")
 
