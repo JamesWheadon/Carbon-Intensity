@@ -1,4 +1,4 @@
-package com.intensity.central
+package com.intensity.scheduler
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -83,6 +83,7 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
 
 fun schedulerClient(schedulerUrl: String) = ClientFilters.SetHostFrom(Uri.of(schedulerUrl)).then(JavaHttpClient())
 
+data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?)
 data class Intensities(val intensities: List<Int>, val date: Instant)
 data class SchedulerIntensitiesData(val intensities: List<Int>, val date: Instant)
 data class ChargeTime(val chargeTime: Instant)
@@ -90,7 +91,6 @@ data class ChargeTime(val chargeTime: Instant)
 val intensitiesLens = SchedulerJackson.autoBody<Intensities>().toLens()
 val chargeTimeLens = SchedulerJackson.autoBody<ChargeTime>().toLens()
 val schedulerIntensitiesDataLens = SchedulerJackson.autoBody<SchedulerIntensitiesData>().toLens()
-
 const val schedulerPattern: String = "yyyy-MM-dd'T'HH:mm:ss"
 
 object SchedulerJackson : ConfigurableJackson(

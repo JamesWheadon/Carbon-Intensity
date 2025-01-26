@@ -7,6 +7,13 @@ import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
 import com.intensity.openapi.ContractSchema
 import com.intensity.openapi.openApi3
+import com.intensity.scheduler.ChargeDetails
+import com.intensity.scheduler.Intensities
+import com.intensity.scheduler.PythonScheduler
+import com.intensity.scheduler.Scheduler
+import com.intensity.scheduler.SchedulerIntensitiesData
+import com.intensity.scheduler.SchedulerJackson
+import com.intensity.scheduler.schedulerClient
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -74,7 +81,7 @@ private fun chargeTimes(scheduler: Scheduler) =
         consumes += APPLICATION_JSON
         produces += APPLICATION_JSON
         receiving(
-            chargeDetailsLens to ChargeDetails(
+            chargeDetailsRequestLens to ChargeDetailsRequest(
                 Instant.parse("2024-09-30T21:20:00Z"),
                 Instant.parse("2024-10-01T02:30:00Z"),
                 60
@@ -82,7 +89,7 @@ private fun chargeTimes(scheduler: Scheduler) =
         )
         returning(OK, chargeTimeResponseLens to ChargeTimeResponse(Instant.parse("2024-09-30T11:30:00Z")))
     } bindContract POST to { request ->
-        val chargeDetails = chargeDetailsLens(request)
+        val chargeDetails = chargeDetailsRequestLens(request).toChargeDetails()
         if (chargeDetails.isValid()) {
             retrieveChargeTime(scheduler, chargeDetails)
         } else {
@@ -158,16 +165,19 @@ private fun updateSchedulerIntensities(
     return intensitiesForecast
 }
 
-data class ChargeDetails(val startTime: Instant, val endTime: Instant?, val duration: Int?) : ContractSchema {
+private fun ChargeDetails.isValid() = endTime == null || endTime!! >= startTime.plusSeconds(duration?.times(60L) ?: 0)
+
+data class ChargeDetailsRequest(val startTime: Instant, val endTime: Instant?, val duration: Int?) : ContractSchema {
     override fun schemas(): Map<String, FieldMetadata> =
         mapOf(
             "startTime" to FieldMetadata("format" to "date-time"),
             "endTime" to FieldMetadata("format" to "date-time"),
             "duration" to FieldMetadata("format" to "int32")
         )
+
+    fun toChargeDetails() = ChargeDetails(startTime, endTime, duration)
 }
 
-private fun ChargeDetails.isValid() = endTime == null || endTime >= startTime.plusSeconds(duration?.times(60L) ?: 0)
 data class IntensitiesResponse(val intensities: List<Int>, val date: Instant) : ContractSchema {
     override fun schemas(): Map<String, FieldMetadata> =
         mapOf(
@@ -184,5 +194,5 @@ data class ChargeTimeResponse(val chargeTime: Instant) : ContractSchema {
 }
 
 val intensitiesResponseLens = SchedulerJackson.autoBody<IntensitiesResponse>().toLens()
-val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()
+val chargeDetailsRequestLens = SchedulerJackson.autoBody<ChargeDetailsRequest>().toLens()
 val chargeTimeResponseLens = SchedulerJackson.autoBody<ChargeTimeResponse>().toLens()
