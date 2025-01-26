@@ -2,6 +2,7 @@ package com.intensity.central
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.intensity.core.errorResponseLens
 import com.intensity.core.formatWith
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result

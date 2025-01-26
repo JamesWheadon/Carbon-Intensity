@@ -1,6 +1,8 @@
 package com.intensity.central
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
+import com.intensity.core.ErrorResponse
+import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
@@ -36,7 +38,6 @@ import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.filter.CorsPolicy
 import org.http4k.filter.ServerFilters
-import org.http4k.format.Jackson
 import org.http4k.lens.LensFailure
 import org.http4k.server.Http4kServer
 import org.http4k.server.SunHttp
@@ -222,8 +223,6 @@ data class ChargeTimeResponse(val chargeTime: Instant) : ContractSchema {
         )
 }
 
-data class ErrorResponse(val error: String)
-
 interface ContractSchema {
     fun schemas(): Map<String, FieldMetadata>
 }
@@ -231,4 +230,3 @@ interface ContractSchema {
 val intensitiesResponseLens = SchedulerJackson.autoBody<IntensitiesResponse>().toLens()
 val chargeDetailsLens = SchedulerJackson.autoBody<ChargeDetails>().toLens()
 val chargeTimeResponseLens = SchedulerJackson.autoBody<ChargeTimeResponse>().toLens()
-val errorResponseLens = Jackson.autoBody<ErrorResponse>().toLens()

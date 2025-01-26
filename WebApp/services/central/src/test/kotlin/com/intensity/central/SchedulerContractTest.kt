@@ -1,5 +1,7 @@
 package com.intensity.central
 
+import com.intensity.core.ErrorResponse
+import com.intensity.core.errorResponseLens
 import com.intensity.core.formatWith
 import com.intensity.coretest.inTimeRange
 import com.intensity.coretest.isSuccess
