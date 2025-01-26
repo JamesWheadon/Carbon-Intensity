@@ -1,4 +1,4 @@
-package com.intensity.central
+package com.intensity.octopus
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intensity.coretest.isSuccess
