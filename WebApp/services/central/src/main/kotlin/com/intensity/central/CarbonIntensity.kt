@@ -1,31 +1,22 @@
 package com.intensity.central
 
-import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.intensity.core.ErrorResponse
 import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
+import com.intensity.openapi.ContractSchema
+import com.intensity.openapi.openApi3
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.valueOrNull
 import org.http4k.contract.ContractRoute
-import org.http4k.contract.ErrorResponseRenderer
 import org.http4k.contract.PreFlightExtraction.Companion.None
 import org.http4k.contract.Tag
 import org.http4k.contract.contract
-import org.http4k.contract.jsonschema.v3.AutoJsonToJsonSchema
-import org.http4k.contract.jsonschema.v3.FieldHolder
 import org.http4k.contract.jsonschema.v3.FieldMetadata
-import org.http4k.contract.jsonschema.v3.FieldRetrieval
-import org.http4k.contract.jsonschema.v3.SimpleLookup
 import org.http4k.contract.meta
-import org.http4k.contract.openapi.ApiInfo
-import org.http4k.contract.openapi.ApiRenderer
-import org.http4k.contract.openapi.OpenAPIJackson
-import org.http4k.contract.openapi.OpenApiVersion
-import org.http4k.contract.openapi.v3.OpenApi3
 import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
@@ -33,12 +24,10 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
-import org.http4k.core.Status.Companion.UNSUPPORTED_MEDIA_TYPE
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.filter.CorsPolicy
 import org.http4k.filter.ServerFilters
-import org.http4k.lens.LensFailure
 import org.http4k.server.Http4kServer
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
@@ -69,40 +58,11 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid) =
     )
 
 private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {
-    renderer = OpenApi3(
-        apiInfo = ApiInfo("Carbon Intensity Calculator", "v1.0"),
-        json = OpenAPIJackson,
-        extensions = emptyList(),
-        apiRenderer = ApiRenderer.Auto(OpenAPIJackson,
-            AutoJsonToJsonSchema(OpenAPIJackson, FieldRetrieval.compose(
-                SimpleLookup(
-                    metadataRetrievalStrategy = { a, b ->
-                        when (a) {
-                            is ContractSchema -> a.schemas()[b] ?: FieldMetadata()
-                            is FieldHolder -> FieldMetadata("format" to "int32")
-                            else -> FieldMetadata()
-                        }
-                    }
-                )
-            ))
-        ),
-        errorResponseRenderer = object : ErrorResponseRenderer {
-            override fun badRequest(lensFailure: LensFailure) = failedToParseRequest(lensFailure)
-        },
-        servers = emptyList(),
-        version = OpenApiVersion._3_0_0
-    )
+    renderer = openApi3()
     descriptionPath = "/openapi.json"
     preFlightExtraction = None
     routes += chargeTimes(scheduler)
     routes += intensities(scheduler, nationalGrid)
-}
-
-private fun failedToParseRequest(failure: LensFailure): Response {
-    return when (failure.cause) {
-        is MismatchedInputException -> Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("incorrect request body or headers"))
-        else -> Response(UNSUPPORTED_MEDIA_TYPE).with(errorResponseLens of ErrorResponse("invalid content type"))
-    }
 }
 
 private fun chargeTimes(scheduler: Scheduler) =
@@ -221,10 +181,6 @@ data class ChargeTimeResponse(val chargeTime: Instant) : ContractSchema {
         mapOf(
             "chargeTime" to FieldMetadata("format" to "date-time")
         )
-}
-
-interface ContractSchema {
-    fun schemas(): Map<String, FieldMetadata>
 }
 
 val intensitiesResponseLens = SchedulerJackson.autoBody<IntensitiesResponse>().toLens()

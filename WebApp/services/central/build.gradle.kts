@@ -18,6 +18,7 @@ dependencies {
 
     implementation(project(":libraries:core"))
     implementation(project(":libraries:national-grid"))
+    implementation(project(":libraries:open-api"))
 
     implementation("org.http4k:http4k-core:$http4kVersion")
     implementation("org.http4k:http4k-format-jackson:$http4kVersion")
