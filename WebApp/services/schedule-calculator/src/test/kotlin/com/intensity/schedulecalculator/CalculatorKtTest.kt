@@ -4,6 +4,7 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.ZoneId
 import java.time.ZonedDateTime
 
 typealias BD = BigDecimal
@@ -52,6 +53,28 @@ class CalculatorKtTest {
         )
     }
 
-    private fun halfHourSlot(price: BigDecimal, intensity: BigDecimal) =
-        HalfHourElectricity(ZonedDateTime.now(), ZonedDateTime.now(), price, intensity)
+    @Test
+    fun `calculate best times to use electricity based on weights and requirements`() {
+        val baseTime = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))
+        val electricity = Electricity(
+            listOf(
+                halfHourSlot(BD("10.14"), BD("53"), baseTime, baseTime.plusMinutes(30)),
+                halfHourSlot(BD("12.40"), BD("58"), baseTime.plusMinutes(30), baseTime.plusMinutes(60)),
+                halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60), baseTime.plusMinutes(90))
+            )
+        )
+        val weights = Weights(BD("0.8"), BD("1"))
+
+        val calculate = calculate(electricity, weights, 30)
+
+        assertThat(calculate, equalTo(ChargeTime(baseTime, baseTime.plusMinutes(30))))
+    }
+
+    private fun halfHourSlot(
+        price: BigDecimal,
+        intensity: BigDecimal,
+        from: ZonedDateTime = ZonedDateTime.now(),
+        to: ZonedDateTime = ZonedDateTime.now()
+    ) =
+        HalfHourElectricity(from, to, price, intensity)
 }

@@ -4,6 +4,15 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.ZonedDateTime
 
+fun calculate(electricity: Electricity, weights: Weights, time: Int): ChargeTime {
+    val normalizedElectricity = normalize(electricity)
+    val slotScores = normalizedElectricity.slots.map { slot ->
+        Triple(slot.from, slot.to, slot.price * weights.price + slot.intensity * weights.intensity)
+    }
+    val best = slotScores.minBy { it.third }
+    return ChargeTime(best.first, best.second)
+}
+
 fun normalize(electricity: Electricity): Electricity {
     val normalizedPrices = normalize(electricity.slots.map { it.price })
     val normalizedIntensities = normalize(electricity.slots.map { it.intensity })
@@ -27,3 +36,5 @@ data class HalfHourElectricity(
     val price: BigDecimal,
     val intensity: BigDecimal
 )
+data class Weights(val price: BigDecimal, val intensity: BigDecimal)
+data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
