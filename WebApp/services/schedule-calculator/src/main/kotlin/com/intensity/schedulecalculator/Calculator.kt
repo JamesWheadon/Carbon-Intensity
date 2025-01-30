@@ -9,8 +9,9 @@ fun calculate(electricity: Electricity, weights: Weights, time: Int): ChargeTime
     val slotScores = normalizedElectricity.slots.map { slot ->
         Triple(slot.from, slot.to, slot.price * weights.price + slot.intensity * weights.intensity)
     }
-    val best = slotScores.minBy { it.third }
-    return ChargeTime(best.first, best.second)
+    val slotSpan = (time + 29) / 30
+    val best = slotScores.windowed(slotSpan).minBy { span -> span.sumOf { it.third } }
+    return ChargeTime(best.first().first, best.last().second)
 }
 
 fun normalize(electricity: Electricity): Electricity {

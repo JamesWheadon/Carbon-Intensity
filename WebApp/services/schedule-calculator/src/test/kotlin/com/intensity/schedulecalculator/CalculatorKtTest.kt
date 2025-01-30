@@ -10,6 +10,8 @@ import java.time.ZonedDateTime
 typealias BD = BigDecimal
 
 class CalculatorKtTest {
+    private val baseTime = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))
+
     @Test
     fun `normalizes all values in a list so they are all a ratio of the largest`() {
         val normalized = normalize(listOf(BD("2"), BD("4"), BD("3")))
@@ -55,12 +57,11 @@ class CalculatorKtTest {
 
     @Test
     fun `calculate best times to use electricity based on weights and requirements`() {
-        val baseTime = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))
         val electricity = Electricity(
             listOf(
-                halfHourSlot(BD("10.14"), BD("53"), baseTime, baseTime.plusMinutes(30)),
-                halfHourSlot(BD("12.40"), BD("58"), baseTime.plusMinutes(30), baseTime.plusMinutes(60)),
-                halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60), baseTime.plusMinutes(90))
+                halfHourSlot(BD("10.14"), BD("53"), baseTime),
+                halfHourSlot(BD("12.40"), BD("58"), baseTime.plusMinutes(30)),
+                halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
             )
         )
         val weights = Weights(BD("0.8"), BD("1"))
@@ -70,11 +71,22 @@ class CalculatorKtTest {
         assertThat(calculate, equalTo(ChargeTime(baseTime, baseTime.plusMinutes(30))))
     }
 
-    private fun halfHourSlot(
-        price: BigDecimal,
-        intensity: BigDecimal,
-        from: ZonedDateTime = ZonedDateTime.now(),
-        to: ZonedDateTime = ZonedDateTime.now()
-    ) =
-        HalfHourElectricity(from, to, price, intensity)
+    @Test
+    fun `calculate best times to use electricity across more than one data slot`() {
+        val electricity = Electricity(
+            listOf(
+                halfHourSlot(BD("10.14"), BD("53"), baseTime),
+                halfHourSlot(BD("12.40"), BD("58"), baseTime.plusMinutes(30)),
+                halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
+            )
+        )
+        val weights = Weights(BD("0.8"), BD("1"))
+
+        val calculate = calculate(electricity, weights, 60)
+
+        assertThat(calculate, equalTo(ChargeTime(baseTime, baseTime.plusMinutes(60))))
+    }
+
+    private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =
+        HalfHourElectricity(from, from.plusMinutes(30), price, intensity)
 }
