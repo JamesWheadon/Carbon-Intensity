@@ -87,6 +87,22 @@ class CalculatorKtTest {
         assertThat(calculate, equalTo(ChargeTime(baseTime, baseTime.plusMinutes(60))))
     }
 
+    @Test
+    fun `calculate best times to use electricity across a fractional one data slot`() {
+        val electricity = Electricity(
+            listOf(
+                halfHourSlot(BD("10.14"), BD("53"), baseTime),
+                halfHourSlot(BD("12.40"), BD("58"), baseTime.plusMinutes(30)),
+                halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
+            )
+        )
+        val weights = Weights(BD("0.8"), BD("1"))
+
+        val calculate = calculate(electricity, weights, 20)
+
+        assertThat(calculate, equalTo(ChargeTime(baseTime, baseTime.plusMinutes(20))))
+    }
+
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =
         HalfHourElectricity(from, from.plusMinutes(30), price, intensity)
 }

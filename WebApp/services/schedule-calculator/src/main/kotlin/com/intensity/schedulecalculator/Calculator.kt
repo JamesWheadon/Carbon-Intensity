@@ -4,14 +4,14 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.ZonedDateTime
 
-fun calculate(electricity: Electricity, weights: Weights, time: Int): ChargeTime {
+fun calculate(electricity: Electricity, weights: Weights, time: Long): ChargeTime {
     val normalizedElectricity = normalize(electricity)
     val slotScores = normalizedElectricity.slots.map { slot ->
         Triple(slot.from, slot.to, slot.price * weights.price + slot.intensity * weights.intensity)
     }
-    val slotSpan = (time + 29) / 30
+    val slotSpan = (time.toInt() + 29) / 30
     val best = slotScores.windowed(slotSpan).minBy { span -> span.sumOf { it.third } }
-    return ChargeTime(best.first().first, best.last().second)
+    return ChargeTime(best.first().first, best.first().first.plusMinutes(time))
 }
 
 fun normalize(electricity: Electricity): Electricity {
