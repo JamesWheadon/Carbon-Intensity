@@ -59,8 +59,8 @@ class CalculatorKtTest {
     fun `calculate best times to use electricity based on weights and requirements`() {
         val electricity = Electricity(
             listOf(
-                halfHourSlot(BD("10.14"), BD("53"), baseTime),
-                halfHourSlot(BD("12.40"), BD("58"), baseTime.plusMinutes(30)),
+                halfHourSlot(BD("13.14"), BD("73"), baseTime),
+                halfHourSlot(BD("10.40"), BD("58"), baseTime.plusMinutes(30)),
                 halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
             )
         )
@@ -68,7 +68,7 @@ class CalculatorKtTest {
 
         val calculate = calculate(electricity, weights, 30)
 
-        assertThat(calculate, equalTo(ChargeTime(baseTime, baseTime.plusMinutes(30))))
+        assertThat(calculate, equalTo(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(60))))
     }
 
     @Test
@@ -91,7 +91,7 @@ class CalculatorKtTest {
     fun `calculate best times to use electricity across a fractional one data slot`() {
         val electricity = Electricity(
             listOf(
-                halfHourSlot(BD("10.14"), BD("53"), baseTime),
+                halfHourSlot(BD("13.14"), BD("59"), baseTime),
                 halfHourSlot(BD("12.40"), BD("58"), baseTime.plusMinutes(30)),
                 halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
             )
@@ -100,7 +100,7 @@ class CalculatorKtTest {
 
         val calculate = calculate(electricity, weights, 20)
 
-        assertThat(calculate, equalTo(ChargeTime(baseTime, baseTime.plusMinutes(20))))
+        assertThat(calculate, equalTo(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(50))))
     }
 
     @Test
@@ -114,9 +114,9 @@ class CalculatorKtTest {
         )
         val weights = Weights(BD("0.8"), BD("1"))
 
-        val calculate = calculate(electricity, weights, 50)
+        val calculate = calculate(electricity, weights, 42)
 
-        assertThat(calculate, equalTo(ChargeTime(baseTime.plusMinutes(10), baseTime.plusMinutes(60))))
+        assertThat(calculate, equalTo(ChargeTime(baseTime.plusMinutes(18), baseTime.plusMinutes(60))))
     }
 
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =

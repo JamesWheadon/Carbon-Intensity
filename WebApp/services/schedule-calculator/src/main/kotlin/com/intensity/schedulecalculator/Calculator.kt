@@ -12,8 +12,7 @@ fun calculate(electricity: Electricity, weights: Weights, time: Long): ChargeTim
         Triple(slot.from, slot.to, slot.price * weights.price + slot.intensity * weights.intensity)
     }
     val slotSpan = (time.toInt() + 29) / 30
-    val slotFraction =
-        BigDecimal.ONE.minus(BigDecimal(time.toInt() % 30).divide(BigDecimal("30"), 5, RoundingMode.HALF_UP))
+    val slotFraction = BigDecimal((30 - (time.toInt() % 30)) % 30).divide(BigDecimal("30"), 5, RoundingMode.HALF_UP)
     var bestStartTime = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.of("UTC"))
     var bestScore = BigDecimal("1000")
     slotScores.windowed(slotSpan).forEach { window ->
