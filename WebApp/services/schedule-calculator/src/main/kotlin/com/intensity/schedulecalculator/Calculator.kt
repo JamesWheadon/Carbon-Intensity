@@ -11,14 +11,14 @@ fun calculate(electricity: Electricity, weights: Weights, time: Long): ChargeTim
     val slotScores = normalizedElectricity.slots.map { slot ->
         Triple(slot.from, slot.to, slot.price * weights.price + slot.intensity * weights.intensity)
     }
-    val slotSpan = (time.toInt() + 29) / 30
-    val slotFraction = BigDecimal((30 - (time.toInt() % 30)) % 30).divide(BigDecimal("30"), 5, RoundingMode.HALF_UP)
+    val dataSlotsSpanned = (time.toInt() + 29) / 30
+    val slotFractionToExclude = slotFractionToExclude(time)
     var bestStartTime = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.of("UTC"))
     var bestScore = BigDecimal("1000")
-    slotScores.windowed(slotSpan).forEach { window ->
+    slotScores.windowed(dataSlotsSpanned).forEach { window ->
         val baseScore = window.sumOf { it.third }
-        val earlyScore = baseScore.minus(window.last().third * slotFraction)
-        val lateScore = baseScore.minus(window.first().third * slotFraction)
+        val earlyScore = baseScore.minus(window.last().third * slotFractionToExclude)
+        val lateScore = baseScore.minus(window.first().third * slotFractionToExclude)
         if (earlyScore < bestScore) {
             bestScore = earlyScore
             bestStartTime = window.first().first
@@ -29,6 +29,11 @@ fun calculate(electricity: Electricity, weights: Weights, time: Long): ChargeTim
         }
     }
     return ChargeTime(bestStartTime, bestStartTime.plusMinutes(time))
+}
+
+private fun slotFractionToExclude(time: Long): BigDecimal {
+    val minutesLessThanFullSlot = (30 - (time.toInt() % 30)) % 30
+    return BigDecimal(minutesLessThanFullSlot).divide(BigDecimal("30"), 5, RoundingMode.HALF_UP)
 }
 
 fun normalize(electricity: Electricity): Electricity {
