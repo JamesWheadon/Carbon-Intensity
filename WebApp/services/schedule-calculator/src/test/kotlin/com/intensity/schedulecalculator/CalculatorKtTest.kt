@@ -122,6 +122,24 @@ class CalculatorKtTest {
     }
 
     @Test
+    fun `calculate best times to use electricity across non-consecutive time slots`() {
+        val electricity = Electricity(
+            listOf(
+                halfHourSlot(BD("11.00"), BD("63"), baseTime),
+                halfHourSlot(BD("10.00"), BD("65"), baseTime.plusMinutes(30)),
+                halfHourSlot(BD("11.00"), BD("63"), baseTime.plusMinutes(60)),
+                halfHourSlot(BD("10.00"), BD("63"), baseTime.plusMinutes(120)),
+                halfHourSlot(BD("11.00"), BD("63"), baseTime.plusMinutes(150))
+            )
+        )
+        val weights = Weights(BD("0.8"), BD("1"))
+
+        val calculate = calculate(electricity, weights, 60)
+
+        assertThat(calculate, equalTo(Success(ChargeTime(baseTime.plusMinutes(120), baseTime.plusMinutes(180)))))
+    }
+
+    @Test
     fun `can not calculate best times with less data given that time requested for`() {
         val electricity = Electricity(
             listOf(
