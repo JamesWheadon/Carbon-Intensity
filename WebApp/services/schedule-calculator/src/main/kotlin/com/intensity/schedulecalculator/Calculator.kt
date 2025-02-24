@@ -1,12 +1,19 @@
 package com.intensity.schedulecalculator
 
+import dev.forkhandles.result4k.Failure
+import dev.forkhandles.result4k.Result
+import dev.forkhandles.result4k.Success
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
-fun calculate(electricity: Electricity, weights: Weights, time: Long): ChargeTime {
+fun calculate(electricity: Electricity, weights: Weights, time: Long): Result<ChargeTime, String> {
+    if (electricity.slots.sumOf { ChronoUnit.MINUTES.between(it.from, it.to) } <= time) {
+        return Failure("Time too long for provided data")
+    }
     val normalizedElectricity = normalize(electricity)
     val slotScores = normalizedElectricity.slots.map { slot ->
         Triple(slot.from, slot.to, slot.price * weights.price + slot.intensity * weights.intensity)
@@ -28,7 +35,7 @@ fun calculate(electricity: Electricity, weights: Weights, time: Long): ChargeTim
             bestStartTime = window.last().second.minusMinutes(time)
         }
     }
-    return ChargeTime(bestStartTime, bestStartTime.plusMinutes(time))
+    return Success(ChargeTime(bestStartTime, bestStartTime.plusMinutes(time)))
 }
 
 private fun slotFractionToExclude(time: Long): BigDecimal {

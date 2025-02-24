@@ -3,6 +3,7 @@ package com.intensity.coretest
 import com.natpryce.hamkrest.MatchResult
 import com.natpryce.hamkrest.Matcher
 import com.natpryce.hamkrest.and
+import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import java.time.Instant
@@ -34,4 +35,15 @@ fun <T, E> isSuccess() = object : Matcher<Result<T, E>> {
 
     override val description: String get() = "Result is a Success"
     override val negatedDescription: String get() = "Result is a Failure"
+}
+
+fun <T, E> isFailure() = object : Matcher<Result<T, E>> {
+    override fun invoke(actual: Result<T, E>) =
+        when (actual) {
+            is Failure -> MatchResult.Match
+            else -> MatchResult.Mismatch("Result is a Success")
+        }
+
+    override val description: String get() = "Result is a Failure"
+    override val negatedDescription: String get() = "Result is a Success"
 }

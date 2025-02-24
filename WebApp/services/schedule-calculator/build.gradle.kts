@@ -14,6 +14,9 @@ val result4kVersion: String by project
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    implementation("dev.forkhandles:result4k:$result4kVersion")
+
+    testImplementation(project(":libraries:core-test"))
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
