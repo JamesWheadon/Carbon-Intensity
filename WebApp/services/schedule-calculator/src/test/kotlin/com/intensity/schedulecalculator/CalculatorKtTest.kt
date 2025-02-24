@@ -68,9 +68,9 @@ class CalculatorKtTest {
         )
         val weights = Weights(BD("0.8"), BD("1"))
 
-        val calculate = calculate(electricity, weights, 30)
+        val calculate = calculate(electricity, weights, 90)
 
-        assertThat(calculate, equalTo(Success(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(60)))))
+        assertThat(calculate, equalTo(Success(ChargeTime(baseTime, baseTime.plusMinutes(90)))))
     }
 
     @Test
