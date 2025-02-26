@@ -45,7 +45,7 @@ class CalculatorKtTest {
             )
         )
 
-        val normalizedElectricity = normalize(electricity)
+        val normalizedElectricity = electricity.normalize()
 
         assertThat(
             normalizedElectricity.slots.map { it.price },
