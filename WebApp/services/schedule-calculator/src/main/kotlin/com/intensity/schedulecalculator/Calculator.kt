@@ -12,7 +12,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
-fun calculate(electricity: Electricity, weights: Weights, time: Long): Result<ChargeTime, Any> =
+fun calculate(electricity: Electricity, weights: Weights, time: Long) =
     electricity.validate()
         .normalize()
         .timeChunked(time)
@@ -42,16 +42,17 @@ fun calculate(electricity: Electricity, weights: Weights, time: Long): Result<Ch
             ChargeTime(bestStartTime, bestStartTime.plusMinutes(time))
         }
 
-private fun Electricity.validate(): Result<Electricity, String> =
+private fun Electricity.validate(): Result<Electricity, CalculationFailure> =
     if (this.slots.sortedBy { it.from }.windowed(2).any { it.last().from.isBefore(it.first().to) }) {
-        Failure("Overlapping time slots")
+        Failure(OverlappingData)
     } else {
         Success(this)
     }
 
-fun Result<Electricity, Any>.normalize() = this.map { it.normalize() }
+fun Result<Electricity, CalculationFailure>.normalize() =
+    this.map { it.normalize() }
 
-private fun Result<Electricity, Any>.timeChunked(time: Long): Result<List<List<HalfHourElectricity>>, Any> =
+private fun Result<Electricity, CalculationFailure>.timeChunked(time: Long) =
     this.flatMap { electricity ->
         val timeChunks = electricity.slots.sortedBy { it.from }
             .fold(mutableListOf<MutableList<HalfHourElectricity>>()) { acc, slot ->
@@ -63,7 +64,7 @@ private fun Result<Electricity, Any>.timeChunked(time: Long): Result<List<List<H
                 acc
             }
         if (timeChunks.none { slots -> slots.sumOf { ChronoUnit.MINUTES.between(it.from, it.to) } >= time }) {
-            return Failure("Time too long for provided data")
+            Failure(TimeGreaterThanPossible)
         } else {
             Success(timeChunks)
         }
@@ -100,3 +101,8 @@ data class HalfHourElectricity(
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)
 data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
+
+interface CalculationFailure
+
+object OverlappingData : CalculationFailure
+object TimeGreaterThanPossible : CalculationFailure

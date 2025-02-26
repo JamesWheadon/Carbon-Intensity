@@ -168,7 +168,7 @@ class CalculatorKtTest {
 
         val calculate = calculate(electricity, weights, 91)
 
-        assertThat(calculate, isFailure())
+        assertThat(calculate, isFailure(TimeGreaterThanPossible))
     }
 
     @Test
@@ -184,7 +184,7 @@ class CalculatorKtTest {
 
         val calculate = calculate(electricity, weights, 30)
 
-        assertThat(calculate, isFailure())
+        assertThat(calculate, isFailure(OverlappingData))
     }
 
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =

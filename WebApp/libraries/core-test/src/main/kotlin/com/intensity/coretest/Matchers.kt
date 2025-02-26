@@ -6,6 +6,7 @@ import com.natpryce.hamkrest.and
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
+import dev.forkhandles.result4k.get
 import java.time.Instant
 
 const val TIME_DIFFERENCE_TOLERANCE = 5L
@@ -42,6 +43,24 @@ fun <T, E> isFailure() = object : Matcher<Result<T, E>> {
         when (actual) {
             is Failure -> MatchResult.Match
             else -> MatchResult.Mismatch("Result is a Success")
+        }
+
+    override val description: String get() = "Result is a Failure"
+    override val negatedDescription: String get() = "Result is a Success"
+}
+
+fun <T, E> isFailure(expected: E) = object : Matcher<Result<T, E>> {
+    override fun invoke(actual: Result<T, E>) =
+        when (actual) {
+            is Failure -> matchExpected(actual.get())
+            else -> MatchResult.Mismatch("Result is a Success")
+        }
+
+    fun matchExpected(get: E): MatchResult =
+        if (get == expected) {
+            MatchResult.Match
+        } else {
+            MatchResult.Mismatch("Failure does not match expected")
         }
 
     override val description: String get() = "Result is a Failure"
