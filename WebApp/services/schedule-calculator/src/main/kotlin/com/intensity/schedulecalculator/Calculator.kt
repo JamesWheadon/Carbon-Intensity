@@ -11,6 +11,9 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 fun calculate(electricity: Electricity, weights: Weights, time: Long): Result<ChargeTime, String> {
+    if (electricity.slots.any { first -> electricity.slots.any { first.from.isAfter(it.from) && first.from.isBefore(it.to) } }) {
+        return Failure("Overlapping time slots")
+    }
     val timeChunks = normalize(electricity).timeChunked()
     if (timeChunks.all { slots -> slots.sumOf { ChronoUnit.MINUTES.between(it.from, it.to) } < time }) {
         return Failure("Time too long for provided data")

@@ -171,6 +171,22 @@ class CalculatorKtTest {
         assertThat(calculate, isFailure())
     }
 
+    @Test
+    fun `can not calculate best times with overlapping time slots`() {
+        val electricity = Electricity(
+            listOf(
+                halfHourSlot(BD("10.50"), BD("61"), baseTime),
+                halfHourSlot(BD("10.00"), BD("58"), baseTime.plusMinutes(15)),
+                halfHourSlot(BD("11.00"), BD("63"), baseTime.plusMinutes(60))
+            )
+        )
+        val weights = Weights(BD("0.8"), BD("1"))
+
+        val calculate = calculate(electricity, weights, 30)
+
+        assertThat(calculate, isFailure())
+    }
+
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =
         HalfHourElectricity(from, from.plusMinutes(30), price, intensity)
 }
