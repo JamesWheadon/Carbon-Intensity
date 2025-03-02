@@ -1,8 +1,11 @@
 package com.intensity.schedulecalculator
 
-import dev.forkhandles.result4k.valueOrNull
+import com.intensity.core.ErrorResponse
+import com.intensity.core.errorResponseLens
+import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson
@@ -15,8 +18,14 @@ fun schedulerApp() = "/schedule" bind POST to { request ->
     val time = scheduleRequest.time
     val weights = scheduleRequest.weights()
     val electricity = scheduleRequest.electricity()
-    val chargeTime = calculate(electricity, weights, time).valueOrNull()!!
-    Response(OK).with(chargeTimeLens of chargeTime)
+    calculate(electricity, weights, time).fold(
+        { chargeTime ->
+            Response(OK).with(chargeTimeLens of chargeTime)
+        },
+        {
+            Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("Overlapping data windows"))
+        }
+    )
 }
 
 data class ScheduleRequest(
