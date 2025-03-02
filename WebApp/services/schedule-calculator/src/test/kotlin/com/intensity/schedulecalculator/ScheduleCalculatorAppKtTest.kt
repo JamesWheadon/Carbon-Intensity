@@ -75,7 +75,6 @@ class ScheduleCalculatorAppKtTest {
         )
     }
 
-
     @Test
     fun `returns a bad request if no schedule possible`() {
         val request = Request(POST, "/schedule").body(
@@ -99,6 +98,32 @@ class ScheduleCalculatorAppKtTest {
         assertThat(
             response.bodyString(), equalTo(
                 """{"error":"No schedule possible"}""".trimIndent()
+            )
+        )
+    }
+
+    @Test
+    fun `returns a bad request if invalid request body`() {
+        val request = Request(POST, "/schedule").body(
+            """{
+                    "time":45,
+                    "intensityWeight":1.0,
+                    "electricityData": [
+                       {
+                           "startTime":"2025-03-02T12:00:00Z",
+                           "price":23.56,
+                           "intensity":145.0
+                       }
+                    ]
+                }""".trimIndent()
+        )
+
+        val response = app(request)
+
+        assertThat(response.status, equalTo(BAD_REQUEST))
+        assertThat(
+            response.bodyString(), equalTo(
+                """{"error":"Invalid Request"}""".trimIndent()
             )
         )
     }

@@ -1,31 +1,39 @@
 package com.intensity.schedulecalculator
 
+import com.intensity.core.ErrorResponse
 import com.intensity.core.errorResponseLens
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.then
 import org.http4k.core.with
+import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
-fun schedulerApp() = "/schedule" bind POST to { request ->
-    val scheduleRequest = scheduleRequestLens(request)
-    val time = scheduleRequest.time
-    val weights = scheduleRequest.weights()
-    val electricity = scheduleRequest.electricity()
-    calculate(electricity, weights, time).fold(
-        { chargeTime ->
-            Response(OK).with(chargeTimeLens of chargeTime)
-        },
-        { failed ->
-            Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse())
-        }
-    )
-}
+fun schedulerApp() = CatchLensFailure { _ -> handleLensFailure() }.then(
+    "/schedule" bind POST to { request ->
+        val scheduleRequest = scheduleRequestLens(request)
+        val time = scheduleRequest.time
+        val weights = scheduleRequest.weights()
+        val electricity = scheduleRequest.electricity()
+        calculate(electricity, weights, time).fold(
+            { chargeTime ->
+                Response(OK).with(chargeTimeLens of chargeTime)
+            },
+            { failed ->
+                Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse())
+            }
+        )
+    }
+)
+
+fun handleLensFailure() =
+    Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("Invalid Request"))
 
 data class ScheduleRequest(
     val time: Long,
