@@ -12,16 +12,12 @@ import org.http4k.core.with
 import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
-import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 fun schedulerApp() = CatchLensFailure { _ -> handleLensFailure() }.then(
     "/schedule" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
-        val time = scheduleRequest.time
-        val weights = scheduleRequest.weights()
-        val electricity = scheduleRequest.electricity()
-        calculate(electricity, weights, time).fold(
+        calculate(scheduleRequest.electricity(), scheduleRequest.weights(), scheduleRequest.time).fold(
             { chargeTime ->
                 Response(OK).with(chargeTimeLens of chargeTime)
             },
@@ -42,8 +38,8 @@ data class ScheduleRequest(
     val electricityData: List<HalfHourElectricityData>
 ) {
     fun weights() = Weights(
-        BigDecimal(priceWeight.toString()),
-        BigDecimal(intensityWeight.toString())
+        priceWeight.toBigDecimal(),
+        intensityWeight.toBigDecimal()
     )
 
     fun electricity() = Electricity(
@@ -61,8 +57,8 @@ data class HalfHourElectricityData(
         return HalfHourElectricity(
             start,
             start.plusMinutes(30),
-            BigDecimal(price.toString()),
-            BigDecimal(intensity.toString())
+            price.toBigDecimal(),
+            intensity.toBigDecimal()
         )
     }
 }
