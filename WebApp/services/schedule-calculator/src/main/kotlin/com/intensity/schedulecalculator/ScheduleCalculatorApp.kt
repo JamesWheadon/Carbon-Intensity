@@ -1,6 +1,5 @@
 package com.intensity.schedulecalculator
 
-import com.intensity.core.ErrorResponse
 import com.intensity.core.errorResponseLens
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
@@ -22,8 +21,8 @@ fun schedulerApp() = "/schedule" bind POST to { request ->
         { chargeTime ->
             Response(OK).with(chargeTimeLens of chargeTime)
         },
-        {
-            Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("Overlapping data windows"))
+        { failed ->
+            Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse())
         }
     )
 }

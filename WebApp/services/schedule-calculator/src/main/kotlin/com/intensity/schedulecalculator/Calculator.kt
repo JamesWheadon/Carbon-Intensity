@@ -1,5 +1,7 @@
 package com.intensity.schedulecalculator
 
+import com.intensity.core.ErrorResponse
+import com.intensity.core.Failed
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -18,14 +20,14 @@ fun calculate(electricity: Electricity, weights: Weights, time: Long) =
         .timeChunked(time)
         .bestChargeTime(weights, time)
 
-private fun Electricity.validate(): Result<Electricity, CalculationFailure> =
+private fun Electricity.validate(): Result<Electricity, Failed> =
     if (this.slots.sortedBy { it.from }.windowed(2).any { it.last().from.isBefore(it.first().to) }) {
         Failure(OverlappingData)
     } else {
         Success(this)
     }
 
-fun Result<Electricity, CalculationFailure>.normalize() =
+fun Result<Electricity, Failed>.normalize() =
     this.map { it.normalize() }
 
 fun Electricity.normalize(): Electricity {
@@ -44,7 +46,7 @@ fun normalize(values: List<BigDecimal>): List<BigDecimal> {
     return values.map { it.divide(max, 5, RoundingMode.HALF_UP) }
 }
 
-private fun Result<Electricity, CalculationFailure>.timeChunked(time: Long) =
+private fun Result<Electricity, Failed>.timeChunked(time: Long) =
     this.flatMap { electricity ->
         val timeChunks = electricity.slots.sortedBy { it.from }
             .fold(mutableListOf<MutableList<HalfHourElectricity>>()) { acc, slot ->
@@ -62,7 +64,7 @@ private fun Result<Electricity, CalculationFailure>.timeChunked(time: Long) =
         }
     }
 
-private fun Result<List<List<HalfHourElectricity>>, CalculationFailure>.bestChargeTime(weights: Weights, time: Long) =
+private fun Result<List<List<HalfHourElectricity>>, Failed>.bestChargeTime(weights: Weights, time: Long) =
     this.map { timeChunks ->
         val dataSlotsSpanned = (time.toInt() + 29) / 30
         val slotFractionToExclude = slotFractionToExclude(time)
@@ -105,7 +107,10 @@ data class HalfHourElectricity(
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)
 data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
 
-interface CalculationFailure
+object OverlappingData : Failed {
+    override fun toErrorResponse() = ErrorResponse("Overlapping data windows")
+}
 
-object OverlappingData : CalculationFailure
-object TimeGreaterThanPossible : CalculationFailure
+object TimeGreaterThanPossible : Failed {
+    override fun toErrorResponse() = ErrorResponse("No schedule possible")
+}
