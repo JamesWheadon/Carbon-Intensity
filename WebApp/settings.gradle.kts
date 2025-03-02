@@ -1,5 +1,7 @@
 rootProject.name = "WebApp"
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 includeSubProjects("clients")
 includeSubProjects("libraries")
 includeSubProjects("services")
