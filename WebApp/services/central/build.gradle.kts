@@ -3,10 +3,6 @@ plugins {
     alias(libs.plugins.jib)
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(projects.libraries.core)
     implementation(projects.libraries.openApi)

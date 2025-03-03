@@ -1,3 +1,15 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
 rootProject.name = "WebApp"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
