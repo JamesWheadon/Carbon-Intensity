@@ -233,10 +233,8 @@ class EndToEndTest {
         val response = User(events, server).call(
             Request(POST, "/charge-time")
                 .contentType(MULTIPART_FORM_DATA)
-                .form(
-                    "startTime" to "2024-09-02T10:31:00",
-                    "endTime" to "2024-09-02T10:56:00"
-                )
+                .form("endTime", "2024-09-02T10:56:00")
+                .form("startTime", "2024-09-02T10:31:00")
         )
 
         assertThat(response.status, equalTo(UNSUPPORTED_MEDIA_TYPE))

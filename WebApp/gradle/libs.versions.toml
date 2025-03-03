@@ -1,13 +1,23 @@
 [versions]
 http4k = "5.26.0.0"
 forkhandles = "2.20.0.0"
+kotlin = "2.0.0"
 junit = "5.11.3"
+jib = "3.4.4"
+
+[plugins]
+jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 
 [libraries]
 http4k-core = { group = "org.http4k", name = "http4k-core", version.ref = "http4k" }
 http4k-jackson = { group = "org.http4k", name = "http4k-format-jackson", version.ref = "http4k" }
+http4k-contract = { group = "org.http4k", name = "http4k-contract", version.ref = "http4k" }
 
 result4k = { group = "dev.forkhandles", name = "result4k", version.ref = "forkhandles" }
 
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+
 http4k-hamkrest = { group = "org.http4k", name = "http4k-testing-hamkrest", version.ref = "http4k" }
+http4k-approval = { group = "org.http4k", name = "http4k-testing-approval", version.ref = "http4k" }
+http4k-tracerbullet = { group = "org.http4k", name = "http4k-testing-tracerbullet", version.ref = "http4k" }

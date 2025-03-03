@@ -1,40 +1,29 @@
 plugins {
-    kotlin("jvm") version "2.0.0"
-    id("com.google.cloud.tools.jib") version "3.4.4"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.jib)
 }
 
 repositories {
     mavenCentral()
 }
 
-val http4kVersion: String by project
-val http4kBomVersion: String by project
-val junitVersion: String by project
-val kotlinVersion: String by project
-val result4kVersion: String by project
-
 dependencies {
-    implementation(platform("org.http4k:http4k-bom:$http4kBomVersion"))
+    implementation(projects.libraries.core)
+    implementation(projects.libraries.openApi)
+    implementation(projects.clients.nationalGrid)
+    implementation(projects.clients.scheduler)
 
-    implementation(project(":libraries:core"))
-    implementation(project(":libraries:open-api"))
+    implementation(libs.http4k.core)
+    implementation(libs.http4k.jackson)
+    implementation(libs.http4k.contract)
+    implementation(libs.result4k)
 
-    implementation(project(":clients:national-grid"))
-    implementation(project(":clients:scheduler"))
+    testImplementation(projects.libraries.coreTest)
 
-    implementation("org.http4k:http4k-core:$http4kVersion")
-    implementation("org.http4k:http4k-format-jackson:$http4kVersion")
-    implementation("org.http4k:http4k-contract:$http4kVersion")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    implementation("dev.forkhandles:result4k:$result4kVersion")
-
-    testImplementation(project(":libraries:core-test"))
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-    testImplementation("org.http4k:http4k-testing-approval:$http4kVersion")
-    testImplementation("org.http4k:http4k-testing-hamkrest:$http4kVersion")
-    testImplementation("org.http4k:http4k-testing-tracerbullet:$http4kVersion")
+    testImplementation(libs.junit.engine)
+    testImplementation(libs.http4k.hamkrest)
+    testImplementation(libs.http4k.approval)
+    testImplementation(libs.http4k.tracerbullet)
 }
 
 tasks.test {
