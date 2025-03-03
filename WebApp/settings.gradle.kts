@@ -1,7 +1,10 @@
+rootProject.name = "WebApp"
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
     }
+    includeBuild("convention-plugins")
 }
 
 dependencyResolutionManagement {
@@ -9,8 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-
-rootProject.name = "WebApp"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
