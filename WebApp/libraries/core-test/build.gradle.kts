@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
     implementation(libs.http4k.hamkrest)
-    testImplementation(libs.result4k)
+    implementation(libs.result4k)
 }
 
 tasks.test {
