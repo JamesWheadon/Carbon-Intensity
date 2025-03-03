@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin)
+    id("com.intensity.kotlin-conventions")
 }
 
 dependencies {
@@ -13,12 +13,4 @@ dependencies {
 
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(17)
 }

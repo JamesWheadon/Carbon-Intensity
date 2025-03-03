@@ -1,16 +1,8 @@
 plugins {
-    alias(libs.plugins.kotlin)
+    id("com.intensity.kotlin-conventions")
 }
 
 dependencies {
     implementation(libs.http4k.hamkrest)
     implementation(libs.result4k)
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(17)
 }

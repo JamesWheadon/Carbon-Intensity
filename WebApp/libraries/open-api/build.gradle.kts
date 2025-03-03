@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin)
+    id("com.intensity.kotlin-conventions")
 }
 
 dependencies {
@@ -7,12 +7,4 @@ dependencies {
 
     implementation(libs.http4k.jackson)
     implementation(libs.http4k.contract)
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(17)
 }

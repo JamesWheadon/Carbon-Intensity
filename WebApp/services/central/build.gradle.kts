@@ -1,6 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin)
-    alias(libs.plugins.jib)
+    id("com.intensity.deployable-conventions")
 }
 
 dependencies {
@@ -20,14 +19,6 @@ dependencies {
     testImplementation(libs.http4k.hamkrest)
     testImplementation(libs.http4k.approval)
     testImplementation(libs.http4k.tracerbullet)
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(17)
 }
 
 jib {
