@@ -1,13 +1,7 @@
 [versions]
 http4k = "5.26.0.0"
 forkhandles = "2.20.0.0"
-kotlin = "2.0.0"
 junit = "5.11.3"
-jib = "3.4.4"
-
-[plugins]
-jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
-kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 
 [libraries]
 http4k-core = { group = "org.http4k", name = "http4k-core", version.ref = "http4k" }
