@@ -15,6 +15,7 @@ dependencies {
 
     testImplementation(projects.libraries.coreTest)
     testImplementation(testFixtures(projects.clients.nationalGrid))
+    testImplementation(testFixtures(projects.clients.scheduler))
 
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)

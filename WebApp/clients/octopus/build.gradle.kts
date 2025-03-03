@@ -1,5 +1,5 @@
 plugins {
-    id("com.intensity.kotlin-conventions")
+    id("com.intensity.client-conventions")
 }
 
 dependencies {
