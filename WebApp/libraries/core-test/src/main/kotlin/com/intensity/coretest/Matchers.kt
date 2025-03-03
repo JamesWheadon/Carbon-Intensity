@@ -38,17 +38,6 @@ fun <T, E> isSuccess() = object : Matcher<Result<T, E>> {
     override val negatedDescription: String get() = "Result is a Failure"
 }
 
-fun <T, E> isFailure() = object : Matcher<Result<T, E>> {
-    override fun invoke(actual: Result<T, E>) =
-        when (actual) {
-            is Failure -> MatchResult.Match
-            else -> MatchResult.Mismatch("Result is a Success")
-        }
-
-    override val description: String get() = "Result is a Failure"
-    override val negatedDescription: String get() = "Result is a Success"
-}
-
 fun <T, E> isFailure(expected: E) = object : Matcher<Result<T, E>> {
     override fun invoke(actual: Result<T, E>) =
         when (actual) {
