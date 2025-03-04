@@ -1,4 +1,4 @@
-package com.intensity.schedulecalculator
+package com.intensity.weightedcalculator
 
 import com.intensity.coretest.isFailure
 import com.natpryce.hamkrest.assertion.assertThat

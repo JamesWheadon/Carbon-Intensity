@@ -1,4 +1,4 @@
-package com.intensity.schedulecalculator
+package com.intensity.weightedcalculator
 
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -8,12 +8,12 @@ import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
 
-class ScheduleCalculatorAppKtTest {
-    private val app = schedulerApp()
+class WeightedCalculatorAppKtTest {
+    private val app = weightedCalculatorApp()
 
     @Test
     fun `returns the result of the schedule calculation`() {
-        val request = Request(POST, "/schedule").body(
+        val request = Request(POST, "/calculate").body(
             """{
                     "time":45,
                     "priceWeight":1.0,
@@ -45,7 +45,7 @@ class ScheduleCalculatorAppKtTest {
 
     @Test
     fun `returns a bad request if data windows overlap`() {
-        val request = Request(POST, "/schedule").body(
+        val request = Request(POST, "/calculate").body(
             """{
                     "time":45,
                     "priceWeight":1.0,
@@ -77,7 +77,7 @@ class ScheduleCalculatorAppKtTest {
 
     @Test
     fun `returns a bad request if no schedule possible`() {
-        val request = Request(POST, "/schedule").body(
+        val request = Request(POST, "/calculate").body(
             """{
                     "time":45,
                     "priceWeight":1.0,
@@ -104,7 +104,7 @@ class ScheduleCalculatorAppKtTest {
 
     @Test
     fun `returns a bad request if invalid request body`() {
-        val request = Request(POST, "/schedule").body(
+        val request = Request(POST, "/calculate").body(
             """{
                     "time":45,
                     "intensityWeight":1.0,

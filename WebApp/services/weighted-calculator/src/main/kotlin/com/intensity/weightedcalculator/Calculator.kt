@@ -1,4 +1,4 @@
-package com.intensity.schedulecalculator
+package com.intensity.weightedcalculator
 
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed

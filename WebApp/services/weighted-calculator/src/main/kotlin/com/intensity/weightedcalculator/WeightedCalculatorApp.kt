@@ -1,4 +1,4 @@
-package com.intensity.schedulecalculator
+package com.intensity.weightedcalculator
 
 import com.intensity.core.ErrorResponse
 import com.intensity.core.errorResponseLens
@@ -14,8 +14,8 @@ import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import java.time.ZonedDateTime
 
-fun schedulerApp() = CatchLensFailure { _ -> handleLensFailure() }.then(
-    "/schedule" bind POST to { request ->
+fun weightedCalculatorApp() = CatchLensFailure { _ -> handleLensFailure() }.then(
+    "/calculate" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         calculate(scheduleRequest.electricity(), scheduleRequest.weights(), scheduleRequest.time).fold(
             { chargeTime ->
