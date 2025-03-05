@@ -1,5 +1,6 @@
 package com.intensity.weightedcalculator
 
+import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.HalfHourElectricity

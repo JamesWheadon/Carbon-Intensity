@@ -14,6 +14,7 @@ data class HalfHourElectricity(
     val price: BigDecimal,
     val intensity: BigDecimal
 )
+data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
 
 fun Electricity.timeChunked(time: Long): Result<List<List<HalfHourElectricity>>, TimeGreaterThanPossible> {
     val timeChunks = slots.sortedBy { it.from }

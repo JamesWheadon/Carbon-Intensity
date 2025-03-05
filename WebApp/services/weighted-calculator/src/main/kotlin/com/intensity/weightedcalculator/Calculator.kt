@@ -1,5 +1,6 @@
 package com.intensity.weightedcalculator
 
+import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.Failed
 import com.intensity.core.HalfHourElectricity
@@ -74,4 +75,3 @@ private fun slotFractionToExclude(time: Long): BigDecimal {
 }
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)
-data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)

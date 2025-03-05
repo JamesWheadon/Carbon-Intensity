@@ -1,5 +1,6 @@
 package com.intensity.limitcalculator
 
+import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.OverlappingData
@@ -26,7 +27,7 @@ class CalculatorKtTest {
 
         val halfHoursInLimit = underIntensityLimit(electricity, BD(65), 30L)
 
-        assertThat(halfHoursInLimit, isSuccess(listOf(listOf(secondHalfHour, thirdHalfHour))))
+        assertThat(halfHoursInLimit, isSuccess(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(60))))
     }
 
     @Test
