@@ -19,15 +19,15 @@ class CalculatorKtTest {
     private val baseTime = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))
 
     @Test
-    fun `finds all electricity data under the intensity limit and chunks the them to contiguous blocks`() {
+    fun `finds the best time to charge by price when under the intensity limit`() {
         val firstHalfHour = halfHourSlot(BD("13.14"), BD("73"), baseTime)
         val secondHalfHour = halfHourSlot(BD("10.40"), BD("58"), baseTime.plusMinutes(30))
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underIntensityLimit(electricity, BD(65), 30L)
+        val halfHoursInLimit = underIntensityLimit(electricity, BD(65), 45L)
 
-        assertThat(halfHoursInLimit, isSuccess(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(60))))
+        assertThat(halfHoursInLimit, isSuccess(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(75))))
     }
 
     @Test

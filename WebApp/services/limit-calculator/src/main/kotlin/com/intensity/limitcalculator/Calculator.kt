@@ -1,7 +1,7 @@
 package com.intensity.limitcalculator
 
-import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
+import com.intensity.core.calculateChargeTime
 import com.intensity.core.timeChunked
 import com.intensity.core.validate
 import dev.forkhandles.result4k.flatMap
@@ -12,7 +12,6 @@ fun underIntensityLimit(electricity: Electricity, intensityLimit: BigDecimal, ti
     electricity.validate().flatMap {
         it.copy(slots = electricity.slots.filter { halfHour -> halfHour.intensity <= intensityLimit })
             .timeChunked(time)
-    }.map {
-        val best = it.flatten().minBy { it.price }
-        ChargeTime(best.from, best.to)
+    }.map { timeChunks ->
+        calculateChargeTime(timeChunks, time) { it.price }
     }
