@@ -2,6 +2,7 @@ package com.intensity.weightedcalculator
 
 import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
+import com.intensity.core.OverlappingData
 import com.intensity.coretest.isFailure
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo

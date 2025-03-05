@@ -5,6 +5,7 @@ import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.timeChunked
+import com.intensity.core.validate
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -22,13 +23,6 @@ fun calculate(electricity: Electricity, weights: Weights, time: Long) =
         .normalize()
         .timeChunked(time)
         .bestChargeTime(weights, time)
-
-private fun Electricity.validate(): Result<Electricity, Failed> =
-    if (this.slots.sortedBy { it.from }.windowed(2).any { it.last().from.isBefore(it.first().to) }) {
-        Failure(OverlappingData)
-    } else {
-        Success(this)
-    }
 
 fun Result<Electricity, Failed>.normalize() =
     this.map { it.normalize() }
@@ -93,10 +87,6 @@ private fun slotFractionToExclude(time: Long): BigDecimal {
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)
 data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
-
-object OverlappingData : Failed {
-    override fun toErrorResponse() = ErrorResponse("Overlapping data windows")
-}
 
 object TimeGreaterThanPossible : Failed {
     override fun toErrorResponse() = ErrorResponse("No schedule possible")
