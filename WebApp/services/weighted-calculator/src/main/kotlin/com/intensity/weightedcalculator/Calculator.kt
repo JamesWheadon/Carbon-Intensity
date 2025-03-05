@@ -1,14 +1,11 @@
 package com.intensity.weightedcalculator
 
 import com.intensity.core.Electricity
-import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.timeChunked
 import com.intensity.core.validate
-import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
-import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.map
 import java.math.BigDecimal
@@ -16,7 +13,6 @@ import java.math.RoundingMode.HALF_UP
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit.MINUTES
 
 fun calculate(electricity: Electricity, weights: Weights, time: Long) =
     electricity.validate()
@@ -43,15 +39,7 @@ fun normalize(values: List<BigDecimal>): List<BigDecimal> {
     return values.map { it.divide(max, 5, HALF_UP) }
 }
 
-private fun Result<Electricity, Failed>.timeChunked(time: Long) =
-    this.flatMap { electricity ->
-        val timeChunks = electricity.timeChunked()
-        if (timeChunks.none { slots -> slots.sumOf { MINUTES.between(it.from, it.to) } >= time }) {
-            Failure(TimeGreaterThanPossible)
-        } else {
-            Success(timeChunks)
-        }
-    }
+private fun Result<Electricity, Failed>.timeChunked(time: Long) = this.flatMap { it.timeChunked(time) }
 
 private fun Result<List<List<HalfHourElectricity>>, Failed>.bestChargeTime(weights: Weights, time: Long) =
     this.map { timeChunks ->
@@ -87,7 +75,3 @@ private fun slotFractionToExclude(time: Long): BigDecimal {
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)
 data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
-
-object TimeGreaterThanPossible : Failed {
-    override fun toErrorResponse() = ErrorResponse("No schedule possible")
-}

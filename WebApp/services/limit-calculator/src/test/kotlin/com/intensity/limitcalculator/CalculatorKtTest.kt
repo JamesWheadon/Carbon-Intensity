@@ -3,6 +3,7 @@ package com.intensity.limitcalculator
 import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.OverlappingData
+import com.intensity.core.TimeGreaterThanPossible
 import com.intensity.coretest.isFailure
 import com.intensity.coretest.isSuccess
 import com.natpryce.hamkrest.assertion.assertThat
@@ -23,7 +24,7 @@ class CalculatorKtTest {
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underIntensityLimit(electricity, BD(65))
+        val halfHoursInLimit = underIntensityLimit(electricity, BD(65), 30L)
 
         assertThat(halfHoursInLimit, isSuccess(listOf(listOf(secondHalfHour, thirdHalfHour))))
     }
@@ -35,9 +36,21 @@ class CalculatorKtTest {
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underIntensityLimit(electricity, BD(65))
+        val halfHoursInLimit = underIntensityLimit(electricity, BD(65), 30L)
 
         assertThat(halfHoursInLimit, isFailure(OverlappingData))
+    }
+
+    @Test
+    fun `can not calculate schedule if not enough time under limit`() {
+        val firstHalfHour = halfHourSlot(BD("13.14"), BD("73"), baseTime)
+        val secondHalfHour = halfHourSlot(BD("10.40"), BD("58"), baseTime.plusMinutes(30))
+        val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
+        val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
+
+        val halfHoursInLimit = underIntensityLimit(electricity, BD(65), 75L)
+
+        assertThat(halfHoursInLimit, isFailure(TimeGreaterThanPossible))
     }
 
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =
