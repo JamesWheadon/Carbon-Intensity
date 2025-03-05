@@ -1,5 +1,7 @@
 package com.intensity.limitcalculator
 
+import com.intensity.core.Electricity
+import com.intensity.core.HalfHourElectricity
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.junit.jupiter.api.Test

@@ -1,7 +1,9 @@
 package com.intensity.weightedcalculator
 
+import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
+import com.intensity.core.HalfHourElectricity
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -95,14 +97,6 @@ private fun slotFractionToExclude(time: Long): BigDecimal {
     val minutesLessThanFullSlot = (30 - (time.toInt() % 30)) % 30
     return BigDecimal(minutesLessThanFullSlot).divide(BigDecimal("30"), 5, RoundingMode.HALF_UP)
 }
-
-data class Electricity(val slots: List<HalfHourElectricity>)
-data class HalfHourElectricity(
-    val from: ZonedDateTime,
-    val to: ZonedDateTime,
-    val price: BigDecimal,
-    val intensity: BigDecimal
-)
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)
 data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)

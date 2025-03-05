@@ -1,6 +1,8 @@
 package com.intensity.weightedcalculator
 
+import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
+import com.intensity.core.HalfHourElectricity
 import com.intensity.core.errorResponseLens
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
