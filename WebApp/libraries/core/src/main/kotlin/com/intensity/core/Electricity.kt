@@ -14,7 +14,13 @@ data class HalfHourElectricity(
     val price: BigDecimal,
     val intensity: BigDecimal
 )
-data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
+
+fun Electricity.validate(): Result<Electricity, Failed> =
+    if (this.slots.sortedBy { it.from }.windowed(2).any { it.last().from.isBefore(it.first().to) }) {
+        Failure(OverlappingData)
+    } else {
+        Success(this)
+    }
 
 fun Electricity.timeChunked(time: Long): Result<List<List<HalfHourElectricity>>, TimeGreaterThanPossible> {
     val timeChunks = slots.sortedBy { it.from }
@@ -32,13 +38,6 @@ fun Electricity.timeChunked(time: Long): Result<List<List<HalfHourElectricity>>,
         Success(timeChunks)
     }
 }
-
-fun Electricity.validate(): Result<Electricity, Failed> =
-    if (this.slots.sortedBy { it.from }.windowed(2).any { it.last().from.isBefore(it.first().to) }) {
-        Failure(OverlappingData)
-    } else {
-        Success(this)
-    }
 
 object OverlappingData : Failed {
     override fun toErrorResponse() = ErrorResponse("Overlapping data windows")
