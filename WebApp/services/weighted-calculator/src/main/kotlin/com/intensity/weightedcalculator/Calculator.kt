@@ -4,17 +4,18 @@ import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.HalfHourElectricity
+import com.intensity.core.timeChunked
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.map
 import java.math.BigDecimal
-import java.math.RoundingMode
+import java.math.RoundingMode.HALF_UP
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
+import java.time.temporal.ChronoUnit.MINUTES
 
 fun calculate(electricity: Electricity, weights: Weights, time: Long) =
     electricity.validate()
@@ -45,21 +46,13 @@ fun Electricity.normalize(): Electricity {
 
 fun normalize(values: List<BigDecimal>): List<BigDecimal> {
     val max = values.max()
-    return values.map { it.divide(max, 5, RoundingMode.HALF_UP) }
+    return values.map { it.divide(max, 5, HALF_UP) }
 }
 
 private fun Result<Electricity, Failed>.timeChunked(time: Long) =
     this.flatMap { electricity ->
-        val timeChunks = electricity.slots.sortedBy { it.from }
-            .fold(mutableListOf<MutableList<HalfHourElectricity>>()) { acc, slot ->
-                if (acc.isEmpty() || acc.last().last().to != slot.from) {
-                    acc.add(mutableListOf(slot))
-                } else {
-                    acc.last().add(slot)
-                }
-                acc
-            }
-        if (timeChunks.none { slots -> slots.sumOf { ChronoUnit.MINUTES.between(it.from, it.to) } >= time }) {
+        val timeChunks = electricity.timeChunked()
+        if (timeChunks.none { slots -> slots.sumOf { MINUTES.between(it.from, it.to) } >= time }) {
             Failure(TimeGreaterThanPossible)
         } else {
             Success(timeChunks)
@@ -95,7 +88,7 @@ private fun Result<List<List<HalfHourElectricity>>, Failed>.bestChargeTime(weigh
 
 private fun slotFractionToExclude(time: Long): BigDecimal {
     val minutesLessThanFullSlot = (30 - (time.toInt() % 30)) % 30
-    return BigDecimal(minutesLessThanFullSlot).divide(BigDecimal("30"), 5, RoundingMode.HALF_UP)
+    return BigDecimal(minutesLessThanFullSlot).divide(BigDecimal("30"), 5, HALF_UP)
 }
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)

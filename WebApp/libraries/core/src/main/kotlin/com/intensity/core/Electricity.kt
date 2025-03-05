@@ -10,3 +10,14 @@ data class HalfHourElectricity(
     val price: BigDecimal,
     val intensity: BigDecimal
 )
+
+fun Electricity.timeChunked(): MutableList<MutableList<HalfHourElectricity>> =
+    slots.sortedBy { it.from }
+        .fold(mutableListOf()) { acc, slot ->
+            if (acc.isEmpty() || acc.last().last().to != slot.from) {
+                acc.add(mutableListOf(slot))
+            } else {
+                acc.last().add(slot)
+            }
+            acc
+        }
