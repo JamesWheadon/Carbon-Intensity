@@ -1,5 +1,6 @@
 package com.intensity.core
 
+import org.http4k.format.Jackson
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -11,6 +12,8 @@ fun interface SlotScore {
 }
 
 data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
+
+val chargeTimeLens = Jackson.autoBody<ChargeTime>().toLens()
 
 fun calculateChargeTime(
     timeChunks: List<List<HalfHourElectricity>>,

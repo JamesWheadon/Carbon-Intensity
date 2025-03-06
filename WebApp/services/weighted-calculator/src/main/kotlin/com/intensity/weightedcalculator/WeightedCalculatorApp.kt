@@ -1,9 +1,9 @@
 package com.intensity.weightedcalculator
 
-import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.HalfHourElectricity
+import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
@@ -67,4 +67,3 @@ data class HalfHourElectricityData(
 }
 
 val scheduleRequestLens = Jackson.autoBody<ScheduleRequest>().toLens()
-val chargeTimeLens = Jackson.autoBody<ChargeTime>().toLens()
