@@ -15,3 +15,11 @@ fun underIntensityLimit(electricity: Electricity, intensityLimit: BigDecimal, ti
     }.map { timeChunks ->
         calculateChargeTime(timeChunks, time) { it.price }
     }
+
+fun underPriceLimit(electricity: Electricity, priceLimit: BigDecimal, time: Long) =
+    electricity.validate().flatMap {
+        it.copy(slots = electricity.slots.filter { halfHour -> halfHour.price <= priceLimit })
+            .timeChunked(time)
+    }.map { timeChunks ->
+        calculateChargeTime(timeChunks, time) { it.intensity }
+    }
