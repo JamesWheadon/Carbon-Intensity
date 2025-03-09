@@ -17,22 +17,19 @@ import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import java.time.ZonedDateTime
 
-fun weightedCalculatorApp() = CatchLensFailure { _ -> handleLensFailure() }.then(
-    "/calculate" bind POST to { request ->
-        val scheduleRequest = scheduleRequestLens(request)
-        calculate(scheduleRequest.electricity(), scheduleRequest.weights(), scheduleRequest.time).fold(
-            { chargeTime ->
-                Response(OK).with(chargeTimeLens of chargeTime)
-            },
-            { failed ->
-                Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse())
-            }
-        )
-    }
-)
+fun weightedCalculatorApp() = CatchLensFailure { _ -> handleLensFailure() }
+    .then(weightedCalculatorRoute())
 
-fun handleLensFailure() =
-    Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("Invalid Request"))
+private fun weightedCalculatorRoute() = "/calculate" bind POST to { request ->
+    val scheduleRequest = scheduleRequestLens(request)
+    calculate(scheduleRequest.electricity(), scheduleRequest.weights(), scheduleRequest.time)
+        .fold(
+            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+            { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
+        )
+}
+
+fun handleLensFailure() = Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("Invalid Request"))
 
 data class ScheduleRequest(
     val time: Long,

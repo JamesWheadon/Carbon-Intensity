@@ -19,26 +19,27 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import java.time.ZonedDateTime
 
-fun limitCalculatorApp() =
-    CatchLensFailure()
-        .then(limitRoutes())
+fun limitCalculatorApp() = CatchLensFailure()
+    .then(limitRoutes())
 
 private fun limitRoutes() = routes(
     "/calculate/intensity/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val intensityLimit = limitLens(request)
-        underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time).fold(
-            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-            { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
-        )
+        underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time)
+            .fold(
+                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
+            )
     },
     "/calculate/price/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
-        underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time).fold(
-            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-            { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
-        )
+        underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time)
+            .fold(
+                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
+            )
     }
 )
 
