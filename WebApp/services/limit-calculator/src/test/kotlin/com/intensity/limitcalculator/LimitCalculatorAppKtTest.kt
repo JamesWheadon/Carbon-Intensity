@@ -18,16 +18,8 @@ class LimitCalculatorAppKtTest {
             """{
                     "time":45,
                     "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":145.0
-                       },
-                       {
-                           "startTime":"2025-03-02T12:30:00Z",
-                           "price":23.55,
-                           "intensity":145.0
-                       }
+                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 145.0)},
+                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
                     ]
                 }""".trimIndent()
         )
@@ -48,16 +40,8 @@ class LimitCalculatorAppKtTest {
             """{
                     "time":45,
                     "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":144.0
-                       },
-                       {
-                           "startTime":"2025-03-02T12:30:00Z",
-                           "price":23.55,
-                           "intensity":145.0
-                       }
+                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
                     ]
                 }""".trimIndent()
         )
@@ -78,16 +62,8 @@ class LimitCalculatorAppKtTest {
             """{
                     "time":45,
                     "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":144.0
-                       },
-                       {
-                           "startTime":"2025-03-02T12:30:00Z",
-                           "price":23.55,
-                           "intensity":145.0
-                       }
+                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
                     ]
                 }""".trimIndent()
         )
@@ -104,16 +80,8 @@ class LimitCalculatorAppKtTest {
             """{
                     "time":45,
                     "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":144.0
-                       },
-                       {
-                           "startTime":"2025-03-02T12:30:00Z",
-                           "price":23.55,
-                           "intensity":145.0
-                       }
+                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
                     ]
                 }""".trimIndent()
         )
@@ -123,4 +91,11 @@ class LimitCalculatorAppKtTest {
         assertThat(response.status, equalTo(BAD_REQUEST))
         assertThat(response.bodyString(), isNullOrEmptyString)
     }
+
+    private fun halfHourJSON(timestamp: String, price: Double, intensity: Double) =
+        """{
+                "startTime":"$timestamp",
+                "price":$price,
+                "intensity":$intensity
+            }"""
 }
