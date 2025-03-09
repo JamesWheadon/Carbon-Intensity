@@ -4,11 +4,12 @@ import com.intensity.core.ErrorResponse
 import com.intensity.core.errorResponseLens
 import com.intensity.openapi.ContractSchema
 import com.intensity.scheduler.ChargeDetails
+import com.intensity.scheduler.ChargeTime
 import com.intensity.scheduler.Scheduler
 import com.intensity.scheduler.SchedulerJackson
 import dev.forkhandles.result4k.Failure
-import dev.forkhandles.result4k.Success
-import dev.forkhandles.result4k.valueOrNull
+import dev.forkhandles.result4k.Result
+import dev.forkhandles.result4k.fold
 import org.http4k.contract.Tag
 import org.http4k.contract.jsonschema.v3.FieldMetadata
 import org.http4k.contract.meta
@@ -40,7 +41,19 @@ fun chargeTimes(scheduler: Scheduler) =
     } bindContract POST to { request ->
         val chargeDetails = chargeDetailsRequestLens(request).toChargeDetails()
         if (chargeDetails.isValid()) {
-            retrieveChargeTime(scheduler, chargeDetails)
+            val bestChargeTime = retrieveChargeTime(scheduler, chargeDetails)
+            bestChargeTime.fold(
+                { chargeTime ->
+                    Response(OK).with(
+                        chargeTimeResponseLens of ChargeTimeResponse(chargeTime.chargeTime)
+                    )
+                },
+                { _ ->
+                    Response(NOT_FOUND).with(
+                        errorResponseLens of ErrorResponse("unable to find charge time")
+                    )
+                }
+            )
         } else {
             Response(BAD_REQUEST).with(errorResponseLens of ErrorResponse("end time must be after start time by at least the charge duration, default 30"))
         }
@@ -49,21 +62,13 @@ fun chargeTimes(scheduler: Scheduler) =
 private fun retrieveChargeTime(
     scheduler: Scheduler,
     chargeDetails: ChargeDetails
-): Response {
+): Result<ChargeTime, String> {
     var bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     if (bestChargeTime == Failure("Duration has not been trained")) {
         scheduler.trainDuration(chargeDetails.duration ?: 30)
         bestChargeTime = scheduler.getBestChargeTime(chargeDetails)
     }
-    return when (bestChargeTime) {
-        is Success -> Response(OK).with(
-            chargeTimeResponseLens of ChargeTimeResponse(bestChargeTime.valueOrNull()!!.chargeTime)
-        )
-
-        is Failure -> Response(NOT_FOUND).with(
-            errorResponseLens of ErrorResponse("unable to find charge time")
-        )
-    }
+    return bestChargeTime
 }
 
 private fun ChargeDetails.isValid() = endTime == null || endTime!! >= startTime.plusSeconds(duration?.times(60L) ?: 0)
