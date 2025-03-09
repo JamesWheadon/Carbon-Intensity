@@ -99,7 +99,7 @@ class LimitCalculatorAppKtTest {
                     "time":75,
                     "electricityData": [
                         ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
-                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                        ${halfHourJSON("2025-03-02T12:15:00Z", 23.55, 145.0)}
                     ]
                 }""".trimIndent()
         )
@@ -107,7 +107,7 @@ class LimitCalculatorAppKtTest {
         val response = app(request)
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.bodyString(), isNullOrEmptyString)
+        assertThat(response.bodyString(), equalTo("""{"error":"Overlapping data windows"}"""))
     }
 
     @Test
@@ -125,7 +125,7 @@ class LimitCalculatorAppKtTest {
         val response = app(request)
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.bodyString(), isNullOrEmptyString)
+        assertThat(response.bodyString(), equalTo("""{"error":"No schedule possible"}"""))
     }
 
     private fun halfHourJSON(timestamp: String, price: Double, intensity: Double) =

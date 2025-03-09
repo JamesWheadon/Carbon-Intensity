@@ -3,6 +3,7 @@ package com.intensity.limitcalculator
 import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.chargeTimeLens
+import com.intensity.core.errorResponseLens
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
@@ -28,7 +29,7 @@ private fun limitRoutes() = routes(
         val intensityLimit = limitLens(request)
         underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time).fold(
             { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-            { Response(BAD_REQUEST) }
+            { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
         )
     },
     "/calculate/price/{limit}" bind POST to { request ->
@@ -36,7 +37,7 @@ private fun limitRoutes() = routes(
         val priceLimit = limitLens(request)
         underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time).fold(
             { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-            { Response(BAD_REQUEST) }
+            { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
         )
     }
 )
