@@ -7,8 +7,12 @@ import dev.forkhandles.result4k.valueOrNull
 import org.http4k.core.Method
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.then
 import org.http4k.core.with
+import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.format.Jackson
+import org.http4k.lens.Path
+import org.http4k.lens.bigDecimal
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
@@ -16,22 +20,25 @@ import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 fun limitCalculatorApp() =
-    routes(
-        "/calculate/intensity/{limit}" bind Method.POST to { request ->
-            val scheduleRequest = scheduleRequestLens(request)
-            val intensityLimit = BigDecimal(request.path("limit"))
-            val chargeTime =
-                underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time).valueOrNull()!!
-            Response(OK).with(chargeTimeLens of chargeTime)
-        },
-        "/calculate/price/{limit}" bind Method.POST to { request ->
-            val scheduleRequest = scheduleRequestLens(request)
-            val priceLimit = BigDecimal(request.path("limit"))
-            val chargeTime =
-                underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time).valueOrNull()!!
-            Response(OK).with(chargeTimeLens of chargeTime)
-        }
-    )
+    CatchLensFailure()
+        .then(limitRoutes())
+
+private fun limitRoutes() = routes(
+    "/calculate/intensity/{limit}" bind Method.POST to { request ->
+        val scheduleRequest = scheduleRequestLens(request)
+        val intensityLimit = BigDecimal(request.path("limit"))
+        val chargeTime =
+            underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time).valueOrNull()!!
+        Response(OK).with(chargeTimeLens of chargeTime)
+    },
+    "/calculate/price/{limit}" bind Method.POST to { request ->
+        val scheduleRequest = scheduleRequestLens(request)
+        val priceLimit = limitLens(request)
+        val chargeTime =
+            underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time).valueOrNull()!!
+        Response(OK).with(chargeTimeLens of chargeTime)
+    }
+)
 
 data class ScheduleRequest(
     val time: Long,
@@ -59,3 +66,4 @@ data class HalfHourElectricityData(
 }
 
 val scheduleRequestLens = Jackson.autoBody<ScheduleRequest>().toLens()
+val limitLens = Path.bigDecimal().of("limit")
