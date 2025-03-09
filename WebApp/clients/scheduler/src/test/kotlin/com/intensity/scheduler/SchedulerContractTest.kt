@@ -50,7 +50,7 @@ abstract class SchedulerContractTest {
 
         val response = scheduler.trainDuration(30)
 
-        assertThat(response.failureOrNull()!!, equalTo("No intensity data for scheduler"))
+        assertThat(response, isFailure(SchedulerTrainingFailure(30)))
     }
 
     @Test

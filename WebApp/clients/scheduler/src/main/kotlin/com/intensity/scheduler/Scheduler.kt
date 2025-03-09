@@ -26,7 +26,7 @@ import java.time.Instant
 
 interface Scheduler {
     fun sendIntensities(intensities: Intensities): Result<Unit, Failed>
-    fun trainDuration(duration: Int): Result<Nothing?, String>
+    fun trainDuration(duration: Int): Result<Unit, Failed>
     fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, String>
     fun getIntensitiesData(): Result<SchedulerIntensitiesData, String>
     fun deleteData()
@@ -42,12 +42,12 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun trainDuration(duration: Int): Result<Nothing?, String> {
+    override fun trainDuration(duration: Int): Result<Unit, Failed> {
         val response = httpHandler(Request(Method.PATCH, "/intensities/train?duration=$duration"))
         return if (response.status == Status.NO_CONTENT) {
-            Success(null)
+            Success(Unit)
         } else {
-            Failure(errorResponseLens(response).error)
+            Failure(SchedulerTrainingFailure(duration))
         }
     }
 
@@ -96,6 +96,9 @@ val schedulerIntensitiesDataLens = SchedulerJackson.autoBody<SchedulerIntensitie
 
 object SchedulerUpdateFailed : Failed {
     override fun toErrorResponse() = ErrorResponse("Error updating scheduler intensities")
+}
+data class SchedulerTrainingFailure(private val duration: Int) : Failed {
+    override fun toErrorResponse() = ErrorResponse("Error training scheduler for $duration duration")
 }
 
 const val schedulerPattern: String = "yyyy-MM-dd'T'HH:mm:ss"
