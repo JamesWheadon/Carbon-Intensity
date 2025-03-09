@@ -5,7 +5,6 @@ import com.intensity.coretest.isFailure
 import com.intensity.coretest.isSuccess
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import dev.forkhandles.result4k.failureOrNull
 import dev.forkhandles.result4k.valueOrNull
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -165,7 +164,7 @@ abstract class SchedulerContractTest {
 
         val response = scheduler.getIntensitiesData()
 
-        assertThat(response.failureOrNull()!!, equalTo("No intensity data for scheduler"))
+        assertThat(response, isFailure(NoSchedulerData))
     }
 }
 

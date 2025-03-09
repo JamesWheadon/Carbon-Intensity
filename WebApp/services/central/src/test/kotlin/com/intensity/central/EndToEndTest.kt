@@ -182,7 +182,7 @@ class EndToEndTest {
         )
 
         assertThat(response.status, equalTo(NOT_FOUND))
-        assertThat(response.body.toString(), equalTo(getErrorResponse("unable to find charge time")))
+        assertThat(response.body.toString(), equalTo(getErrorResponse("No scheduler data for time span")))
         assertThat(scheduler.data, isNotNull())
     }
 

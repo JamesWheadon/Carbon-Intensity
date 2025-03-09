@@ -4,10 +4,11 @@ import com.intensity.nationalgrid.NationalGrid
 import com.intensity.openapi.ContractSchema
 import com.intensity.scheduler.Intensities
 import com.intensity.scheduler.Scheduler
-import com.intensity.scheduler.SchedulerIntensitiesData
 import com.intensity.scheduler.SchedulerJackson
-import dev.forkhandles.result4k.Result
-import dev.forkhandles.result4k.valueOrNull
+import dev.forkhandles.result4k.Success
+import dev.forkhandles.result4k.flatMapFailure
+import dev.forkhandles.result4k.fold
+import dev.forkhandles.result4k.map
 import org.http4k.contract.ContractRoute
 import org.http4k.contract.Tag
 import org.http4k.contract.jsonschema.v3.FieldMetadata
@@ -16,6 +17,7 @@ import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import java.time.Instant
@@ -40,24 +42,32 @@ fun intensities(
         )
     )
 } bindContract POST to { _: Request ->
-    val intensitiesData = scheduler.getIntensitiesData()
     val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
-    val intensitiesForecast = if (intensitiesData.forCurrentDay(startOfDay)) {
-        intensitiesData.valueOrNull()!!.intensities
-    } else {
-        updateSchedulerIntensities(nationalGrid, startOfDay, scheduler)
-    }
-    Response(OK).with(
-        intensitiesResponseLens of IntensitiesResponse(
-            intensitiesForecast,
-            startOfDay
+    scheduler.getIntensitiesData()
+        .map {
+            if (it.date == startOfDay) {
+                it.intensities
+            } else {
+                updateSchedulerIntensities(nationalGrid, startOfDay, scheduler)
+            }
+        }
+        .flatMapFailure {
+            Success(updateSchedulerIntensities(nationalGrid, startOfDay, scheduler))
+        }
+        .fold(
+            { intensitiesForecast ->
+                Response(OK).with(
+                    intensitiesResponseLens of IntensitiesResponse(
+                        intensitiesForecast,
+                        startOfDay
+                    )
+                )
+            },
+            { _ ->
+                Response(NOT_FOUND)
+            }
         )
-    )
 }
-
-private fun Result<SchedulerIntensitiesData, String>.forCurrentDay(
-    startOfDay: Instant?
-) = valueOrNull() != null && valueOrNull()!!.date == startOfDay
 
 private fun updateSchedulerIntensities(
     nationalGrid: NationalGrid,

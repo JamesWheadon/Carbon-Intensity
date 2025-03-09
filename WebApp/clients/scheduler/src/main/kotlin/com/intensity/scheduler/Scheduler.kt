@@ -28,7 +28,7 @@ interface Scheduler {
     fun sendIntensities(intensities: Intensities): Result<Unit, Failed>
     fun trainDuration(duration: Int): Result<Unit, Failed>
     fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, Failed>
-    fun getIntensitiesData(): Result<SchedulerIntensitiesData, String>
+    fun getIntensitiesData(): Result<SchedulerIntensitiesData, Failed>
     fun deleteData()
 }
 
@@ -72,12 +72,12 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun getIntensitiesData(): Result<SchedulerIntensitiesData, String> {
+    override fun getIntensitiesData(): Result<SchedulerIntensitiesData, Failed> {
         val response = httpHandler(Request(Method.GET, "/intensities"))
         return if (response.status.successful) {
             Success(schedulerIntensitiesDataLens(response))
         } else {
-            Failure(errorResponseLens(response).error)
+            Failure(NoSchedulerData)
         }
     }
 
@@ -103,7 +103,9 @@ object SchedulerUpdateFailed : Failed {
 object NoDataForTimeSpan : Failed {
     override fun toErrorResponse() = ErrorResponse("No scheduler data for time span")
 }
-
+object NoSchedulerData : Failed {
+    override fun toErrorResponse() = ErrorResponse("No scheduler data")
+}
 data class UntrainedDuration(private val duration: Int) : Failed {
     override fun toErrorResponse() = ErrorResponse("Scheduler not trained for $duration duration")
 }
