@@ -2,6 +2,8 @@ package com.intensity.scheduler
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.intensity.core.ErrorResponse
+import com.intensity.core.Failed
 import com.intensity.core.errorResponseLens
 import com.intensity.core.formatWith
 import dev.forkhandles.result4k.Failure
@@ -23,7 +25,7 @@ import org.http4k.lens.BiDiMapping
 import java.time.Instant
 
 interface Scheduler {
-    fun sendIntensities(intensities: Intensities): Result<Nothing?, String>
+    fun sendIntensities(intensities: Intensities): Result<Unit, Failed>
     fun trainDuration(duration: Int): Result<Nothing?, String>
     fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, String>
     fun getIntensitiesData(): Result<SchedulerIntensitiesData, String>
@@ -31,12 +33,12 @@ interface Scheduler {
 }
 
 class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
-    override fun sendIntensities(intensities: Intensities): Result<Nothing?, String> {
+    override fun sendIntensities(intensities: Intensities): Result<Unit, Failed> {
         val response = httpHandler(Request(Method.POST, "/intensities").with(intensitiesLens of intensities))
         return if (response.status == Status.NO_CONTENT) {
-            Success(null)
+            Success(Unit)
         } else {
-            Failure(errorResponseLens(response).error)
+            Failure(SchedulerUpdateFailed)
         }
     }
 
@@ -91,6 +93,11 @@ data class ChargeTime(val chargeTime: Instant)
 val intensitiesLens = SchedulerJackson.autoBody<Intensities>().toLens()
 val chargeTimeLens = SchedulerJackson.autoBody<ChargeTime>().toLens()
 val schedulerIntensitiesDataLens = SchedulerJackson.autoBody<SchedulerIntensitiesData>().toLens()
+
+object SchedulerUpdateFailed : Failed {
+    override fun toErrorResponse() = ErrorResponse("Error updating scheduler intensities")
+}
+
 const val schedulerPattern: String = "yyyy-MM-dd'T'HH:mm:ss"
 
 object SchedulerJackson : ConfigurableJackson(

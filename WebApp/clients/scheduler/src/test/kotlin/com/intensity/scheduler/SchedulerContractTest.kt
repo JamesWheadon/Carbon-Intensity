@@ -1,9 +1,9 @@
 package com.intensity.scheduler
 
 import com.intensity.coretest.inTimeRange
+import com.intensity.coretest.isFailure
 import com.intensity.coretest.isSuccess
 import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.contains
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.failureOrNull
 import dev.forkhandles.result4k.valueOrNull
@@ -25,14 +25,14 @@ abstract class SchedulerContractTest {
     fun `responds with bad request when too few intensities sent`() {
         val errorResponse = scheduler.sendIntensities(Intensities(List(95) { 212 }, getTestInstant()))
 
-        assertThat(errorResponse.failureOrNull()!!, contains("too short".toRegex()))
+        assertThat(errorResponse, isFailure(SchedulerUpdateFailed))
     }
 
     @Test
     fun `responds with bad request when too many intensities sent`() {
         val errorResponse = scheduler.sendIntensities(Intensities(List(97) { 212 }, getTestInstant()))
 
-        assertThat(errorResponse.failureOrNull()!!, contains("too long".toRegex()))
+        assertThat(errorResponse, isFailure(SchedulerUpdateFailed))
     }
 
     @Test
