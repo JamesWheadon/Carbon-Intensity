@@ -121,10 +121,6 @@ class WeightedCalculatorAppKtTest {
         val response = app(request)
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(
-            response.bodyString(), equalTo(
-                """{"error":"Invalid Request"}""".trimIndent()
-            )
-        )
+        assertThat(response.bodyString(), equalTo("""{"error":"Invalid Request"}""".trimIndent()))
     }
 }

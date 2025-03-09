@@ -2,7 +2,6 @@ package com.intensity.limitcalculator
 
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import com.natpryce.hamkrest.isNullOrEmptyString
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
@@ -71,7 +70,7 @@ class LimitCalculatorAppKtTest {
         val response = app(request)
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.bodyString(), isNullOrEmptyString)
+        assertThat(response.bodyString(), equalTo("""{"error":"Invalid Request"}""".trimIndent()))
     }
 
     @Test
@@ -89,7 +88,7 @@ class LimitCalculatorAppKtTest {
         val response = app(request)
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.bodyString(), isNullOrEmptyString)
+        assertThat(response.bodyString(), equalTo("""{"error":"Invalid Request"}""".trimIndent()))
     }
 
     @Test

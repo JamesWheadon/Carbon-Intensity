@@ -4,6 +4,7 @@ import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
+import com.intensity.core.handleLensFailures
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
@@ -11,7 +12,6 @@ import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.then
 import org.http4k.core.with
-import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.format.Jackson
 import org.http4k.lens.Path
 import org.http4k.lens.bigDecimal
@@ -19,7 +19,7 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import java.time.ZonedDateTime
 
-fun limitCalculatorApp() = CatchLensFailure()
+fun limitCalculatorApp() = handleLensFailures()
     .then(limitRoutes())
 
 private fun limitRoutes() = routes(
