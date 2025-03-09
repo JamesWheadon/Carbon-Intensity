@@ -73,7 +73,7 @@ abstract class SchedulerContractTest {
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().minusSeconds(30 * 60), null, null))
 
-        assertThat(chargeTime.failureOrNull()!!, equalTo("No data for time slot"))
+        assertThat(chargeTime, isFailure(NoDataForTimeSpan))
     }
 
     @Test
@@ -84,7 +84,7 @@ abstract class SchedulerContractTest {
         val chargeTime =
             scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(3 * SECONDS_IN_DAY), null, null))
 
-        assertThat(chargeTime.failureOrNull()!!, equalTo("No data for time slot"))
+        assertThat(chargeTime, isFailure(NoDataForTimeSpan))
     }
 
     @Test
@@ -107,7 +107,7 @@ abstract class SchedulerContractTest {
 
         val chargeTime = scheduler.getBestChargeTime(ChargeDetails(getTestInstant().plusSeconds(60), null, null))
 
-        assertThat(chargeTime.failureOrNull()!!, equalTo("Duration has not been trained"))
+        assertThat(chargeTime, isFailure(UntrainedDuration(30)))
     }
 
     @Test

@@ -27,7 +27,7 @@ import java.time.Instant
 interface Scheduler {
     fun sendIntensities(intensities: Intensities): Result<Unit, Failed>
     fun trainDuration(duration: Int): Result<Unit, Failed>
-    fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, String>
+    fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, Failed>
     fun getIntensitiesData(): Result<SchedulerIntensitiesData, String>
     fun deleteData()
 }
@@ -51,7 +51,7 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         }
     }
 
-    override fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, String> {
+    override fun getBestChargeTime(chargeDetails: ChargeDetails): Result<ChargeTime, Failed> {
         val timestamp = formatWith(schedulerPattern).format(chargeDetails.startTime)
         var query = "current=$timestamp"
         if (chargeDetails.endTime != null) {
@@ -65,7 +65,10 @@ class PythonScheduler(val httpHandler: HttpHandler) : Scheduler {
         return if (response.status == Status.OK) {
             Success(chargeTimeLens(response))
         } else {
-            Failure(errorResponseLens(response).error)
+            when (errorResponseLens(response).error) {
+                "Duration has not been trained" -> Failure(UntrainedDuration(chargeDetails.duration ?: 30))
+                else -> Failure(NoDataForTimeSpan)
+            }
         }
     }
 
@@ -96,6 +99,13 @@ val schedulerIntensitiesDataLens = SchedulerJackson.autoBody<SchedulerIntensitie
 
 object SchedulerUpdateFailed : Failed {
     override fun toErrorResponse() = ErrorResponse("Error updating scheduler intensities")
+}
+object NoDataForTimeSpan : Failed {
+    override fun toErrorResponse() = ErrorResponse("No scheduler data for time span")
+}
+
+data class UntrainedDuration(private val duration: Int) : Failed {
+    override fun toErrorResponse() = ErrorResponse("Scheduler not trained for $duration duration")
 }
 data class SchedulerTrainingFailure(private val duration: Int) : Failed {
     override fun toErrorResponse() = ErrorResponse("Error training scheduler for $duration duration")
