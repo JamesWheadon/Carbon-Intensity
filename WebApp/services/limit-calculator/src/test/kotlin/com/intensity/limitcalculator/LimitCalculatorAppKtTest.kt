@@ -92,6 +92,42 @@ class LimitCalculatorAppKtTest {
         assertThat(response.bodyString(), isNullOrEmptyString)
     }
 
+    @Test
+    fun `returns the correct response when calculation fails for price limit`() {
+        val request = Request(POST, "/calculate/price/26.00").body(
+            """{
+                    "time":75,
+                    "electricityData": [
+                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                    ]
+                }""".trimIndent()
+        )
+
+        val response = app(request)
+
+        assertThat(response.status, equalTo(BAD_REQUEST))
+        assertThat(response.bodyString(), isNullOrEmptyString)
+    }
+
+    @Test
+    fun `returns the correct response when calculation fails for intensity limit`() {
+        val request = Request(POST, "/calculate/price/26.00").body(
+            """{
+                    "time":75,
+                    "electricityData": [
+                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                    ]
+                }""".trimIndent()
+        )
+
+        val response = app(request)
+
+        assertThat(response.status, equalTo(BAD_REQUEST))
+        assertThat(response.bodyString(), isNullOrEmptyString)
+    }
+
     private fun halfHourJSON(timestamp: String, price: Double, intensity: Double) =
         """{
                 "startTime":"$timestamp",

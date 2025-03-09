@@ -3,9 +3,10 @@ package com.intensity.limitcalculator
 import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.chargeTimeLens
-import dev.forkhandles.result4k.valueOrNull
-import org.http4k.core.Method
+import dev.forkhandles.result4k.fold
+import org.http4k.core.Method.POST
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.then
 import org.http4k.core.with
@@ -22,19 +23,21 @@ fun limitCalculatorApp() =
         .then(limitRoutes())
 
 private fun limitRoutes() = routes(
-    "/calculate/intensity/{limit}" bind Method.POST to { request ->
+    "/calculate/intensity/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val intensityLimit = limitLens(request)
-        val chargeTime =
-            underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time).valueOrNull()!!
-        Response(OK).with(chargeTimeLens of chargeTime)
+        underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time).fold(
+            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+            { Response(BAD_REQUEST) }
+        )
     },
-    "/calculate/price/{limit}" bind Method.POST to { request ->
+    "/calculate/price/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
-        val chargeTime =
-            underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time).valueOrNull()!!
-        Response(OK).with(chargeTimeLens of chargeTime)
+        underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time).fold(
+            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+            { Response(BAD_REQUEST) }
+        )
     }
 )
 
