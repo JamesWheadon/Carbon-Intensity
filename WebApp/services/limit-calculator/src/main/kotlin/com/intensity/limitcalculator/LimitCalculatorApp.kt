@@ -14,9 +14,7 @@ import org.http4k.format.Jackson
 import org.http4k.lens.Path
 import org.http4k.lens.bigDecimal
 import org.http4k.routing.bind
-import org.http4k.routing.path
 import org.http4k.routing.routes
-import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 fun limitCalculatorApp() =
@@ -26,7 +24,7 @@ fun limitCalculatorApp() =
 private fun limitRoutes() = routes(
     "/calculate/intensity/{limit}" bind Method.POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
-        val intensityLimit = BigDecimal(request.path("limit"))
+        val intensityLimit = limitLens(request)
         val chargeTime =
             underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time).valueOrNull()!!
         Response(OK).with(chargeTimeLens of chargeTime)
