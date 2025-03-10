@@ -1,11 +1,14 @@
 package com.intensity.central
 
+import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.openapi.ContractSchema
 import com.intensity.scheduler.Intensities
 import com.intensity.scheduler.Scheduler
 import com.intensity.scheduler.SchedulerJackson
+import com.intensity.scheduler.SchedulerUpdateFailed
 import dev.forkhandles.result4k.Success
+import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.flatMapFailure
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
@@ -17,6 +20,7 @@ import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
@@ -44,15 +48,15 @@ fun intensities(
 } bindContract POST to { _: Request ->
     val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
     scheduler.getIntensitiesData()
-        .map {
+        .flatMap {
             if (it.date == startOfDay) {
-                it.intensities
+                Success(it.intensities)
             } else {
                 updateSchedulerIntensities(nationalGrid, startOfDay, scheduler)
             }
         }
         .flatMapFailure {
-            Success(updateSchedulerIntensities(nationalGrid, startOfDay, scheduler))
+            updateSchedulerIntensities(nationalGrid, startOfDay, scheduler)
         }
         .fold(
             { intensitiesForecast ->
@@ -63,8 +67,12 @@ fun intensities(
                     )
                 )
             },
-            { _ ->
-                Response(NOT_FOUND)
+            { failed ->
+                val status = when (failed) {
+                    is SchedulerUpdateFailed -> INTERNAL_SERVER_ERROR
+                    else -> NOT_FOUND
+                }
+                Response(status).with(errorResponseLens of failed.toErrorResponse())
             }
         )
 }
@@ -73,11 +81,10 @@ private fun updateSchedulerIntensities(
     nationalGrid: NationalGrid,
     startOfDay: Instant,
     scheduler: Scheduler
-): List<Int> {
-    val gridData = nationalGrid.fortyEightHourIntensity(startOfDay)
+) = nationalGrid.fortyEightHourIntensity(startOfDay).flatMap { gridData ->
     val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
     scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
-    return intensitiesForecast
+        .map { intensitiesForecast }
 }
 
 data class IntensitiesResponse(val intensities: List<Int>, val date: Instant) : ContractSchema {

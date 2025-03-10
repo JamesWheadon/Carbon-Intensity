@@ -5,6 +5,7 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
@@ -18,9 +19,13 @@ private const val SECONDS_IN_HALF_HOUR = 1800L
 
 class FakeNationalGrid : HttpHandler {
     private var dayData: NationalGridData? = null
+    private var failure = false
 
     val routes = routes(
-        "/intensity/{time}/fw48h" bind Method.GET to { request ->
+        "/intensity/{time}/fw48h" bind Method.GET to handler@{ request ->
+            if (failure) {
+                return@handler Response(INTERNAL_SERVER_ERROR)
+            }
             if (dayData != null) {
                 Response(Status.OK).with(nationalGridDataLens of dayData!!)
             } else {
@@ -69,6 +74,10 @@ class FakeNationalGrid : HttpHandler {
                 HalfHourData(start, end, Intensity(data.first, data.second, index))
             }
         )
+    }
+
+    fun shouldFail() {
+        failure = true
     }
 
     override fun invoke(request: Request) = routes(request)

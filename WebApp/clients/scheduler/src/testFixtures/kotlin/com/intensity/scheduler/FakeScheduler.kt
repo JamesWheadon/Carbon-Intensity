@@ -108,6 +108,10 @@ class FakeScheduler : HttpHandler {
         errorChargeTime.add(badTime)
     }
 
+    fun hasIntensityData(intensities: Intensities) {
+        data = intensities
+    }
+
     private fun getChargeTime(chargeTime: Instant, end: Instant?, duration: Int): ChargeTime {
         val actionTime = if (end != null && end.minusSeconds(duration * 60L) < chargeTime) {
             end.minusSeconds(duration * 60L)
@@ -115,10 +119,6 @@ class FakeScheduler : HttpHandler {
             chargeTime
         }
         return ChargeTime(actionTime)
-    }
-
-    fun hasIntensityData(intensities: Intensities) {
-        data = intensities
     }
 
     override fun invoke(request: Request) = routes(request)

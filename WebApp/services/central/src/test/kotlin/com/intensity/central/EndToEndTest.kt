@@ -14,6 +14,7 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNSUPPORTED_MEDIA_TYPE
@@ -324,6 +325,31 @@ class EndToEndTest {
                 }"}"""
             )
         )
+    }
+
+    @Test
+    fun `handles error from national grid with the correct response`() {
+        nationalGrid.shouldFail()
+
+        val response = User(events, server).call(
+            Request(POST, "/intensities")
+        )
+
+        assertThat(response.status, equalTo(NOT_FOUND))
+        assertThat(response.body.toString(), equalTo("""{"error":"Failed to get intensity data"}"""))
+    }
+
+    @Test
+    fun `handles error when scheduler fails to accept data`() {
+        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
+        nationalGrid.setDateData(date.toInstant(), List(99) { 210 }, List(99) { null })
+
+        val response = User(events, server).call(
+            Request(POST, "/intensities")
+        )
+
+        assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
+        assertThat(response.body.toString(), equalTo("""{"error":"Error updating scheduler intensities"}"""))
     }
 
     private fun getChargeTimeBody(startTimestamp: String) = """{"startTime":"$startTimestamp"}"""
