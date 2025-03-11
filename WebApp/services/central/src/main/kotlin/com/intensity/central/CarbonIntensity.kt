@@ -3,6 +3,9 @@ package com.intensity.central
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
+import com.intensity.octopus.Octopus
+import com.intensity.octopus.OctopusCloud
+import com.intensity.octopus.octopusClient
 import com.intensity.openapi.openApi3
 import com.intensity.scheduler.PythonScheduler
 import com.intensity.scheduler.Scheduler
@@ -12,6 +15,7 @@ import org.http4k.contract.contract
 import org.http4k.core.then
 import org.http4k.filter.CorsPolicy
 import org.http4k.filter.ServerFilters.Cors
+import org.http4k.routing.routes
 import org.http4k.server.Http4kServer
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
@@ -22,20 +26,24 @@ fun main() {
     val server = carbonIntensityServer(
         port,
         PythonScheduler(schedulerClient(schedulerUrl)),
-        NationalGridCloud(nationalGridClient())
+        NationalGridCloud(nationalGridClient()),
+        OctopusCloud(octopusClient())
     ).start()
     println("Server started on " + server.port())
 }
 
 val corsMiddleware = Cors(CorsPolicy.UnsafeGlobalPermissive)
 
-fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: NationalGrid): Http4kServer {
-    return carbonIntensity(scheduler, nationalGrid).asServer(SunHttp(port))
+fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: NationalGrid, octopus: Octopus): Http4kServer {
+    return carbonIntensity(scheduler, nationalGrid, octopus).asServer(SunHttp(port))
 }
 
-fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid) =
+fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid, octopus: Octopus) =
     corsMiddleware.then(
-        contractRoutes(scheduler, nationalGrid)
+        routes(
+            contractRoutes(scheduler, nationalGrid),
+            octopusProducts(octopus)
+        )
     )
 
 private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {

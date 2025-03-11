@@ -24,16 +24,18 @@ class FakeOctopus : HttpHandler {
             Response(Status.OK).body(
                 """
                     {
-                        "count":1,
+                        "count":${products.size},
                         "next":null,
                         "previous":null,
-                        "results":[
-                            {
-                                "code":"AGILE-24-10-01",
-                                "display_name":"Agile Octopus",
-                                "brand":"OCTOPUS_ENERGY"
-                            }
-                        ]
+                        "results":${
+                    products.joinToString(",", "[", "]") {
+                        """{
+                        "code":"$it",
+                        "display_name":"Agile Octopus",
+                        "brand":"OCTOPUS_ENERGY"
+                    }"""
+                    }
+                }
                     }""".trimIndent()
             )
         },
@@ -46,7 +48,7 @@ class FakeOctopus : HttpHandler {
                             "single_register_electricity_tariffs": {
                                 "_A": {
                                     "direct_debit_monthly": {
-                                        "code": "E-1R-AGILE-FLEX-22-11-25-A"
+                                        "code": "E-1R-$productCode-A"
                                     }
                                 }
                             }

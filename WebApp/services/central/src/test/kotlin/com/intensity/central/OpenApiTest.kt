@@ -2,6 +2,8 @@ package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
+import com.intensity.octopus.FakeOctopus
+import com.intensity.octopus.OctopusCloud
 import com.intensity.scheduler.FakeScheduler
 import com.intensity.scheduler.PythonScheduler
 import com.natpryce.hamkrest.and
@@ -29,6 +31,9 @@ class OpenApiTest {
         ),
         NationalGridCloud(
             FakeNationalGrid()
+        ),
+        OctopusCloud(
+            FakeOctopus()
         )
     )
 

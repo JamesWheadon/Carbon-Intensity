@@ -2,6 +2,8 @@ package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
+import com.intensity.octopus.FakeOctopus
+import com.intensity.octopus.OctopusCloud
 import com.intensity.scheduler.FakeScheduler
 import com.intensity.scheduler.PythonScheduler
 import org.http4k.core.Filter
@@ -41,6 +43,7 @@ abstract class EndToEndTest {
 
     private val appClientStack = clientStack("App", events)
 
+    val octopus = FakeOctopus()
     val scheduler = FakeScheduler()
     val nationalGrid = FakeNationalGrid()
     val server = serverStack("App", events).then(
@@ -50,6 +53,9 @@ abstract class EndToEndTest {
             ),
             NationalGridCloud(
                 appClientStack.then(nationalGrid.traced(serverStack("National Grid", events)))
+            ),
+            OctopusCloud(
+                appClientStack.then(octopus.traced(serverStack("Octopus", events)))
             )
         )
     )

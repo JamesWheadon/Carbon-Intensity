@@ -7,6 +7,7 @@ dependencies {
     implementation(projects.libraries.openApi)
     implementation(projects.clients.nationalGrid)
     implementation(projects.clients.scheduler)
+    implementation(projects.clients.octopus)
 
     implementation(libs.http4k.core)
     implementation(libs.http4k.jackson)
@@ -16,6 +17,7 @@ dependencies {
     testImplementation(projects.libraries.coreTest)
     testImplementation(testFixtures(projects.clients.nationalGrid))
     testImplementation(testFixtures(projects.clients.scheduler))
+    testImplementation(testFixtures(projects.clients.octopus))
 
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)
