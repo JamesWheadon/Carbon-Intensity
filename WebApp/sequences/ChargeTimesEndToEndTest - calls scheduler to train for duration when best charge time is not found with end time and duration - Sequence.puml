@@ -1,5 +1,5 @@
 @startuml
-title EndToEndTest - calls scheduler to train for duration when best charge time is not found
+title ChargeTimesEndToEndTest - calls scheduler to train for duration when best charge time is not found with end time and duration
 participant "User"
 participant "App"
 participant "Scheduler"

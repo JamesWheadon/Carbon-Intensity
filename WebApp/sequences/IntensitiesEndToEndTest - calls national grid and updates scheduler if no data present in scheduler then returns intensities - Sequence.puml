@@ -1,5 +1,5 @@
 @startuml
-title EndToEndTest - handles error when scheduler fails to accept data
+title IntensitiesEndToEndTest - calls national grid and updates scheduler if no data present in scheduler then returns intensities
 participant "User"
 participant "App"
 participant "Scheduler"
@@ -19,8 +19,8 @@ deactivate "National Grid"
 "App" -> "Scheduler": POST intensities
 activate "Scheduler"
 
-"Scheduler" X-[#DarkOrange]> "App": <color:DarkOrange> 400 Bad Request
+"Scheduler" -[#DarkGreen]> "App": <color:DarkGreen> 204 No Content
 deactivate "Scheduler"
-"App" X-[#FireBrick]> "User": <color:FireBrick> 500 Internal Server Error
+"App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
 deactivate "App"
 @enduml

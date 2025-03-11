@@ -1,5 +1,5 @@
 @startuml
-title EndToEndTest - responds with optimal charge time starting the next day
+title ChargeTimesEndToEndTest - responds with optimal charge time starting the next day
 participant "User"
 participant "App"
 participant "Scheduler"

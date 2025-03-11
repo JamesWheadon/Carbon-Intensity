@@ -1,5 +1,5 @@
 @startuml
-title EndToEndTest - responds with bad request and error if difference between start and end less than duration
+title ChargeTimesEndToEndTest - responds with bad request and error when no start timestamp
 participant "User"
 participant "App"
 "User" -> "App": POST charge-time

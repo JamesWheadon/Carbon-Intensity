@@ -1,5 +1,5 @@
 @startuml
-title EndToEndTest - responds with unsupported media type and error when incorrect content type
+title ChargeTimesEndToEndTest - responds with unsupported media type and error when incorrect content type
 participant "User"
 participant "App"
 "User" -> "App": POST charge-time

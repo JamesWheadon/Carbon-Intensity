@@ -1,5 +1,5 @@
 @startuml
-title EndToEndTest - responds with not found and error if can't calculate best charge time
+title ChargeTimesEndToEndTest - responds with optimal charge time with end time and duration
 participant "User"
 participant "App"
 participant "Scheduler"
@@ -8,8 +8,8 @@ activate "App"
 "App" -> "Scheduler": GET charge-time
 activate "Scheduler"
 
-"Scheduler" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found
+"Scheduler" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
 deactivate "Scheduler"
-"App" X-[#DarkOrange]> "User": <color:DarkOrange> 404 Not Found
+"App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
 deactivate "App"
 @enduml

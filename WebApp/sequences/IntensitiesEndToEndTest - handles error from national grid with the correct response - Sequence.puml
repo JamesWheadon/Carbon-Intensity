@@ -1,5 +1,5 @@
 @startuml
-title EndToEndTest - handles error from national grid with the correct response
+title IntensitiesEndToEndTest - handles error from national grid with the correct response
 participant "User"
 participant "App"
 participant "Scheduler"
