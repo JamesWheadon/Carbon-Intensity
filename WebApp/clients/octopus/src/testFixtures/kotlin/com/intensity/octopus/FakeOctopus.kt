@@ -1,10 +1,13 @@
 package com.intensity.octopus
 
 import org.http4k.core.HttpHandler
-import org.http4k.core.Method
+import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
-import org.http4k.core.Status
+import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
+import org.http4k.core.Status.Companion.NOT_FOUND
+import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
@@ -20,8 +23,8 @@ class FakeOctopus : HttpHandler {
     private var fail = false
 
     val routes = routes(
-        "/" bind Method.GET to {
-            Response(Status.OK).body(
+        "/" bind GET to {
+            Response(OK).body(
                 """
                     {
                         "count":${products.size},
@@ -39,10 +42,10 @@ class FakeOctopus : HttpHandler {
                     }""".trimIndent()
             )
         },
-        "/{productCode}" bind Method.GET to { request ->
+        "/{productCode}" bind GET to { request ->
             val productCode = request.path("productCode")
             if (products.contains(productCode)) {
-                Response(Status.OK).body(
+                Response(OK).body(
                     """
                         {
                             "single_register_electricity_tariffs": {
@@ -56,10 +59,10 @@ class FakeOctopus : HttpHandler {
                     """.trimIndent()
                 )
             } else {
-                Response(Status.NOT_FOUND).body("""{"detail":"No EnergyProduct matches the given query."}""")
+                Response(NOT_FOUND).body("""{"detail":"No EnergyProduct matches the given query."}""")
             }
         },
-        "/{productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates" bind Method.GET to { request ->
+        "/{productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates" bind GET to { request ->
             val productCode = request.path("productCode")!!
             val tariffCode = request.path("tariffCode")!!
             if (products.contains(productCode) && tariffCodePrices.keys.any { it.first == tariffCode }) {
@@ -81,9 +84,9 @@ class FakeOctopus : HttpHandler {
                     Instant.now()
                 }
                 if (errors.isNotEmpty()) {
-                    Response(Status.BAD_REQUEST).body(errors.joinToString(",", "{", "}"))
+                    Response(BAD_REQUEST).body(errors.joinToString(",", "{", "}"))
                 } else if (periodTo.isBefore(periodFrom)) {
-                    Response(Status.BAD_REQUEST).body("""{"period_from":["Must not be greater than `period_to`."]}""")
+                    Response(BAD_REQUEST).body("""{"period_from":["Must not be greater than `period_to`."]}""")
                 } else {
                     val halfHourPrices = mutableListOf<String>()
                     val halfHourIntervals = ((periodTo.epochSecond - periodFrom.epochSecond) / 1800).toInt()
@@ -100,7 +103,7 @@ class FakeOctopus : HttpHandler {
                             }"""
                         )
                     }
-                    Response(Status.OK).body(
+                    Response(OK).body(
                         """
                         {
                             "count":${count},
@@ -112,9 +115,9 @@ class FakeOctopus : HttpHandler {
                     )
                 }
             } else if (products.contains(productCode)) {
-                Response(Status.NOT_FOUND).body("""{"detail":"No ElectricityTariff matches the given query."}""")
+                Response(NOT_FOUND).body("""{"detail":"No ElectricityTariff matches the given query."}""")
             } else {
-                Response(Status.NOT_FOUND).body("""{"detail":"No EnergyProduct matches the given query."}""")
+                Response(NOT_FOUND).body("""{"detail":"No EnergyProduct matches the given query."}""")
             }
         }
     )
@@ -134,7 +137,7 @@ class FakeOctopus : HttpHandler {
 
     override fun invoke(request: Request): Response {
         return when (fail) {
-            true -> Response(Status.INTERNAL_SERVER_ERROR)
+            true -> Response(INTERNAL_SERVER_ERROR)
             false -> routes(request)
         }
     }
