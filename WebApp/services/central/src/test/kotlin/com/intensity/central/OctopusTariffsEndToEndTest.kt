@@ -2,7 +2,7 @@ package com.intensity.central
 
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.http4k.core.Method.POST
+import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.OK
@@ -18,7 +18,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         )
 
         val response = User(events, server).call(
-            Request(POST, "/tariffs/octopus")
+            Request(GET, "/tariffs/octopus")
         )
 
         assertThat(response.status, equalTo(OK))
@@ -40,7 +40,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         octopus.incorrectOctopusProductCode("error-product")
 
         val response = User(events, server).call(
-            Request(POST, "/tariffs/octopus")
+            Request(GET, "/tariffs/octopus")
         )
 
         assertThat(response.status, equalTo(OK))
@@ -57,7 +57,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         octopus.fail()
 
         val response = User(events, server).call(
-            Request(POST, "/tariffs/octopus")
+            Request(GET, "/tariffs/octopus")
         )
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))

@@ -5,8 +5,7 @@ import com.intensity.octopus.Octopus
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.partition
-import org.http4k.core.Method.POST
-import org.http4k.core.Request
+import org.http4k.core.Method.GET
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.OK
@@ -16,7 +15,7 @@ import org.http4k.routing.bind
 
 fun octopusProducts(
     octopus: Octopus
-) = "tariffs/octopus" bind POST to { _: Request ->
+) = "tariffs/octopus" bind GET to {
     octopus.products().map { products ->
         products.results.map { product ->
             octopus.product(product.code)

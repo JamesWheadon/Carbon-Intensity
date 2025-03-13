@@ -3,7 +3,7 @@ title OctopusTariffsEndToEndTest - handles failure case when unable to retrieve 
 participant "User"
 participant "App"
 participant "Octopus"
-"User" -> "App": POST tariffs/octopus
+"User" -> "App": GET tariffs/octopus
 activate "App"
 "App" -> "Octopus": GET 
 activate "Octopus"
