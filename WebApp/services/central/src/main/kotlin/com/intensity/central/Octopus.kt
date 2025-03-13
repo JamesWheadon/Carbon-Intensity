@@ -1,6 +1,5 @@
 package com.intensity.central
 
-import com.intensity.core.ErrorResponse
 import com.intensity.core.errorResponseLens
 import com.intensity.octopus.Octopus
 import dev.forkhandles.result4k.allValues
@@ -29,7 +28,7 @@ fun octopusProducts(
             Response(OK).with(octopusProductsLens of products)
         },
         { failed ->
-            Response(INTERNAL_SERVER_ERROR).with(errorResponseLens of ErrorResponse(failed))
+            Response(INTERNAL_SERVER_ERROR).with(errorResponseLens of failed.toErrorResponse())
         }
     )
 }

@@ -74,7 +74,7 @@ abstract class OctopusContractTest {
 
         assertThat(
             productDetails,
-            equalTo(Failure("Incorrect Octopus product code"))
+            equalTo(Failure(IncorrectOctopusProductCode))
         )
     }
 
@@ -89,7 +89,7 @@ abstract class OctopusContractTest {
 
         assertThat(
             prices,
-            equalTo(Failure("Incorrect Octopus product code"))
+            equalTo(Failure(IncorrectOctopusProductCode))
         )
     }
 
@@ -104,7 +104,7 @@ abstract class OctopusContractTest {
 
         assertThat(
             prices,
-            equalTo(Failure("Incorrect Octopus tariff code"))
+            equalTo(Failure(IncorrectOctopusTariffCode))
         )
     }
 
@@ -117,7 +117,7 @@ abstract class OctopusContractTest {
                 "2023-03-28T01:00Z",
                 "2023-03-27T04:59Z"
             ),
-            equalTo(Failure("Invalid request"))
+            equalTo(Failure(InvalidRequestFailed))
         )
         assertThat(
             octopus.prices(
@@ -126,7 +126,7 @@ abstract class OctopusContractTest {
                 "2023-03-28T01:00Z",
                 "2023-03-27T04:59Z"
             ),
-            equalTo(Failure("Invalid request"))
+            equalTo(Failure(InvalidRequestFailed))
         )
         assertThat(
             octopus.prices(
@@ -135,7 +135,7 @@ abstract class OctopusContractTest {
                 "2023-03-28T01:00Z",
                 "2023-03-27T0459Z"
             ),
-            equalTo(Failure("Invalid request"))
+            equalTo(Failure(InvalidRequestFailed))
         )
     }
 }
@@ -168,7 +168,7 @@ class FakeOctopusTest : OctopusContractTest() {
         fakeOctopus.fail()
         val products = octopus.products()
 
-        assertThat(products, equalTo(Failure("Failure communicating with Octopus")))
+        assertThat(products, equalTo(Failure(OctopusCommunicationFailed)))
     }
 
     @Test
@@ -176,7 +176,7 @@ class FakeOctopusTest : OctopusContractTest() {
         fakeOctopus.fail()
         val productDetails = octopus.product("AGILE")
 
-        assertThat(productDetails, equalTo(Failure("Failure communicating with Octopus")))
+        assertThat(productDetails, equalTo(Failure(OctopusCommunicationFailed)))
     }
 
     @Test
@@ -189,7 +189,7 @@ class FakeOctopusTest : OctopusContractTest() {
             "2023-03-28T04:59Z"
         )
 
-        assertThat(prices, equalTo(Failure("Failure communicating with Octopus")))
+        assertThat(prices, equalTo(Failure(OctopusCommunicationFailed)))
     }
 }
 
