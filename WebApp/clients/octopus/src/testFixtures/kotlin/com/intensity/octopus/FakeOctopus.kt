@@ -19,6 +19,7 @@ import kotlin.math.min
 
 class FakeOctopus : HttpHandler {
     private val products = mutableSetOf<String>()
+    private val errorProducts = mutableSetOf<String>()
     private val tariffCodePrices = mutableMapOf<Pair<String, String>, List<Double>>()
     private var fail = false
 
@@ -44,7 +45,7 @@ class FakeOctopus : HttpHandler {
         },
         "/{productCode}" bind GET to { request ->
             val productCode = request.path("productCode")
-            if (products.contains(productCode)) {
+            if (products.contains(productCode) && !errorProducts.contains(productCode)) {
                 Response(OK).body(
                     """
                         {
@@ -133,6 +134,11 @@ class FakeOctopus : HttpHandler {
 
     fun fail() {
         fail = true
+    }
+
+    fun incorrectOctopusProductCode(productCode: String) {
+        products.add(productCode)
+        errorProducts.add(productCode)
     }
 
     override fun invoke(request: Request): Response {

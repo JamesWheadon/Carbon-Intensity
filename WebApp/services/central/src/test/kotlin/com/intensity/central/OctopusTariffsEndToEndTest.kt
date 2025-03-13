@@ -31,6 +31,28 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     }
 
     @Test
+    fun `returns only the octopus products that have tariffs`() {
+        octopus.setPricesFor(
+            "AGILE-24-10-01",
+            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            listOf(23.4, 26.0, 24.3)
+        )
+        octopus.incorrectOctopusProductCode("error-product")
+
+        val response = User(events, server).call(
+            Request(POST, "/tariffs/octopus")
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response.body.toString(),
+            equalTo(
+                """{"products":[{"name":"AGILE-24-10-01","tariffs":["E-1R-AGILE-24-10-01-A"]}]}""".trimIndent()
+            )
+        )
+    }
+
+    @Test
     fun `handles failure case when unable to retrieve products`() {
         octopus.fail()
 

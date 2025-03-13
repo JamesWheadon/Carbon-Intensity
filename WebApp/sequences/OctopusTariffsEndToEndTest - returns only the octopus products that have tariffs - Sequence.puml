@@ -1,0 +1,25 @@
+@startuml
+title OctopusTariffsEndToEndTest - returns only the octopus products that have tariffs
+participant "User"
+participant "App"
+participant "Octopus"
+"User" -> "App": POST tariffs/octopus
+activate "App"
+"App" -> "Octopus": GET 
+activate "Octopus"
+
+"Octopus" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "Octopus"
+"App" -> "Octopus": GET {productCode}
+activate "Octopus"
+
+"Octopus" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "Octopus"
+"App" -> "Octopus": GET {productCode}
+activate "Octopus"
+
+"Octopus" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found
+deactivate "Octopus"
+"App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
+deactivate "App"
+@enduml

@@ -2,10 +2,9 @@ package com.intensity.central
 
 import com.intensity.core.errorResponseLens
 import com.intensity.octopus.Octopus
-import dev.forkhandles.result4k.allValues
-import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
+import dev.forkhandles.result4k.partition
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -18,14 +17,16 @@ import org.http4k.routing.bind
 fun octopusProducts(
     octopus: Octopus
 ) = "tariffs/octopus" bind POST to { _: Request ->
-    octopus.products().flatMap { products ->
+    octopus.products().map { products ->
         products.results.map { product ->
             octopus.product(product.code)
-                .map { OctopusProduct(product.code, it.tariffs.values.map { it.monthly.code }) }
-        }.allValues().map { OctopusProducts(it) }
+                .map {
+                    OctopusProduct(product.code, it.tariffs.values.map { it.monthly.code })
+                }
+        }.partition().first
     }.fold(
         { products ->
-            Response(OK).with(octopusProductsLens of products)
+            Response(OK).with(octopusProductsLens of OctopusProducts(products))
         },
         { failed ->
             Response(INTERNAL_SERVER_ERROR).with(errorResponseLens of failed.toErrorResponse())
