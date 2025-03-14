@@ -1,0 +1,20 @@
+@startuml
+title OctopusTariffsEndToEndTest - handles failure case when no correct products are found
+participant "User"
+participant "App"
+participant "Octopus"
+"User" -> "App": GET tariffs/octopus
+activate "App"
+"App" -> "Octopus": GET 
+activate "Octopus"
+
+"Octopus" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "Octopus"
+"App" -> "Octopus": GET {productCode}
+activate "Octopus"
+
+"Octopus" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found
+deactivate "Octopus"
+"App" X-[#FireBrick]> "User": <color:FireBrick> 500 Internal Server Error
+deactivate "App"
+@enduml

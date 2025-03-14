@@ -2,6 +2,9 @@ package com.intensity.central
 
 import com.intensity.core.errorResponseLens
 import com.intensity.octopus.Octopus
+import dev.forkhandles.result4k.Failure
+import dev.forkhandles.result4k.Success
+import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.partition
@@ -16,13 +19,18 @@ import org.http4k.routing.bind
 fun octopusProducts(
     octopus: Octopus
 ) = "tariffs/octopus" bind GET to {
-    octopus.products().map { products ->
-        products.results.map { product ->
+    octopus.products().flatMap { products ->
+        val tariffsAndFailures = products.results.map { product ->
             octopus.product(product.code)
                 .map {
                     OctopusProduct(product.code, it.tariffs.values.map { it.monthly.code })
                 }
-        }.partition().first
+        }.partition()
+        if (tariffsAndFailures.first.isNotEmpty()) {
+            Success(tariffsAndFailures.first)
+        } else {
+            Failure(tariffsAndFailures.second.first())
+        }
     }.fold(
         { products ->
             Response(OK).with(octopusProductsLens of OctopusProducts(products))

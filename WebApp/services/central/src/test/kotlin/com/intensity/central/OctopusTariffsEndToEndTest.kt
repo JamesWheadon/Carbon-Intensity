@@ -68,4 +68,21 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             )
         )
     }
+
+    @Test
+    fun `handles failure case when no correct products are found`() {
+        octopus.incorrectOctopusProductCode("error-product")
+
+        val response = User(events, server).call(
+            Request(GET, "/tariffs/octopus")
+        )
+
+        assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
+        assertThat(
+            response.body.toString(),
+            equalTo(
+                """{"error":"Incorrect Octopus product code"}""".trimIndent()
+            )
+        )
+    }
 }
