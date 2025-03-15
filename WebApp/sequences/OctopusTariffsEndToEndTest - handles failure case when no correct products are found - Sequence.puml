@@ -15,6 +15,6 @@ activate "Octopus"
 
 "Octopus" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found
 deactivate "Octopus"
-"App" X-[#FireBrick]> "User": <color:FireBrick> 500 Internal Server Error
+"App" X-[#DarkOrange]> "User": <color:DarkOrange> 404 Not Found
 deactivate "App"
 @enduml

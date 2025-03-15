@@ -5,6 +5,7 @@ import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
+import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
 
@@ -77,11 +78,11 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             Request(GET, "/tariffs/octopus")
         )
 
-        assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
+        assertThat(response.status, equalTo(NOT_FOUND))
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"error":"Incorrect Octopus product code"}""".trimIndent()
+                """{"error":"No Octopus products"}""".trimIndent()
             )
         )
     }
