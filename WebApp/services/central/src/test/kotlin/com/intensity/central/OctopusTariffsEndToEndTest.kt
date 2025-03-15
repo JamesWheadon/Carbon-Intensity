@@ -19,7 +19,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         )
 
         val response = User(events, server).call(
-            Request(GET, "/tariffs/octopus")
+            Request(GET, "/tariffs")
         )
 
         assertThat(response.status, equalTo(OK))
@@ -41,7 +41,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         octopus.incorrectOctopusProductCode("error-product")
 
         val response = User(events, server).call(
-            Request(GET, "/tariffs/octopus")
+            Request(GET, "/tariffs")
         )
 
         assertThat(response.status, equalTo(OK))
@@ -58,7 +58,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         octopus.fail()
 
         val response = User(events, server).call(
-            Request(GET, "/tariffs/octopus")
+            Request(GET, "/tariffs")
         )
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
@@ -75,7 +75,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         octopus.incorrectOctopusProductCode("error-product")
 
         val response = User(events, server).call(
-            Request(GET, "/tariffs/octopus")
+            Request(GET, "/tariffs")
         )
 
         assertThat(response.status, equalTo(NOT_FOUND))

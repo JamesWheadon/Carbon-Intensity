@@ -21,13 +21,12 @@ import org.http4k.routing.bind
 
 fun octopusProducts(
     octopus: Octopus
-) = "tariffs/octopus" bind GET to {
+) = "tariffs" bind GET to {
     octopus.products().flatMap { products ->
         val tariffsAndFailures = products.results.map { product ->
-            octopus.product(product.code)
-                .map {
-                    OctopusProduct(product.code, it.tariffs.values.map { it.monthly.code })
-                }
+            octopus.product(product.code).map {
+                OctopusProduct(product.code, it.tariffs.values.map { tariff -> tariff.monthly.code })
+            }
         }.partition()
         if (tariffsAndFailures.first.isNotEmpty()) {
             Success(tariffsAndFailures.first)
