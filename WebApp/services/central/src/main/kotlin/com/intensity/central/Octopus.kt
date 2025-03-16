@@ -4,12 +4,14 @@ import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.errorResponseLens
 import com.intensity.octopus.Octopus
+import com.intensity.octopus.pricesLens
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.partition
+import dev.forkhandles.result4k.valueOrNull
 import org.http4k.core.Method.GET
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
@@ -18,6 +20,8 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
+import org.http4k.routing.path
+import java.time.ZonedDateTime
 
 fun octopusProducts(
     octopus: Octopus
@@ -45,6 +49,18 @@ fun octopusProducts(
             Response(status).with(errorResponseLens of failed.toErrorResponse())
         }
     )
+}
+
+fun octopusPrices(
+    octopus: Octopus
+) = "tariffs/{productCode}/{tariffCode}" bind GET to { request ->
+    val prices = octopus.prices(
+        request.path("productCode")!!,
+        request.path("tariffCode")!!,
+        ZonedDateTime.now(),
+        ZonedDateTime.now().plusDays(2)
+    )
+    Response(OK).with(pricesLens of prices.valueOrNull()!!)
 }
 
 val octopusProductsLens = Jackson.autoBody<OctopusProducts>().toLens()

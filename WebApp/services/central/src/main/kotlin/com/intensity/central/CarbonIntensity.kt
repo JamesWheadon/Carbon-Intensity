@@ -42,7 +42,8 @@ fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid, octopus: O
     corsMiddleware.then(
         routes(
             contractRoutes(scheduler, nationalGrid),
-            octopusProducts(octopus)
+            octopusProducts(octopus),
+            octopusPrices(octopus)
         )
     )
 
