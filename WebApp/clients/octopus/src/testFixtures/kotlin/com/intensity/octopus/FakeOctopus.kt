@@ -12,9 +12,7 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.time.temporal.TemporalAccessor
 import kotlin.math.min
 
 class FakeOctopus : HttpHandler {
@@ -123,9 +121,7 @@ class FakeOctopus : HttpHandler {
         }
     )
 
-    private fun parseTimestamp(timestamp: String): Instant =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmX")
-            .parse(timestamp) { temporal: TemporalAccessor? -> Instant.from(temporal) }
+    private fun parseTimestamp(timestamp: String) = Instant.parse(timestamp)
 
     fun setPricesFor(productCode: String, tariffCodeAtTime: Pair<String, String>, prices: List<Double>) {
         products.add(productCode)

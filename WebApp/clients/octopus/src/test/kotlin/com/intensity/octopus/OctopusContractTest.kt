@@ -8,6 +8,8 @@ import dev.forkhandles.result4k.valueOrNull
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 abstract class OctopusContractTest {
     abstract val octopus: Octopus
@@ -17,8 +19,8 @@ abstract class OctopusContractTest {
         val prices = octopus.prices(
             "AGILE-FLEX-22-11-25",
             "E-1R-AGILE-FLEX-22-11-25-C",
-            "2023-03-26T00:00Z",
-            "2023-03-26T01:29Z"
+            ZonedDateTime.of(2023, 3, 26, 0, 0, 0, 0, ZoneId.of("UTC")),
+            ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
 
         assertThat(prices.results.map(HalfHourPrices::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
@@ -30,8 +32,8 @@ abstract class OctopusContractTest {
         val prices = octopus.prices(
             "AGILE-FLEX-22-11-25",
             "E-1R-AGILE-FLEX-22-11-25-B",
-            "2023-03-26T00:00Z",
-            "2023-03-26T01:29Z"
+            ZonedDateTime.of(2023, 3, 26, 0, 0, 0, 0, ZoneId.of("UTC")),
+            ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
 
         assertThat(prices.results.map(HalfHourPrices::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
@@ -42,8 +44,8 @@ abstract class OctopusContractTest {
         val prices = octopus.prices(
             "AGILE-FLEX-22-11-25",
             "E-1R-AGILE-FLEX-22-11-25-C",
-            "2023-03-28T01:00Z",
-            "2023-03-28T04:59Z"
+            ZonedDateTime.of(2023, 3, 28, 1, 0, 0, 0, ZoneId.of("UTC")),
+            ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
 
         assertThat(
@@ -83,8 +85,8 @@ abstract class OctopusContractTest {
         val prices = octopus.prices(
             "AGILE-FLEX",
             "E-1R-AGILE-FLEX-22-11-25-C",
-            "2023-03-28T01:00Z",
-            "2023-03-28T04:59Z"
+            ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
+            ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         )
 
         assertThat(
@@ -98,8 +100,8 @@ abstract class OctopusContractTest {
         val prices = octopus.prices(
             "AGILE-FLEX-22-11-25",
             "E-1R-AGILE-FLEX",
-            "2023-03-28T01:00Z",
-            "2023-03-28T04:59Z"
+            ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
+            ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         )
 
         assertThat(
@@ -114,26 +116,8 @@ abstract class OctopusContractTest {
             octopus.prices(
                 "AGILE-FLEX-22-11-25",
                 "E-1R-AGILE-FLEX-22-11-25-C",
-                "2023-03-28T01:00Z",
-                "2023-03-27T04:59Z"
-            ),
-            equalTo(Failure(InvalidRequestFailed))
-        )
-        assertThat(
-            octopus.prices(
-                "AGILE-FLEX-22-11-25",
-                "E-1R-AGILE-FLEX-22-11-25-C",
-                "2023-03-28T01:00Z",
-                "2023-03-27T04:59Z"
-            ),
-            equalTo(Failure(InvalidRequestFailed))
-        )
-        assertThat(
-            octopus.prices(
-                "AGILE-FLEX-22-11-25",
-                "E-1R-AGILE-FLEX-22-11-25-C",
-                "2023-03-28T01:00Z",
-                "2023-03-27T0459Z"
+                ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
+                ZonedDateTime.of(2023, 3, 27, 4, 59, 0, 0, ZoneId.of("UTC"))
             ),
             equalTo(Failure(InvalidRequestFailed))
         )
@@ -185,8 +169,8 @@ class FakeOctopusTest : OctopusContractTest() {
         val prices = octopus.prices(
             "AGILE-FLEX-22-11-25",
             "E-1R-AGILE-FLEX-22-11-25-C",
-            "2023-03-28T01:00Z",
-            "2023-03-28T04:59Z"
+            ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
+            ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         )
 
         assertThat(prices, equalTo(Failure(OctopusCommunicationFailed)))

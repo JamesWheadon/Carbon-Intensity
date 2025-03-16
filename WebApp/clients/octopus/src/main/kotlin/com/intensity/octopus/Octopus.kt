@@ -8,17 +8,26 @@ import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.HttpHandler
-import org.http4k.core.Method
+import org.http4k.core.Method.GET
 import org.http4k.core.Request
-import org.http4k.core.Status
+import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.NOT_FOUND
+import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Uri
 import org.http4k.core.then
 import org.http4k.filter.ClientFilters
 import org.http4k.format.Jackson
 import java.time.Instant
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 interface Octopus {
-    fun prices(productCode: String, tariffCode: String, periodFrom: String, periodTo: String): Result<Prices, Failed>
+    fun prices(
+        productCode: String,
+        tariffCode: String,
+        start: ZonedDateTime,
+        end: ZonedDateTime
+    ): Result<Prices, Failed>
     fun products(): Result<Products, Failed>
     fun product(productCode: String): Result<ProductDetails, Failed>
 }
@@ -27,38 +36,40 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
     override fun prices(
         productCode: String,
         tariffCode: String,
-        periodFrom: String,
-        periodTo: String
+        start: ZonedDateTime,
+        end: ZonedDateTime
     ): Result<Prices, Failed> {
+        val periodFrom = start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
+        val periodTo = end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         val response = httpHandler(
             Request(
-                Method.GET,
+                GET,
                 "/$productCode/electricity-tariffs/$tariffCode/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"
             )
         )
         return when (response.status) {
-            Status.OK -> Success(pricesLens(response))
-            Status.BAD_REQUEST -> Failure(InvalidRequestFailed)
-            Status.NOT_FOUND -> octopusErrorLens(response).toFailure()
+            OK -> Success(pricesLens(response))
+            BAD_REQUEST -> Failure(InvalidRequestFailed)
+            NOT_FOUND -> octopusErrorLens(response).toFailure()
             else -> Failure(OctopusCommunicationFailed)
         }
     }
 
     override fun products(): Result<Products, Failed> {
-        val response = httpHandler(Request(Method.GET, "/"))
+        val response = httpHandler(Request(GET, "/"))
         return when (response.status) {
-            Status.OK -> Success(productsLens(response))
+            OK -> Success(productsLens(response))
             else -> Failure(OctopusCommunicationFailed)
         }
     }
 
     override fun product(productCode: String): Result<ProductDetails, Failed> {
         val response = httpHandler(
-            Request(Method.GET, "/$productCode/")
+            Request(GET, "/$productCode/")
         )
         return when (response.status) {
-            Status.OK -> Success(productDetailsLens(response))
-            Status.NOT_FOUND -> octopusErrorLens(response).toFailure()
+            OK -> Success(productDetailsLens(response))
+            NOT_FOUND -> octopusErrorLens(response).toFailure()
             else -> Failure(OctopusCommunicationFailed)
         }
     }
