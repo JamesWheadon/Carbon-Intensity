@@ -17,7 +17,6 @@ import org.http4k.core.Uri
 import org.http4k.core.then
 import org.http4k.filter.ClientFilters
 import org.http4k.format.Jackson
-import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -82,8 +81,8 @@ data class Prices(val results: List<HalfHourPrices>)
 data class HalfHourPrices(
     @JsonProperty("value_exc_vat") val wholesalePrice: Double,
     @JsonProperty("value_inc_vat") val retailPrice: Double,
-    @JsonProperty("valid_from") val from: Instant,
-    @JsonProperty("valid_to") val to: Instant
+    @JsonProperty("valid_from") val from: ZonedDateTime,
+    @JsonProperty("valid_to") val to: ZonedDateTime
 )
 
 data class Products(val results: List<Product>)

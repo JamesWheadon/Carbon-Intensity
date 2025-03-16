@@ -7,8 +7,8 @@ import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.valueOrNull
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import java.time.Instant
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 abstract class OctopusContractTest {
@@ -24,7 +24,10 @@ abstract class OctopusContractTest {
         ).valueOrNull()!!
 
         assertThat(prices.results.map(HalfHourPrices::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
-        assertThat(prices.results.first().from, equalTo(Instant.parse("2023-03-26T01:00:00Z")))
+        assertThat(
+            prices.results.first().from,
+            equalTo(ZonedDateTime.of(2023, 3, 26, 1, 0, 0, 0, ZoneId.ofOffset("", ZoneOffset.UTC)))
+        )
     }
 
     @Test
@@ -52,8 +55,14 @@ abstract class OctopusContractTest {
             prices.results.map(HalfHourPrices::wholesalePrice),
             equalTo(listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2))
         )
-        assertThat(prices.results.last().from, equalTo(Instant.parse("2023-03-28T01:00:00Z")))
-        assertThat(prices.results.first().to, equalTo(Instant.parse("2023-03-28T05:00:00Z")))
+        assertThat(
+            prices.results.last().from,
+            equalTo(ZonedDateTime.of(2023, 3, 28, 1, 0, 0, 0, ZoneId.ofOffset("", ZoneOffset.UTC)))
+        )
+        assertThat(
+            prices.results.first().to,
+            equalTo(ZonedDateTime.of(2023, 3, 28, 5, 0, 0, 0, ZoneId.ofOffset("", ZoneOffset.UTC)))
+        )
     }
 
     @Test
