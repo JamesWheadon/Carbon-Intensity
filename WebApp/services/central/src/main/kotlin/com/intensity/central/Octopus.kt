@@ -54,11 +54,13 @@ fun octopusProducts(
 fun octopusPrices(
     octopus: Octopus
 ) = "tariffs/{productCode}/{tariffCode}" bind GET to { request ->
+    val start = request.query("start")?.let { ZonedDateTime.parse(it) } ?: ZonedDateTime.now()
+    val end = request.query("end")?.let { ZonedDateTime.parse(it) } ?: start.plusDays(2)
     val prices = octopus.prices(
         request.path("productCode")!!,
         request.path("tariffCode")!!,
-        ZonedDateTime.now(),
-        request.query("end")?.let { ZonedDateTime.parse(it) } ?: ZonedDateTime.now().plusDays(2)
+        start,
+        end
     )
     Response(OK).with(pricesLens of prices.valueOrNull()!!)
 }

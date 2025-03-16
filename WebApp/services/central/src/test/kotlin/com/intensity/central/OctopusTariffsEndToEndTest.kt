@@ -177,6 +177,51 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         )
     }
 
+    @Test
+    fun `accepts a start time for pricing data`() {
+        octopus.setPricesFor(
+            "AGILE-24-10-01",
+            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            mutableListOf(23.4, 26.0, 24.3)
+        )
+
+        val response = User(events, server).call(
+            Request(
+                GET,
+                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26T00:00:00Z"
+            )
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response,
+            hasBody(
+                """{
+                        "results":[
+                            {
+                                "value_exc_vat":23.4,
+                                "value_inc_vat":24.57,
+                                "valid_from":"2023-03-26T01:00:00Z",
+                                "valid_to":"2023-03-26T01:30:00Z"
+                            },
+                            {
+                                "value_exc_vat":26.0,
+                                "value_inc_vat":27.3,
+                                "valid_from":"2023-03-26T00:30:00Z",
+                                "valid_to":"2023-03-26T01:00:00Z"
+                            },
+                            {
+                                "value_exc_vat":24.3,
+                                "value_inc_vat":25.515,
+                                "valid_from":"2023-03-26T00:00:00Z",
+                                "valid_to":"2023-03-26T00:30:00Z"
+                            }
+                        ]
+                    }"""
+            )
+        )
+    }
+
     private fun zonedDateTimeAtHalfHour(time: ZonedDateTime) =
         time.truncatedTo(ChronoUnit.HOURS).plusMinutes(time.minute / 30 * 30L)
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
