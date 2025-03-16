@@ -1,0 +1,15 @@
+@startuml
+title OctopusTariffsEndToEndTest - accepts an end time for pricing data
+participant "User"
+participant "App"
+participant "Octopus"
+"User" -> "App": GET tariffs/{productCode}/{tariffCode}
+activate "App"
+"App" -> "Octopus": GET {productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates
+activate "Octopus"
+
+"Octopus" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "Octopus"
+"App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
+deactivate "App"
+@enduml

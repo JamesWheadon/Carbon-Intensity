@@ -58,7 +58,7 @@ fun octopusPrices(
         request.path("productCode")!!,
         request.path("tariffCode")!!,
         ZonedDateTime.now(),
-        ZonedDateTime.now().plusDays(2)
+        request.query("end")?.let { ZonedDateTime.parse(it) } ?: ZonedDateTime.now().plusDays(2)
     )
     Response(OK).with(pricesLens of prices.valueOrNull()!!)
 }

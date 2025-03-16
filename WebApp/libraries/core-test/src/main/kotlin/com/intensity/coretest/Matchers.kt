@@ -2,8 +2,11 @@ package com.intensity.coretest
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.natpryce.hamkrest.MatchResult
+import com.natpryce.hamkrest.MatchResult.Match
+import com.natpryce.hamkrest.MatchResult.Mismatch
 import com.natpryce.hamkrest.Matcher
 import com.natpryce.hamkrest.and
+import com.natpryce.hamkrest.describe
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -23,7 +26,7 @@ fun inTimeRange(expectedStart: Instant, expectedEnd: Instant): Matcher<Instant> 
 
 fun <T> isNotNull() = object : Matcher<T?> {
     override fun invoke(actual: T?): MatchResult =
-        if (actual != null) MatchResult.Match else MatchResult.Mismatch("value is null")
+        if (actual != null) Match else Mismatch("value is null")
 
     override val description: String get() = "is not null"
     override val negatedDescription: String get() = "is null"
@@ -32,8 +35,8 @@ fun <T> isNotNull() = object : Matcher<T?> {
 fun <T, E> isSuccess() = object : Matcher<Result<T, E>> {
     override fun invoke(actual: Result<T, E>) =
         when (actual) {
-            is Success -> MatchResult.Match
-            else -> MatchResult.Mismatch("Result is a Failure")
+            is Success -> Match
+            else -> Mismatch("Result is a Failure")
         }
 
     override val description: String get() = "Result is a Success"
@@ -44,14 +47,14 @@ fun <T, E> isSuccess(expected: T) = object : Matcher<Result<T, E>> {
     override fun invoke(actual: Result<T, E>) =
         when (actual) {
             is Success -> matchExpected(actual.get())
-            else -> MatchResult.Mismatch("Result is a Failure")
+            else -> Mismatch("Result is a Failure")
         }
 
     fun matchExpected(get: T): MatchResult =
         if (get == expected) {
-            MatchResult.Match
+            Match
         } else {
-            MatchResult.Mismatch("Success does not match expected")
+            Mismatch("Success does not match expected")
         }
 
     override val description: String get() = "Result is a Success"
@@ -62,14 +65,14 @@ fun <T, E> isFailure(expected: E) = object : Matcher<Result<T, E>> {
     override fun invoke(actual: Result<T, E>) =
         when (actual) {
             is Failure -> matchExpected(actual.get())
-            else -> MatchResult.Mismatch("Result is a Success")
+            else -> Mismatch("Result is a Success")
         }
 
     fun matchExpected(get: E): MatchResult =
         if (get == expected) {
-            MatchResult.Match
+            Match
         } else {
-            MatchResult.Mismatch("Failure does not match expected")
+            Mismatch("Failure does not match expected")
         }
 
     override val description: String get() = "Result is a Failure"
@@ -80,12 +83,12 @@ fun hasBody(expected: String) = object : Matcher<Response> {
     override fun invoke(actual: Response): MatchResult {
         val mapper = ObjectMapper()
         return if (mapper.readTree(actual.bodyString()) == mapper.readTree(expected)) {
-            MatchResult.Match
+            Match
         } else {
-            MatchResult.Mismatch("Response body is not equal to expected")
+            Mismatch("was: ${describe(actual.bodyString())}")
         }
     }
 
-    override val description: String get() = "Response body matches expected"
-    override val negatedDescription: String get() = "Response body does not match expected"
+    override val description: String get() = "is equal to ${describe(expected)}"
+    override val negatedDescription: String get() = "is not equal to ${describe(expected)}"
 }
