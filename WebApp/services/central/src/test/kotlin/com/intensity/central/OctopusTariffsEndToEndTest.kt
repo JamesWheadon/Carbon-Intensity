@@ -222,6 +222,40 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         )
     }
 
+    @Test
+    fun `handles tariff not existing`() {
+        octopus.setPricesFor(
+            "AGILE-24-10-01",
+            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            mutableListOf(23.4, 26.0, 24.3)
+        )
+
+        val response = User(events, server).call(
+            Request(
+                GET,
+                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-D"
+            )
+        )
+
+        assertThat(response.status, equalTo(NOT_FOUND))
+        assertThat(response, hasBody("""{"error":"Incorrect Octopus tariff code"}"""))
+    }
+
+    @Test
+    fun `handles octopus not responding`() {
+        octopus.fail()
+
+        val response = User(events, server).call(
+            Request(
+                GET,
+                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-D"
+            )
+        )
+
+        assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
+        assertThat(response, hasBody("""{"error":"Failure communicating with Octopus"}"""))
+    }
+
     private fun zonedDateTimeAtHalfHour(time: ZonedDateTime) =
         time.truncatedTo(ChronoUnit.HOURS).plusMinutes(time.minute / 30 * 30L)
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))

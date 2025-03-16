@@ -4,6 +4,7 @@ import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.errorResponseLens
 import com.intensity.octopus.Octopus
+import com.intensity.octopus.OctopusCommunicationFailed
 import com.intensity.octopus.pricesLens
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Success
@@ -11,7 +12,6 @@ import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.partition
-import dev.forkhandles.result4k.valueOrNull
 import org.http4k.core.Method.GET
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
@@ -56,13 +56,23 @@ fun octopusPrices(
 ) = "tariffs/{productCode}/{tariffCode}" bind GET to { request ->
     val start = request.query("start")?.let { ZonedDateTime.parse(it) } ?: ZonedDateTime.now()
     val end = request.query("end")?.let { ZonedDateTime.parse(it) } ?: start.plusDays(2)
-    val prices = octopus.prices(
+    octopus.prices(
         request.path("productCode")!!,
         request.path("tariffCode")!!,
         start,
         end
+    ).fold(
+        { prices ->
+            Response(OK).with(pricesLens of prices)
+        },
+        { failed ->
+            val status = when (failed) {
+                OctopusCommunicationFailed -> INTERNAL_SERVER_ERROR
+                else -> NOT_FOUND
+            }
+            Response(status).with(errorResponseLens of failed.toErrorResponse())
+        }
     )
-    Response(OK).with(pricesLens of prices.valueOrNull()!!)
 }
 
 val octopusProductsLens = Jackson.autoBody<OctopusProducts>().toLens()
