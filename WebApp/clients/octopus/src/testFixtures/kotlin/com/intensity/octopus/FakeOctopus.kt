@@ -66,18 +66,14 @@ class FakeOctopus : HttpHandler {
             val tariffCode = request.path("tariffCode")!!
             if (products.contains(productCode) && tariffCodePrices.keys.any { it.first == tariffCode }) {
                 val errors = mutableListOf<String>()
-                val periodFrom = try {
-                    Instant.ofEpochSecond(
-                        parseTimestamp(request.query("period_from")!!).epochSecond / 1800 * 1800
-                    )
+                var periodFrom = try {
+                    parseTimestamp(request.query("period_from")!!)
                 } catch (e: DateTimeParseException) {
                     errors.add(""""period_from":["Enter a valid date/time."]""")
                     Instant.now()
                 }
-                val periodTo = try {
-                    Instant.ofEpochSecond(
-                        parseTimestamp(request.query("period_to")!!).epochSecond / 1800 * 1800 + 1800
-                    )
+                var periodTo = try {
+                    parseTimestamp(request.query("period_to")!!)
                 } catch (e: DateTimeParseException) {
                     errors.add(""""period_to":["Enter a valid date/time."]""")
                     Instant.now()
@@ -87,6 +83,8 @@ class FakeOctopus : HttpHandler {
                 } else if (periodTo.isBefore(periodFrom)) {
                     Response(BAD_REQUEST).body("""{"period_from":["Must not be greater than `period_to`."]}""")
                 } else {
+                    periodFrom = Instant.ofEpochSecond(periodFrom.epochSecond / 1800 * 1800)
+                    periodTo = Instant.ofEpochSecond(periodTo.epochSecond / 1800 * 1800 + 1800)
                     val halfHourPrices = mutableListOf<String>()
                     val halfHourIntervals = ((periodTo.epochSecond - periodFrom.epochSecond) / 1800).toInt()
                     val providedPriceData = tariffCodePrices[tariffCode to periodFrom.toString()]!!.size

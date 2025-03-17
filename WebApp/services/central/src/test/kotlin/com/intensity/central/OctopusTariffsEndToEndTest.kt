@@ -5,6 +5,7 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
@@ -254,6 +255,25 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
         assertThat(response, hasBody("""{"error":"Failure communicating with Octopus"}"""))
+    }
+
+    @Test
+    fun `handles error when end time before start time`() {
+        octopus.setPricesFor(
+            "AGILE-24-10-01",
+            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            mutableListOf(23.4, 26.0, 24.3)
+        )
+
+        val response = User(events, server).call(
+            Request(
+                GET,
+                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26T00:00:00Z&end=2023-03-25T23:59:59Z"
+            )
+        )
+
+        assertThat(response.status, equalTo(BAD_REQUEST))
+        assertThat(response, hasBody("""{"error":"Invalid request"}"""))
     }
 
     private fun zonedDateTimeAtHalfHour(time: ZonedDateTime) =

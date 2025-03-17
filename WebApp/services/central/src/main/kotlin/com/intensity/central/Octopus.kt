@@ -3,6 +3,7 @@ package com.intensity.central
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.errorResponseLens
+import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCommunicationFailed
 import com.intensity.octopus.pricesLens
@@ -14,6 +15,7 @@ import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.partition
 import org.http4k.core.Method.GET
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
@@ -67,6 +69,7 @@ fun octopusPrices(
         },
         { failed ->
             val status = when (failed) {
+                InvalidRequestFailed -> BAD_REQUEST
                 OctopusCommunicationFailed -> INTERNAL_SERVER_ERROR
                 else -> NOT_FOUND
             }
