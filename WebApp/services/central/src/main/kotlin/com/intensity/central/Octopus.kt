@@ -21,6 +21,8 @@ import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson
+import org.http4k.lens.Query
+import org.http4k.lens.zonedDateTime
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import java.time.ZonedDateTime
@@ -56,8 +58,8 @@ fun octopusProducts(
 fun octopusPrices(
     octopus: Octopus
 ) = "tariffs/{productCode}/{tariffCode}" bind GET to { request ->
-    val start = request.query("start")?.let { ZonedDateTime.parse(it) } ?: ZonedDateTime.now()
-    val end = request.query("end")?.let { ZonedDateTime.parse(it) } ?: start.plusDays(2)
+    val start = Query.zonedDateTime().optional("start")(request) ?: ZonedDateTime.now()
+    val end = Query.zonedDateTime().optional("end")(request) ?: start.plusDays(2)
     octopus.prices(
         request.path("productCode")!!,
         request.path("tariffCode")!!,

@@ -276,6 +276,29 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         assertThat(response, hasBody("""{"error":"Invalid request"}"""))
     }
 
+    @Test
+    fun `handles invalid timestamps for start and end times`() {
+        val invalidStart = User(events, server).call(
+            Request(
+                GET,
+                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26.00:00:00Z"
+            )
+        )
+
+        assertThat(invalidStart.status, equalTo(BAD_REQUEST))
+        assertThat(invalidStart, hasBody("""{"error":"Invalid request"}"""))
+
+        val invalidEnd = User(events, server).call(
+            Request(
+                GET,
+                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?end=23-03-25T23:59:59Z"
+            )
+        )
+
+        assertThat(invalidEnd.status, equalTo(BAD_REQUEST))
+        assertThat(invalidEnd, hasBody("""{"error":"Invalid request"}"""))
+    }
+
     private fun zonedDateTimeAtHalfHour(time: ZonedDateTime) =
         time.truncatedTo(ChronoUnit.HOURS).plusMinutes(time.minute / 30 * 30L)
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))

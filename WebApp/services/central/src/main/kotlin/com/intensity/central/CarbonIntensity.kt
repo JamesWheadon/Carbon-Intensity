@@ -1,8 +1,10 @@
 package com.intensity.central
 
+import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
+import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.octopus.octopusClient
@@ -12,9 +14,14 @@ import com.intensity.scheduler.Scheduler
 import com.intensity.scheduler.schedulerClient
 import org.http4k.contract.PreFlightExtraction.Companion.None
 import org.http4k.contract.contract
+import org.http4k.core.Response
+import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.then
+import org.http4k.core.with
 import org.http4k.filter.CorsPolicy
+import org.http4k.filter.ServerFilters.CatchLensFailure
 import org.http4k.filter.ServerFilters.Cors
+import org.http4k.lens.LensFailure
 import org.http4k.routing.routes
 import org.http4k.server.Http4kServer
 import org.http4k.server.SunHttp
@@ -39,13 +46,17 @@ fun carbonIntensityServer(port: Int, scheduler: Scheduler, nationalGrid: Nationa
 }
 
 fun carbonIntensity(scheduler: Scheduler, nationalGrid: NationalGrid, octopus: Octopus) =
-    corsMiddleware.then(
-        routes(
-            contractRoutes(scheduler, nationalGrid),
-            octopusProducts(octopus),
-            octopusPrices(octopus)
+    corsMiddleware
+        .then(CatchLensFailure { _: LensFailure ->
+            Response(BAD_REQUEST).with(errorResponseLens of InvalidRequestFailed.toErrorResponse())
+        })
+        .then(
+            routes(
+                contractRoutes(scheduler, nationalGrid),
+                octopusProducts(octopus),
+                octopusPrices(octopus)
+            )
         )
-    )
 
 private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {
     renderer = openApi3()
