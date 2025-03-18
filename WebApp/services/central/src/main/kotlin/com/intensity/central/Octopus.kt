@@ -3,10 +3,11 @@ package com.intensity.central
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.errorResponseLens
+import com.intensity.octopus.HalfHourPrices
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCommunicationFailed
-import com.intensity.octopus.pricesLens
+import com.intensity.octopus.Prices
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
@@ -67,7 +68,7 @@ fun octopusPrices(
         end
     ).fold(
         { prices ->
-            Response(OK).with(pricesLens of prices)
+            Response(OK).with(OctopusPricesResponse.lens of prices.toResponse())
         },
         { failed ->
             val status = when (failed) {
@@ -88,8 +89,23 @@ private data class OctopusProducts(val products: List<OctopusProduct>) {
         val lens = Jackson.autoBody<OctopusProducts>().toLens()
     }
 }
-
 private data class OctopusProduct(val name: String, val tariffs: List<String>)
+
+private data class OctopusPricesResponse(val prices: List<HalfHourPricesResponse>) {
+    companion object {
+        val lens = Jackson.autoBody<OctopusPricesResponse>().toLens()
+    }
+}
+
+private data class HalfHourPricesResponse(
+    val wholesalePrice: Double,
+    val retailPrice: Double,
+    val from: ZonedDateTime,
+    val to: ZonedDateTime
+)
+
+private fun Prices.toResponse() = OctopusPricesResponse(this.results.map(HalfHourPrices::toResponse))
+private fun HalfHourPrices.toResponse() = HalfHourPricesResponse(wholesalePrice, retailPrice, from, to)
 
 private object NoOctopusProducts : Failed {
     override fun toErrorResponse() = ErrorResponse("No Octopus products")

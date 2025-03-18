@@ -111,24 +111,24 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             response,
             hasBody(
                 """{
-                        "results":[
+                        "prices":[
                             {
-                                "value_exc_vat":23.4,
-                                "value_inc_vat":24.57,
-                                "valid_from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}",
-                                "valid_to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(90))}"
+                                "wholesalePrice":23.4,
+                                "retailPrice":24.57,
+                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(90))}"
                             },
                             {
-                                "value_exc_vat":26.0,
-                                "value_inc_vat":27.3,
-                                "valid_from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}",
-                                "valid_to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}"
+                                "wholesalePrice":26.0,
+                                "retailPrice":27.3,
+                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}"
                             },
                             {
-                                "value_exc_vat":24.3,
-                                "value_inc_vat":25.515,
-                                "valid_from":"${zonedDateTimeAtHalfHour(currentTime)}",
-                                "valid_to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}"
+                                "wholesalePrice":24.3,
+                                "retailPrice":25.515,
+                                "from":"${zonedDateTimeAtHalfHour(currentTime)}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}"
                             }
                         ]
                     }"""
@@ -158,18 +158,18 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             response,
             hasBody(
                 """{
-                        "results":[
+                        "prices":[
                             {
-                                "value_exc_vat":23.4,
-                                "value_inc_vat":24.57,
-                                "valid_from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}",
-                                "valid_to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}"
+                                "wholesalePrice":23.4,
+                                "retailPrice":24.57,
+                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}"
                             },
                             {
-                                "value_exc_vat":26.0,
-                                "value_inc_vat":27.3,
-                                "valid_from":"${zonedDateTimeAtHalfHour(currentTime)}",
-                                "valid_to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}"
+                                "wholesalePrice":26.0,
+                                "retailPrice":27.3,
+                                "from":"${zonedDateTimeAtHalfHour(currentTime)}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}"
                             }
                         ]
                     }"""
@@ -197,24 +197,24 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             response,
             hasBody(
                 """{
-                        "results":[
+                        "prices":[
                             {
-                                "value_exc_vat":23.4,
-                                "value_inc_vat":24.57,
-                                "valid_from":"2023-03-26T01:00:00Z",
-                                "valid_to":"2023-03-26T01:30:00Z"
+                                "wholesalePrice":23.4,
+                                "retailPrice":24.57,
+                                "from":"2023-03-26T01:00:00Z",
+                                "to":"2023-03-26T01:30:00Z"
                             },
                             {
-                                "value_exc_vat":26.0,
-                                "value_inc_vat":27.3,
-                                "valid_from":"2023-03-26T00:30:00Z",
-                                "valid_to":"2023-03-26T01:00:00Z"
+                                "wholesalePrice":26.0,
+                                "retailPrice":27.3,
+                                "from":"2023-03-26T00:30:00Z",
+                                "to":"2023-03-26T01:00:00Z"
                             },
                             {
-                                "value_exc_vat":24.3,
-                                "value_inc_vat":25.515,
-                                "valid_from":"2023-03-26T00:00:00Z",
-                                "valid_to":"2023-03-26T00:30:00Z"
+                                "wholesalePrice":24.3,
+                                "retailPrice":25.515,
+                                "from":"2023-03-26T00:00:00Z",
+                                "to":"2023-03-26T00:30:00Z"
                             }
                         ]
                     }"""
