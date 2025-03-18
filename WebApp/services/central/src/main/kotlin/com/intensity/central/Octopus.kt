@@ -43,7 +43,7 @@ fun octopusProducts(
         }
     }.fold(
         { products ->
-            Response(OK).with(octopusProductsLens of OctopusProducts(products))
+            Response(OK).with(OctopusProducts.lens of OctopusProducts(products))
         },
         { failed ->
             val status = when (failed) {
@@ -58,8 +58,8 @@ fun octopusProducts(
 fun octopusPrices(
     octopus: Octopus
 ) = "tariffs/{productCode}/{tariffCode}" bind GET to { request ->
-    val start = Query.zonedDateTime().optional("start")(request) ?: ZonedDateTime.now()
-    val end = Query.zonedDateTime().optional("end")(request) ?: start.plusDays(2)
+    val start = startTimeLens(request) ?: ZonedDateTime.now()
+    val end = endTimeLens(request) ?: start.plusDays(2)
     octopus.prices(
         request.path("productCode")!!,
         request.path("tariffCode")!!,
@@ -80,11 +80,17 @@ fun octopusPrices(
     )
 }
 
-val octopusProductsLens = Jackson.autoBody<OctopusProducts>().toLens()
+private val endTimeLens = Query.zonedDateTime().optional("end")
+private val startTimeLens = Query.zonedDateTime().optional("start")
 
-data class OctopusProducts(val products: List<OctopusProduct>)
-data class OctopusProduct(val name: String, val tariffs: List<String>)
+private data class OctopusProducts(val products: List<OctopusProduct>) {
+    companion object {
+        val lens = Jackson.autoBody<OctopusProducts>().toLens()
+    }
+}
 
-object NoOctopusProducts : Failed {
+private data class OctopusProduct(val name: String, val tariffs: List<String>)
+
+private object NoOctopusProducts : Failed {
     override fun toErrorResponse() = ErrorResponse("No Octopus products")
 }

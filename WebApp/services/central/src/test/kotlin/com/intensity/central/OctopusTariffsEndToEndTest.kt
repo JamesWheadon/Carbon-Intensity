@@ -14,7 +14,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-
 class OctopusTariffsEndToEndTest : EndToEndTest() {
     @Test
     fun `returns octopus products`() {
