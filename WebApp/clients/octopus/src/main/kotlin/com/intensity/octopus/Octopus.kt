@@ -21,20 +21,39 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 interface Octopus {
+    fun products(): Result<Products, Failed>
+    fun product(product: OctopusProduct): Result<ProductDetails, Failed>
     fun prices(
-        productCode: String,
-        tariffCode: String,
+        product: OctopusProduct,
+        tariff: OctopusTariff,
         start: ZonedDateTime,
         end: ZonedDateTime
     ): Result<Prices, Failed>
-    fun products(): Result<Products, Failed>
-    fun product(productCode: String): Result<ProductDetails, Failed>
 }
 
 class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
+    override fun products(): Result<Products, Failed> {
+        val response = httpHandler(Request(GET, "/"))
+        return when (response.status) {
+            OK -> Success(productsLens(response))
+            else -> Failure(OctopusCommunicationFailed)
+        }
+    }
+
+    override fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
+        val response = httpHandler(
+            Request(GET, "/${product.code}/")
+        )
+        return when (response.status) {
+            OK -> Success(productDetailsLens(response))
+            NOT_FOUND -> octopusErrorLens(response).toFailure()
+            else -> Failure(OctopusCommunicationFailed)
+        }
+    }
+
     override fun prices(
-        productCode: String,
-        tariffCode: String,
+        product: OctopusProduct,
+        tariff: OctopusTariff,
         start: ZonedDateTime,
         end: ZonedDateTime
     ): Result<Prices, Failed> {
@@ -43,7 +62,7 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
         val response = httpHandler(
             Request(
                 GET,
-                "/$productCode/electricity-tariffs/$tariffCode/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"
+                "/${product.code}/electricity-tariffs/${tariff.code}/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"
             )
         )
         return when (response.status) {
@@ -53,29 +72,16 @@ class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
             else -> Failure(OctopusCommunicationFailed)
         }
     }
-
-    override fun products(): Result<Products, Failed> {
-        val response = httpHandler(Request(GET, "/"))
-        return when (response.status) {
-            OK -> Success(productsLens(response))
-            else -> Failure(OctopusCommunicationFailed)
-        }
-    }
-
-    override fun product(productCode: String): Result<ProductDetails, Failed> {
-        val response = httpHandler(
-            Request(GET, "/$productCode/")
-        )
-        return when (response.status) {
-            OK -> Success(productDetailsLens(response))
-            NOT_FOUND -> octopusErrorLens(response).toFailure()
-            else -> Failure(OctopusCommunicationFailed)
-        }
-    }
 }
 
 fun octopusClient() = ClientFilters.SetBaseUriFrom(Uri.of("https://api.octopus.energy/v1/products"))
     .then(JavaHttpClient())
+
+@JvmInline
+value class OctopusProduct(val code: String)
+
+@JvmInline
+value class OctopusTariff(val code: String)
 
 data class Prices(val results: List<HalfHourPrices>)
 data class HalfHourPrices(
@@ -87,14 +93,12 @@ data class HalfHourPrices(
 
 data class Products(val results: List<Product>)
 data class Product(
-    val code: String,
-    @JsonProperty("display_name") val name: String,
-    val brand: String
+    val code: OctopusProduct
 )
 
 data class ProductDetails(@JsonProperty("single_register_electricity_tariffs") val tariffs: Map<String, TariffDetails>)
 data class TariffDetails(@JsonProperty("direct_debit_monthly") val monthly: TariffFees)
-data class TariffFees(val code: String)
+data class TariffFees(val code: OctopusTariff)
 data class OctopusError(val detail: String) {
     fun toFailure() = Failure(
         when (detail) {

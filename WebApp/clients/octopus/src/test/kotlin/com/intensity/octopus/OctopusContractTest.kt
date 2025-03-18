@@ -17,8 +17,8 @@ abstract class OctopusContractTest {
     @Test
     fun `can get electricity prices`() {
         val prices = octopus.prices(
-            "AGILE-FLEX-22-11-25",
-            "E-1R-AGILE-FLEX-22-11-25-C",
+            OctopusProduct("AGILE-FLEX-22-11-25"),
+            OctopusTariff("E-1R-AGILE-FLEX-22-11-25-C"),
             ZonedDateTime.of(2023, 3, 26, 0, 0, 0, 0, ZoneId.of("UTC")),
             ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
@@ -33,8 +33,8 @@ abstract class OctopusContractTest {
     @Test
     fun `can get electricity prices for a certain tariff`() {
         val prices = octopus.prices(
-            "AGILE-FLEX-22-11-25",
-            "E-1R-AGILE-FLEX-22-11-25-B",
+            OctopusProduct("AGILE-FLEX-22-11-25"),
+            OctopusTariff("E-1R-AGILE-FLEX-22-11-25-B"),
             ZonedDateTime.of(2023, 3, 26, 0, 0, 0, 0, ZoneId.of("UTC")),
             ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
@@ -45,8 +45,8 @@ abstract class OctopusContractTest {
     @Test
     fun `can get electricity prices at a certain time`() {
         val prices = octopus.prices(
-            "AGILE-FLEX-22-11-25",
-            "E-1R-AGILE-FLEX-22-11-25-C",
+            OctopusProduct("AGILE-FLEX-22-11-25"),
+            OctopusTariff("E-1R-AGILE-FLEX-22-11-25-C"),
             ZonedDateTime.of(2023, 3, 28, 1, 0, 0, 0, ZoneId.of("UTC")),
             ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
@@ -74,14 +74,14 @@ abstract class OctopusContractTest {
 
     @Test
     fun `can get product information`() {
-        val productDetails = octopus.product("AGILE-FLEX-22-11-25").valueOrNull()!!
+        val productDetails = octopus.product(OctopusProduct("AGILE-FLEX-22-11-25")).valueOrNull()!!
 
-        assertThat(productDetails.tariffs["_A"]!!.monthly.code, equalTo("E-1R-AGILE-FLEX-22-11-25-A"))
+        assertThat(productDetails.tariffs["_A"]!!.monthly.code, equalTo(OctopusTariff("E-1R-AGILE-FLEX-22-11-25-A")))
     }
 
     @Test
     fun `handles no product details existing`() {
-        val productDetails = octopus.product("AGILE-FLEX")
+        val productDetails = octopus.product(OctopusProduct("AGILE-FLEX"))
 
         assertThat(
             productDetails,
@@ -92,8 +92,8 @@ abstract class OctopusContractTest {
     @Test
     fun `handles no product existing`() {
         val prices = octopus.prices(
-            "AGILE-FLEX",
-            "E-1R-AGILE-FLEX-22-11-25-C",
+            OctopusProduct("AGILE-FLEX"),
+            OctopusTariff("E-1R-AGILE-FLEX-22-11-25-C"),
             ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
             ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         )
@@ -107,8 +107,8 @@ abstract class OctopusContractTest {
     @Test
     fun `handles no tariff existing`() {
         val prices = octopus.prices(
-            "AGILE-FLEX-22-11-25",
-            "E-1R-AGILE-FLEX",
+            OctopusProduct("AGILE-FLEX-22-11-25"),
+            OctopusTariff("E-1R-AGILE-FLEX"),
             ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
             ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         )
@@ -123,8 +123,8 @@ abstract class OctopusContractTest {
     fun `handles invalid time periods`() {
         assertThat(
             octopus.prices(
-                "AGILE-FLEX-22-11-25",
-                "E-1R-AGILE-FLEX-22-11-25-C",
+                OctopusProduct("AGILE-FLEX-22-11-25"),
+                OctopusTariff("E-1R-AGILE-FLEX-22-11-25-C"),
                 ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
                 ZonedDateTime.of(2023, 3, 27, 4, 59, 0, 0, ZoneId.of("UTC"))
             ),
@@ -167,7 +167,7 @@ class FakeOctopusTest : OctopusContractTest() {
     @Test
     fun `handles failure getting product details`() {
         fakeOctopus.fail()
-        val productDetails = octopus.product("AGILE")
+        val productDetails = octopus.product(OctopusProduct("AGILE"))
 
         assertThat(productDetails, equalTo(Failure(OctopusCommunicationFailed)))
     }
@@ -176,8 +176,8 @@ class FakeOctopusTest : OctopusContractTest() {
     fun `handles failure getting tariff prices`() {
         fakeOctopus.fail()
         val prices = octopus.prices(
-            "AGILE-FLEX-22-11-25",
-            "E-1R-AGILE-FLEX-22-11-25-C",
+            OctopusProduct("AGILE-FLEX-22-11-25"),
+            OctopusTariff("E-1R-AGILE-FLEX-22-11-25-C"),
             ZonedDateTime.of(2023, 3, 28, 0, 0, 0, 0, ZoneId.of("UTC")),
             ZonedDateTime.of(2023, 3, 28, 4, 59, 0, 0, ZoneId.of("UTC"))
         )

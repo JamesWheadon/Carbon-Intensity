@@ -7,6 +7,8 @@ import com.intensity.octopus.HalfHourPrices
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCommunicationFailed
+import com.intensity.octopus.OctopusProduct
+import com.intensity.octopus.OctopusTariff
 import com.intensity.octopus.Prices
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Success
@@ -22,10 +24,10 @@ import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson
+import org.http4k.lens.Path
 import org.http4k.lens.Query
 import org.http4k.lens.zonedDateTime
 import org.http4k.routing.bind
-import org.http4k.routing.path
 import java.time.ZonedDateTime
 
 fun octopusProducts(
@@ -34,7 +36,7 @@ fun octopusProducts(
     octopus.products().flatMap { products ->
         val tariffsAndFailures = products.results.map { product ->
             octopus.product(product.code).map {
-                OctopusProduct(product.code, it.tariffs.values.map { tariff -> tariff.monthly.code })
+                OctopusProductResponse(product.code, it.tariffs.values.map { tariff -> tariff.monthly.code })
             }
         }.partition()
         if (tariffsAndFailures.first.isNotEmpty()) {
@@ -62,8 +64,8 @@ fun octopusPrices(
     val start = startTimeLens(request) ?: ZonedDateTime.now()
     val end = endTimeLens(request) ?: start.plusDays(2)
     octopus.prices(
-        request.path("productCode")!!,
-        request.path("tariffCode")!!,
+        octopusProductLens(request),
+        octopusTariffLens(request),
         start,
         end
     ).fold(
@@ -83,20 +85,22 @@ fun octopusPrices(
 
 private val endTimeLens = Query.zonedDateTime().optional("end")
 private val startTimeLens = Query.zonedDateTime().optional("start")
+private val octopusProductLens = Path.map { OctopusProduct(it) }.of("productCode")
+private val octopusTariffLens = Path.map { OctopusTariff(it) }.of("tariffCode")
 
-private data class OctopusProducts(val products: List<OctopusProduct>) {
+private data class OctopusProducts(val products: List<OctopusProductResponse>) {
     companion object {
         val lens = Jackson.autoBody<OctopusProducts>().toLens()
     }
 }
-private data class OctopusProduct(val name: String, val tariffs: List<String>)
+
+private data class OctopusProductResponse(val name: OctopusProduct, val tariffs: List<OctopusTariff>)
 
 private data class OctopusPricesResponse(val prices: List<HalfHourPricesResponse>) {
     companion object {
         val lens = Jackson.autoBody<OctopusPricesResponse>().toLens()
     }
 }
-
 private data class HalfHourPricesResponse(
     val wholesalePrice: Double,
     val retailPrice: Double,
