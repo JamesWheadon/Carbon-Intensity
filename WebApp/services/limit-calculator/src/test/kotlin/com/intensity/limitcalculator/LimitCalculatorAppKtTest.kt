@@ -7,6 +7,7 @@ import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
+import java.time.ZonedDateTime
 
 class LimitCalculatorAppKtTest {
     private val app = limitCalculatorApp()
@@ -16,10 +17,14 @@ class LimitCalculatorAppKtTest {
         val request = Request(POST, "/calculate/intensity/150").body(
             """{
                     "time":45,
-                    "electricityData": [
-                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 145.0)},
-                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
-                    ]
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
+                    "electricity": {
+                        "slots":[
+                            ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 145.0)},
+                            ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -38,10 +43,14 @@ class LimitCalculatorAppKtTest {
         val request = Request(POST, "/calculate/price/25.19").body(
             """{
                     "time":45,
-                    "electricityData": [
-                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
-                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
-                    ]
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
+                    "electricity": {
+                        "slots": [
+                            ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                            ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -60,10 +69,14 @@ class LimitCalculatorAppKtTest {
         val request = Request(POST, "/calculate/price/invalid").body(
             """{
                     "time":45,
-                    "electricityData": [
-                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
-                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
-                    ]
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
+                    "electricity": {
+                        "slots": [
+                            ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                            ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -78,10 +91,14 @@ class LimitCalculatorAppKtTest {
         val request = Request(POST, "/calculate/intensity/invalid").body(
             """{
                     "time":45,
-                    "electricityData": [
-                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
-                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
-                    ]
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
+                    "electricity": {
+                        "slots": [
+                            ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                            ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -96,10 +113,14 @@ class LimitCalculatorAppKtTest {
         val request = Request(POST, "/calculate/price/26.00").body(
             """{
                     "time":75,
-                    "electricityData": [
-                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
-                        ${halfHourJSON("2025-03-02T12:15:00Z", 23.55, 145.0)}
-                    ]
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
+                    "electricity": {
+                        "slots": [
+                            ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                            ${halfHourJSON("2025-03-02T12:15:00Z", 23.55, 145.0)}
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -114,10 +135,14 @@ class LimitCalculatorAppKtTest {
         val request = Request(POST, "/calculate/price/26.00").body(
             """{
                     "time":75,
-                    "electricityData": [
-                        ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
-                        ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
-                    ]
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
+                    "electricity": {
+                        "slots": [
+                            ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
+                            ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -129,7 +154,8 @@ class LimitCalculatorAppKtTest {
 
     private fun halfHourJSON(timestamp: String, price: Double, intensity: Double) =
         """{
-                "startTime":"$timestamp",
+                "from":"$timestamp",
+                "to":"${ZonedDateTime.parse(timestamp).plusMinutes(30)}",
                 "price":$price,
                 "intensity":$intensity
             }"""

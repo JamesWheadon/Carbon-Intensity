@@ -1,7 +1,6 @@
 package com.intensity.limitcalculator
 
 import com.intensity.core.Electricity
-import com.intensity.core.HalfHourElectricity
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
 import com.intensity.core.handleLensFailures
@@ -26,7 +25,7 @@ private fun limitRoutes() = routes(
     "/calculate/intensity/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val intensityLimit = limitLens(request)
-        underIntensityLimit(scheduleRequest.electricity(), intensityLimit, scheduleRequest.time)
+        underIntensityLimit(scheduleRequest.electricity, intensityLimit, scheduleRequest.time)
             .fold(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
@@ -35,7 +34,7 @@ private fun limitRoutes() = routes(
     "/calculate/price/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
-        underPriceLimit(scheduleRequest.electricity(), priceLimit, scheduleRequest.time)
+        underPriceLimit(scheduleRequest.electricity, priceLimit, scheduleRequest.time)
             .fold(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
@@ -45,28 +44,10 @@ private fun limitRoutes() = routes(
 
 data class ScheduleRequest(
     val time: Long,
-    val electricityData: List<HalfHourElectricityData>
-) {
-    fun electricity() = Electricity(
-        electricityData.map { it.toHalfHourElectricity() }
-    )
-}
-
-data class HalfHourElectricityData(
-    val startTime: String,
-    val price: Double,
-    val intensity: Double
-) {
-    fun toHalfHourElectricity(): HalfHourElectricity {
-        val start = ZonedDateTime.parse(startTime)
-        return HalfHourElectricity(
-            start,
-            start.plusMinutes(30),
-            price.toBigDecimal(),
-            intensity.toBigDecimal()
-        )
-    }
-}
+    val start: ZonedDateTime,
+    val end: ZonedDateTime,
+    val electricity: Electricity
+)
 
 val scheduleRequestLens = Jackson.autoBody<ScheduleRequest>().toLens()
 val limitLens = Path.bigDecimal().of("limit")
