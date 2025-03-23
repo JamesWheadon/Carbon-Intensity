@@ -27,7 +27,7 @@ private fun limitRoutes() = routes(
         val intensityLimit = limitLens(request)
         underIntensityLimit(scheduleRequest.electricity, intensityLimit, scheduleRequest.time)
             .fold(
-                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime!!) },
+                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
             )
     },
@@ -36,7 +36,7 @@ private fun limitRoutes() = routes(
         val priceLimit = limitLens(request)
         underPriceLimit(scheduleRequest.electricity, priceLimit, scheduleRequest.time)
             .fold(
-                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime!!) },
+                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
             )
     }

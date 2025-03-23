@@ -2,10 +2,8 @@ package com.intensity.weightedcalculator
 
 import com.intensity.core.Electricity
 import com.intensity.core.Failed
-import com.intensity.core.HalfHourElectricity
 import com.intensity.core.SlotScore
 import com.intensity.core.calculateChargeTime
-import com.intensity.core.timeChunked
 import com.intensity.core.validate
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.flatMap
@@ -16,7 +14,6 @@ import java.math.RoundingMode.HALF_UP
 fun calculate(electricity: Electricity, weights: Weights, time: Long) =
     electricity.validate()
         .normalize()
-        .timeChunked(time)
         .bestChargeTime(weights, time)
 
 fun Result<Electricity, Failed>.normalize() =
@@ -38,12 +35,10 @@ fun normalize(values: List<BigDecimal>): List<BigDecimal> {
     return values.map { it.divide(max, 5, HALF_UP) }
 }
 
-private fun Result<Electricity, Failed>.timeChunked(time: Long) = this.flatMap { it.timeChunked(time) }
-
-private fun Result<List<List<HalfHourElectricity>>, Failed>.bestChargeTime(weights: Weights, time: Long) =
-    this.map { timeChunks ->
+private fun Result<Electricity, Failed>.bestChargeTime(weights: Weights, time: Long) =
+    this.flatMap { electricity ->
         val weightedCalculation = SlotScore { it.price * weights.price + it.intensity * weights.intensity }
-        calculateChargeTime(timeChunks, time, weightedCalculation)
+        calculateChargeTime(electricity.slots, time, weightedCalculation)
     }
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)

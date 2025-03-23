@@ -3,8 +3,8 @@ package com.intensity.limitcalculator
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
+import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.OverlappingData
-import com.intensity.core.TimeGreaterThanPossible
 import com.intensity.coretest.isFailure
 import com.intensity.coretest.isSuccess
 import com.natpryce.hamkrest.assertion.assertThat
@@ -51,7 +51,7 @@ class CalculatorKtTest {
 
         val halfHoursInLimit = underIntensityLimit(electricity, BD("65"), 75L)
 
-        assertThat(halfHoursInLimit, isFailure(TimeGreaterThanPossible))
+        assertThat(halfHoursInLimit, isFailure(NoChargeTimePossible))
     }
 
     @Test
@@ -87,7 +87,7 @@ class CalculatorKtTest {
 
         val halfHoursInLimit = underPriceLimit(electricity, BD("13.0"), 75L)
 
-        assertThat(halfHoursInLimit, isFailure(TimeGreaterThanPossible))
+        assertThat(halfHoursInLimit, isFailure(NoChargeTimePossible))
     }
 
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =

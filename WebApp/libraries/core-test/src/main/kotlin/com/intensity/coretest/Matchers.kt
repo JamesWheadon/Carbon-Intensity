@@ -50,15 +50,15 @@ fun <T, E> isSuccess(expected: T) = object : Matcher<Result<T, E>> {
             else -> Mismatch("Result is a Failure")
         }
 
-    fun matchExpected(get: T): MatchResult =
-        if (get == expected) {
+    fun matchExpected(actual: T): MatchResult =
+        if (actual == expected) {
             Match
         } else {
-            Mismatch("Success does not match expected")
+            Mismatch("was: ${describe(actual)}")
         }
 
-    override val description: String get() = "Result is a Success"
-    override val negatedDescription: String get() = "Result is a Failure"
+    override val description: String get() = "is equal to ${describe(expected)}"
+    override val negatedDescription: String get() = "is not equal to ${describe(expected)}"
 }
 
 fun <T, E> isFailure(expected: E) = object : Matcher<Result<T, E>> {
@@ -68,15 +68,15 @@ fun <T, E> isFailure(expected: E) = object : Matcher<Result<T, E>> {
             else -> Mismatch("Result is a Success")
         }
 
-    fun matchExpected(get: E): MatchResult =
-        if (get == expected) {
+    fun matchExpected(actual: E): MatchResult =
+        if (actual == expected) {
             Match
         } else {
-            Mismatch("Failure does not match expected")
+            Mismatch("was: ${describe(actual)}")
         }
 
-    override val description: String get() = "Result is a Failure"
-    override val negatedDescription: String get() = "Result is a Success"
+    override val description: String get() = "is equal to ${describe(expected)}"
+    override val negatedDescription: String get() = "is not equal to ${describe(expected)}"
 }
 
 fun hasBody(expected: String) = object : Matcher<Response> {

@@ -97,7 +97,7 @@ class WeightedCalculatorAppKtTest {
         assertThat(response.status, equalTo(BAD_REQUEST))
         assertThat(
             response.bodyString(), equalTo(
-                """{"error":"No schedule possible"}""".trimIndent()
+                """{"error":"No charge time possible"}""".trimIndent()
             )
         )
     }

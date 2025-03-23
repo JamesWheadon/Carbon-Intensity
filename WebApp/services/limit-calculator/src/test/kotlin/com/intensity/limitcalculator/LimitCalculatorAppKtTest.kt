@@ -149,7 +149,7 @@ class LimitCalculatorAppKtTest {
         val response = app(request)
 
         assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.bodyString(), equalTo("""{"error":"No schedule possible"}"""))
+        assertThat(response.bodyString(), equalTo("""{"error":"No charge time possible"}"""))
     }
 
     private fun halfHourJSON(timestamp: String, price: Double, intensity: Double) =

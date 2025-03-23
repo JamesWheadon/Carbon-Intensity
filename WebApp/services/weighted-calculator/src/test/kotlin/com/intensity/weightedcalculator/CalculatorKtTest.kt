@@ -3,8 +3,8 @@ package com.intensity.weightedcalculator
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.HalfHourElectricity
+import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.OverlappingData
-import com.intensity.core.TimeGreaterThanPossible
 import com.intensity.coretest.isFailure
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -91,7 +91,7 @@ class CalculatorKtTest {
 
         val calculate = calculate(electricity, weights, 91)
 
-        assertThat(calculate, isFailure(TimeGreaterThanPossible))
+        assertThat(calculate, isFailure(NoChargeTimePossible))
     }
 
     @Test
