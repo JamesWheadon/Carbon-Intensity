@@ -5,6 +5,7 @@ import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
@@ -109,9 +110,8 @@ class LimitCalculatorAppKtTest {
     }
 
     @Test
-    fun `returns the correct response when calculation fails for price limit`() {
-        val request = Request(POST, "/calculate/price/26.00").body(
-            """{
+    fun `returns the correct response when calculation fails due to overlapping windows`() {
+        val overlappingDataBody = """{
                     "time":75,
                     "start":"2025-03-02T12:00:00Z",
                     "end":"2025-03-02T13:00:00Z",
@@ -122,18 +122,21 @@ class LimitCalculatorAppKtTest {
                         ]
                     }
                 }""".trimIndent()
-        )
 
-        val response = app(request)
+        val priceResponse = app(Request(POST, "/calculate/price/26.00").body(overlappingDataBody))
 
-        assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.bodyString(), equalTo("""{"error":"Overlapping data windows"}"""))
+        assertThat(priceResponse.status, equalTo(BAD_REQUEST))
+        assertThat(priceResponse.bodyString(), equalTo("""{"error":"Overlapping data windows"}"""))
+
+        val intensityResponse = app(Request(POST, "/calculate/intensity/146.00").body(overlappingDataBody))
+
+        assertThat(intensityResponse.status, equalTo(BAD_REQUEST))
+        assertThat(intensityResponse.bodyString(), equalTo("""{"error":"Overlapping data windows"}"""))
     }
 
     @Test
-    fun `returns the correct response when calculation fails for intensity limit`() {
-        val request = Request(POST, "/calculate/price/26.00").body(
-            """{
+    fun `returns the correct response when calculation fails due to insufficient data for time`() {
+        val insufficientDataBody = """{
                     "time":75,
                     "start":"2025-03-02T12:00:00Z",
                     "end":"2025-03-02T13:00:00Z",
@@ -144,12 +147,16 @@ class LimitCalculatorAppKtTest {
                         ]
                     }
                 }""".trimIndent()
-        )
 
-        val response = app(request)
+        val priceResponse = app(Request(POST, "/calculate/price/26.00").body(insufficientDataBody))
 
-        assertThat(response.status, equalTo(BAD_REQUEST))
-        assertThat(response.bodyString(), equalTo("""{"error":"No charge time possible"}"""))
+        assertThat(priceResponse.status, equalTo(NOT_FOUND))
+        assertThat(priceResponse.bodyString(), equalTo("""{"error":"No charge time possible"}"""))
+
+        val intensityResponse = app(Request(POST, "/calculate/intensity/150.00").body(insufficientDataBody))
+
+        assertThat(intensityResponse.status, equalTo(NOT_FOUND))
+        assertThat(intensityResponse.bodyString(), equalTo("""{"error":"No charge time possible"}"""))
     }
 
     private fun halfHourJSON(timestamp: String, price: Double, intensity: Double) =
