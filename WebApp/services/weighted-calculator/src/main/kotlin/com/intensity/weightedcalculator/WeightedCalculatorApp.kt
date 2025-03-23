@@ -23,7 +23,7 @@ private fun weightedCalculatorRoute() = "/calculate" bind POST to { request ->
     val scheduleRequest = scheduleRequestLens(request)
     calculate(scheduleRequest.electricity(), scheduleRequest.weights(), scheduleRequest.time)
         .fold(
-            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime!!) },
             { failed -> Response(BAD_REQUEST).with(errorResponseLens of failed.toErrorResponse()) }
         )
 }

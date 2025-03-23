@@ -3,8 +3,6 @@ package com.intensity.core
 import org.http4k.format.Jackson
 import java.math.BigDecimal
 import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 fun interface SlotScore {
@@ -19,9 +17,9 @@ fun calculateChargeTime(
     timeChunks: List<List<HalfHourElectricity>>,
     time: Long,
     slotScore: SlotScore
-): ChargeTime {
-    var bestStartTime = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.of("UTC"))
-    var bestScore = BigDecimal("1000000000")
+): ChargeTime? {
+    var bestStartTime: ZonedDateTime? = null
+    var bestScore: BigDecimal? = null
     timeChunks.forEach { chunk ->
         val scored = chunk.map { Triple(it.from, it.to, slotScore.getSlotScore(it)) }
         scored.forEachIndexed { index, window ->
@@ -36,7 +34,7 @@ fun calculateChargeTime(
                         it.third * Duration.between(it.first, endTime).toMinutes().toBigDecimal()
                     }
                 }
-                if (followingScore < bestScore) {
+                if (bestScore == null || followingScore < bestScore) {
                     bestScore = followingScore
                     bestStartTime = window.first
                 }
@@ -50,12 +48,12 @@ fun calculateChargeTime(
                         it.third * Duration.between(startTime, it.second).toMinutes().toBigDecimal()
                     }
                 }
-                if (precedingScore < bestScore) {
+                if (bestScore == null || precedingScore < bestScore) {
                     bestScore = precedingScore
                     bestStartTime = startTime
                 }
             }
         }
     }
-    return ChargeTime(bestStartTime, bestStartTime.plusMinutes(time))
+    return bestStartTime?.let { ChargeTime(it, it.plusMinutes(time)) }
 }

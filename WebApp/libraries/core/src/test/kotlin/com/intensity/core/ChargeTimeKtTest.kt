@@ -127,6 +127,25 @@ class ChargeTimeKtTest {
         assertThat(calculate, equalTo(ChargeTime(baseTime.plusMinutes(127), baseTime.plusMinutes(157))))
     }
 
+    @Test
+    fun `returns null if no charge time is possible`() {
+        val electricity = listOf(
+            listOf(
+                timeSlot(BD("11.00"), BD("63"), baseTime, 15),
+                timeSlot(BD("11.00"), BD("64"), baseTime.plusMinutes(15), 20),
+                timeSlot(BD("11.00"), BD("63"), baseTime.plusMinutes(35), 30),
+            ),
+            listOf(
+                timeSlot(BD("10.00"), BD("63"), baseTime.plusMinutes(120), 29),
+                timeSlot(BD("11.00"), BD("62"), baseTime.plusMinutes(149), 8)
+            )
+        )
+
+        val calculate = calculateChargeTime(electricity, 300) { it.intensity }
+
+        assertThat(calculate, equalTo(null))
+    }
+
     private fun timeSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now(), length: Long = 30) =
         HalfHourElectricity(from, from.plusMinutes(length), price, intensity)
 }
