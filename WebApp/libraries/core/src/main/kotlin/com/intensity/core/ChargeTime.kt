@@ -2,7 +2,7 @@ package com.intensity.core
 
 import org.http4k.format.Jackson
 import java.math.BigDecimal
-import java.math.RoundingMode
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -20,31 +20,42 @@ fun calculateChargeTime(
     time: Long,
     slotScore: SlotScore
 ): ChargeTime {
-    val dataSlotsSpanned = (time.toInt() + 29) / 30
-    val slotFractionToExclude = slotFractionToExclude(time)
     var bestStartTime = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.of("UTC"))
-    var bestScore = BigDecimal("1000")
+    var bestScore = BigDecimal("1000000000")
     timeChunks.forEach { chunk ->
-        chunk.map { Triple(it.from, it.to, slotScore.getSlotScore(it)) }
-            .windowed(dataSlotsSpanned)
-            .forEach { window ->
-                val baseScore = window.sumOf { it.third }
-                val earlyScore = baseScore.minus(window.last().third * slotFractionToExclude)
-                val lateScore = baseScore.minus(window.first().third * slotFractionToExclude)
-                if (earlyScore < bestScore) {
-                    bestScore = earlyScore
-                    bestStartTime = window.first().first
+        val scored = chunk.map { Triple(it.from, it.to, slotScore.getSlotScore(it)) }
+        scored.forEachIndexed { index, window ->
+            val following = scored.subList(index, scored.size).takeWhile { it.first < window.first.plusMinutes(time) }
+            val preceding = scored.subList(0, index + 1).takeLastWhile { it.second > window.second.minusMinutes(time) }
+            if (following.sumOf { Duration.between(it.first, it.second).toMinutes() } >= time) {
+                val endTime = window.first.plusMinutes(time)
+                val followingScore = following.sumOf {
+                    if (!endTime.isBefore(it.second)) {
+                        it.third * Duration.between(it.first, it.second).toMinutes().toBigDecimal()
+                    } else {
+                        it.third * Duration.between(it.first, endTime).toMinutes().toBigDecimal()
+                    }
                 }
-                if (lateScore < bestScore) {
-                    bestScore = lateScore
-                    bestStartTime = window.last().second.minusMinutes(time)
+                if (followingScore < bestScore) {
+                    bestScore = followingScore
+                    bestStartTime = window.first
                 }
             }
+            if (preceding.sumOf { Duration.between(it.first, it.second).toMinutes() } >= time) {
+                val startTime = window.second.minusMinutes(time)
+                val precedingScore = preceding.sumOf {
+                    if (!startTime.isAfter(it.first)) {
+                        it.third * Duration.between(it.first, it.second).toMinutes().toBigDecimal()
+                    } else {
+                        it.third * Duration.between(startTime, it.second).toMinutes().toBigDecimal()
+                    }
+                }
+                if (precedingScore < bestScore) {
+                    bestScore = precedingScore
+                    bestStartTime = startTime
+                }
+            }
+        }
     }
     return ChargeTime(bestStartTime, bestStartTime.plusMinutes(time))
-}
-
-private fun slotFractionToExclude(time: Long): BigDecimal {
-    val minutesLessThanFullSlot = (30 - (time.toInt() % 30)) % 30
-    return BigDecimal(minutesLessThanFullSlot).divide(BigDecimal("30"), 5, RoundingMode.HALF_UP)
 }
