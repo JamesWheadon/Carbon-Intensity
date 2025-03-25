@@ -34,6 +34,9 @@ class OpenApiTest {
         ),
         OctopusCloud(
             FakeOctopus()
+        ),
+        LimitCalculatorCloud(
+            FakeLimitCalculator()
         )
     )
 

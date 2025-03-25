@@ -46,6 +46,7 @@ abstract class EndToEndTest {
     val octopus = FakeOctopus()
     val scheduler = FakeScheduler()
     val nationalGrid = FakeNationalGrid()
+    val limitCalculator = FakeLimitCalculator()
     val server = serverStack("App", events).then(
         carbonIntensity(
             PythonScheduler(
@@ -56,6 +57,9 @@ abstract class EndToEndTest {
             ),
             OctopusCloud(
                 appClientStack.then(octopus.traced(serverStack("Octopus", events)))
+            ),
+            LimitCalculatorCloud(
+                appClientStack.then(limitCalculator.traced(serverStack("Limit Calculator", events)))
             )
         )
     )

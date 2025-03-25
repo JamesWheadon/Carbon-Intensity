@@ -1,8 +1,14 @@
 package com.intensity.central
 
+import com.intensity.core.ChargeTime
+import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
+import com.intensity.core.HalfHourElectricity
+import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
+import com.intensity.nationalgrid.NationalGrid
+import com.intensity.nationalgrid.NationalGridData
 import com.intensity.octopus.HalfHourPrices
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
@@ -16,7 +22,11 @@ import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.partition
+import dev.forkhandles.result4k.valueOrNull
+import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
+import org.http4k.core.Method.POST
+import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
@@ -28,11 +38,12 @@ import org.http4k.lens.Path
 import org.http4k.lens.Query
 import org.http4k.lens.zonedDateTime
 import org.http4k.routing.bind
+import java.math.BigDecimal
 import java.time.ZonedDateTime
 
 fun octopusProducts(
     octopus: Octopus
-) = "tariffs" bind GET to {
+) = "/tariffs" bind GET to {
     octopus.products().flatMap { products ->
         val tariffsAndFailures = products.results.map { product ->
             octopus.product(product.code).map {
@@ -60,7 +71,7 @@ fun octopusProducts(
 
 fun octopusPrices(
     octopus: Octopus
-) = "tariffs/{productCode}/{tariffCode}" bind GET to { request ->
+) = "/tariffs/{productCode}/{tariffCode}" bind GET to { request ->
     val start = startTimeLens(request) ?: ZonedDateTime.now()
     val end = endTimeLens(request) ?: start.plusDays(2)
     octopus.prices(
@@ -81,6 +92,71 @@ fun octopusPrices(
             Response(status).with(errorResponseLens of failed.toErrorResponse())
         }
     )
+}
+
+fun octopusChargeTimes(
+    calculator: Calculator
+) = "/octopus/charge-time" bind POST to { request ->
+    val calculationData = CalculationData.lens(request)
+    val chargeTime = calculator.calculate(calculationData)
+    Response(OK).with(chargeTimeLens of chargeTime)
+}
+
+class Calculator(
+    private val octopus: Octopus,
+    private val nationalGrid: NationalGrid,
+    private val limit: LimitCalculator
+) {
+    fun calculate(calculationData: CalculationData): ChargeTime {
+        val prices =
+            octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
+        val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start.toInstant())
+        println(prices)
+        println(intensity)
+        return limit.intensityLimit(
+            Electricity(createSlots(prices.valueOrNull()!!, intensity.valueOrNull()!!)),
+            calculationData.intensityLimit,
+            calculationData.time
+        )
+    }
+
+    private fun createSlots(
+        prices: Prices,
+        intensity: NationalGridData
+    ): List<HalfHourElectricity> {
+        return prices.results.zip(intensity.data).map {
+            HalfHourElectricity(
+                it.first.from,
+                it.first.to,
+                it.first.retailPrice.toBigDecimal(),
+                it.second.intensity.forecast.toBigDecimal()
+            )
+        }
+    }
+}
+
+interface LimitCalculator {
+    fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime
+}
+
+class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
+    override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime {
+        return chargeTimeLens(
+            httpHandler(
+                Request(
+                    POST,
+                    "/calculate/price/$limit"
+                ).with(
+                    ScheduleRequest.lens of ScheduleRequest(
+                        time,
+                        electricity.slots.first().from,
+                        electricity.slots.last().to,
+                        electricity
+                    )
+                )
+            )
+        )
+    }
 }
 
 private val endTimeLens = Query.zonedDateTime().optional("end")
@@ -107,6 +183,30 @@ private data class HalfHourPricesResponse(
     val from: ZonedDateTime,
     val to: ZonedDateTime
 )
+
+data class CalculationData(
+    val product: OctopusProduct,
+    val tariff: OctopusTariff,
+    val start: ZonedDateTime,
+    val end: ZonedDateTime,
+    val time: Long,
+    val intensityLimit: BigDecimal
+) {
+    companion object {
+        val lens = Jackson.autoBody<CalculationData>().toLens()
+    }
+}
+
+data class ScheduleRequest(
+    val time: Long,
+    val start: ZonedDateTime,
+    val end: ZonedDateTime,
+    val electricity: Electricity
+) {
+    companion object {
+        val lens = Jackson.autoBody<ScheduleRequest>().toLens()
+    }
+}
 
 private fun Prices.toResponse() = OctopusPricesResponse(this.results.map(HalfHourPrices::toResponse))
 private fun HalfHourPrices.toResponse() = HalfHourPricesResponse(wholesalePrice, retailPrice, from, to)
