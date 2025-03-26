@@ -47,6 +47,7 @@ abstract class EndToEndTest {
     val scheduler = FakeScheduler()
     val nationalGrid = FakeNationalGrid()
     val limitCalculator = FakeLimitCalculator()
+    val weightsCalculator = FakeWeightsCalculator()
     val server = serverStack("App", events).then(
         carbonIntensity(
             PythonScheduler(
@@ -60,6 +61,9 @@ abstract class EndToEndTest {
             ),
             LimitCalculatorCloud(
                 appClientStack.then(limitCalculator.traced(serverStack("Limit Calculator", events)))
+            ),
+            WeightsCalculatorCloud(
+                appClientStack.then(weightsCalculator.traced(serverStack("Weights Calculator", events)))
             )
         )
     )

@@ -37,6 +37,9 @@ class OpenApiTest {
         ),
         LimitCalculatorCloud(
             FakeLimitCalculator()
+        ),
+        WeightsCalculatorCloud(
+            FakeWeightsCalculator()
         )
     )
 

@@ -105,19 +105,27 @@ fun octopusChargeTimes(
 class Calculator(
     private val octopus: Octopus,
     private val nationalGrid: NationalGrid,
-    private val limit: LimitCalculator
+    private val limit: LimitCalculator,
+    private val weights: WeightsCalculator
 ) {
     fun calculate(calculationData: CalculationData): ChargeTime {
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
         val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start.toInstant())
-        println(prices)
-        println(intensity)
-        return limit.intensityLimit(
-            Electricity(createSlots(prices.valueOrNull()!!, intensity.valueOrNull()!!)),
+        val electricity = Electricity(createSlots(prices.valueOrNull()!!, intensity.valueOrNull()!!))
+        val chargeTime = limit.intensityLimit(
+            electricity,
             calculationData.intensityLimit,
             calculationData.time
         )
+        if (chargeTime == null) {
+            return weights.chargeTime(
+                electricity,
+                Weights(0.0, 1.0),
+                calculationData.time
+            )
+        }
+        return chargeTime
     }
 
     private fun createSlots(
@@ -136,26 +144,52 @@ class Calculator(
 }
 
 interface LimitCalculator {
-    fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime
+    fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime?
+}
+
+interface WeightsCalculator {
+    fun chargeTime(electricity: Electricity, weights: Weights, time: Long): ChargeTime
 }
 
 class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
-    override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime {
-        return chargeTimeLens(
-            httpHandler(
-                Request(
-                    POST,
-                    "/calculate/price/$limit"
-                ).with(
-                    ScheduleRequest.lens of ScheduleRequest(
-                        time,
-                        electricity.slots.first().from,
-                        electricity.slots.last().to,
-                        electricity
-                    )
+    override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime? {
+        val response = httpHandler(
+            Request(
+                POST,
+                "/calculate/price/$limit"
+            ).with(
+                ScheduleRequest.lens of ScheduleRequest(
+                    time,
+                    electricity,
+                    electricity.slots.first().from,
+                    electricity.slots.last().to
                 )
             )
         )
+        return if (response.status == OK) {
+            chargeTimeLens(response)
+        } else {
+            null
+        }
+    }
+}
+
+class WeightsCalculatorCloud(val httpHandler: HttpHandler) : WeightsCalculator {
+    override fun chargeTime(electricity: Electricity, weights: Weights, time: Long): ChargeTime {
+        val response = httpHandler(
+            Request(
+                POST,
+                "/calculate"
+            ).with(
+                ScheduleRequest.lens of ScheduleRequest(
+                    time,
+                    electricity,
+                    priceWeight = weights.priceWeight,
+                    intensityWeight = weights.intensityWeight
+                )
+            )
+        )
+        return chargeTimeLens(response)
     }
 }
 
@@ -177,6 +211,7 @@ private data class OctopusPricesResponse(val prices: List<HalfHourPricesResponse
         val lens = Jackson.autoBody<OctopusPricesResponse>().toLens()
     }
 }
+
 private data class HalfHourPricesResponse(
     val wholesalePrice: Double,
     val retailPrice: Double,
@@ -199,14 +234,18 @@ data class CalculationData(
 
 data class ScheduleRequest(
     val time: Long,
-    val start: ZonedDateTime,
-    val end: ZonedDateTime,
-    val electricity: Electricity
+    val electricity: Electricity,
+    val start: ZonedDateTime? = null,
+    val end: ZonedDateTime? = null,
+    val priceWeight: Double? = null,
+    val intensityWeight: Double? = null
 ) {
     companion object {
         val lens = Jackson.autoBody<ScheduleRequest>().toLens()
     }
 }
+
+data class Weights(val priceWeight: Double, val intensityWeight: Double)
 
 private fun Prices.toResponse() = OctopusPricesResponse(this.results.map(HalfHourPrices::toResponse))
 private fun HalfHourPrices.toResponse() = HalfHourPricesResponse(wholesalePrice, retailPrice, from, to)

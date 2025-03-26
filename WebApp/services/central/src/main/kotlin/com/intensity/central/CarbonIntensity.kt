@@ -33,17 +33,19 @@ fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 9000
     val schedulerUrl = System.getenv("SCHEDULER_URL") ?: "http://localhost:8080"
     val limitCalculatorUrl = "http://localhost:9001"
+    val weightsCalculatorUrl = "http://localhost:9002"
     val server = carbonIntensityServer(
         port,
         PythonScheduler(schedulerClient(schedulerUrl)),
         NationalGridCloud(nationalGridClient()),
         OctopusCloud(octopusClient()),
-        LimitCalculatorCloud(limitCalculatorClient(limitCalculatorUrl))
+        LimitCalculatorCloud(calculatorClient(limitCalculatorUrl)),
+        WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl))
     ).start()
     println("Server started on " + server.port())
 }
 
-fun limitCalculatorClient(limitCalculatorUrl: String) =
+fun calculatorClient(limitCalculatorUrl: String) =
     ClientFilters.SetBaseUriFrom(Uri.of(limitCalculatorUrl))
         .then(JavaHttpClient())
 
@@ -54,27 +56,28 @@ fun carbonIntensityServer(
     scheduler: Scheduler,
     nationalGrid: NationalGrid,
     octopus: Octopus,
-    limitCalculator: LimitCalculator
-) = carbonIntensity(scheduler, nationalGrid, octopus, limitCalculator).asServer(SunHttp(port))
+    limitCalculator: LimitCalculator,
+    weightsCalculator: WeightsCalculator
+) = carbonIntensity(scheduler, nationalGrid, octopus, limitCalculator, weightsCalculator).asServer(SunHttp(port))
 
 fun carbonIntensity(
     scheduler: Scheduler,
     nationalGrid: NationalGrid,
     octopus: Octopus,
-    limitCalculator: LimitCalculator
-) =
-    corsMiddleware
-        .then(CatchLensFailure { _: LensFailure ->
-            Response(BAD_REQUEST).with(errorResponseLens of InvalidRequestFailed.toErrorResponse())
-        })
-        .then(
-            routes(
-                contractRoutes(scheduler, nationalGrid),
-                octopusProducts(octopus),
-                octopusPrices(octopus),
-                octopusChargeTimes(Calculator(octopus, nationalGrid, limitCalculator))
-            )
+    limitCalculator: LimitCalculator,
+    weightsCalculator: WeightsCalculator
+) = corsMiddleware
+    .then(CatchLensFailure { _: LensFailure ->
+        Response(BAD_REQUEST).with(errorResponseLens of InvalidRequestFailed.toErrorResponse())
+    })
+    .then(
+        routes(
+            contractRoutes(scheduler, nationalGrid),
+            octopusProducts(octopus),
+            octopusPrices(octopus),
+            octopusChargeTimes(Calculator(octopus, nationalGrid, limitCalculator, weightsCalculator))
         )
+    )
 
 private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {
     renderer = openApi3()
