@@ -44,7 +44,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
 
         octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(14.8, 13.7, 13.6))
         nationalGrid.setDateData(time.toInstant(), listOf(100, 100, 101), listOf(null, null, null))
-        weightsCalculator.setChargeTime("2025-03-25T13:00:00Z" to "2025-03-25T13:30:00Z")
+        weightsCalculator.setChargeTime(FakeWeights(0.0, 1.0), "2025-03-25T13:00:00Z" to "2025-03-25T13:30:00Z")
 
         val requestBody = """{
                 "product":"octopusProduct",
@@ -52,7 +52,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "start":"${time.formatted()}",
                 "end":"${time.plusMinutes(90).formatted()}",
                 "time":30,
-                "intensityLimit":1
+                "intensityLimit":99
             }""".trimMargin()
         val response = User(events, server).call(
             Request(POST, "/octopus/charge-time").body(requestBody)

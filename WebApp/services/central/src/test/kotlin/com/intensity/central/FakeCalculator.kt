@@ -6,53 +6,59 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
+import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 
 class FakeLimitCalculator : HttpHandler {
-    private var chargeTimeToRespondWith: MutableMap<Limits, Pair<String, String>> = mutableMapOf()
+    private var chargeTimeToRespondWith: MutableMap<FakeLimits, Pair<String, String>> = mutableMapOf()
 
     val routes = routes(
         "/calculate/price/{limit}" bind POST to { request ->
-            val limits = Limits(request.path("limit")!!.toDouble(), 0.0)
-            getResponse(limits)
+            getResponse(FakeLimits(request.path("limit")!!.toDouble(), 0.0))
         },
         "/calculate/intensity/{limit}" bind POST to { request ->
-            val limits = Limits(0.0, request.path("limit")!!.toDouble())
-            getResponse(limits)
+            getResponse(FakeLimits(0.0, request.path("limit")!!.toDouble()))
         }
     )
 
-    private fun getResponse(limits: Limits) = (chargeTimeToRespondWith[limits]
-        ?.let { Response(OK).body("""{"from":"${it.first}","to":"${it.second}"}""") }
-        ?: Response(NOT_FOUND))
+    private fun getResponse(limits: FakeLimits) =
+        chargeTimeToRespondWith[limits]
+            ?.let { Response(OK).body("""{"from":"${it.first}","to":"${it.second}"}""") }
+            ?: Response(NOT_FOUND)
 
     override fun invoke(request: Request) = routes(request)
 
     fun setIntensityChargeTime(limit: Double, chargeTime: Pair<String, String>) {
-        chargeTimeToRespondWith[Limits(0.0, limit)] = chargeTime
+        chargeTimeToRespondWith[FakeLimits(0.0, limit)] = chargeTime
     }
 }
 
 class FakeWeightsCalculator : HttpHandler {
-    private var chargeTimeToRespondWith: Pair<String, String>? = null
+    private var chargeTimeToRespondWith: MutableMap<FakeWeights, Pair<String, String>> = mutableMapOf()
 
     val routes = routes(
-        "/calculate" bind POST to { _ ->
-            if (chargeTimeToRespondWith == null) {
-                Response(NOT_FOUND)
-            } else {
-                Response(OK).body("""{"from":"${chargeTimeToRespondWith!!.first}","to":"${chargeTimeToRespondWith!!.second}"}""")
-            }
+        "/calculate" bind POST to { request ->
+            getResponse(FakeWeights.lens(request))
         }
     )
 
+    private fun getResponse(weights: FakeWeights) =
+        chargeTimeToRespondWith[weights]
+            ?.let { Response(OK).body("""{"from":"${it.first}","to":"${it.second}"}""") }
+            ?: Response(NOT_FOUND)
+
     override fun invoke(request: Request) = routes(request)
 
-    fun setChargeTime(chargeTime: Pair<String, String>) {
-        chargeTimeToRespondWith = chargeTime
+    fun setChargeTime(weights: FakeWeights, chargeTime: Pair<String, String>) {
+        chargeTimeToRespondWith[weights] = chargeTime
     }
 }
 
-data class Limits(val price: Double, val intensity: Double)
+data class FakeLimits(val price: Double, val intensity: Double)
+data class FakeWeights(val priceWeight: Double, val intensityWeight: Double) {
+    companion object {
+        val lens = Jackson.autoBody<FakeWeights>().toLens()
+    }
+}
