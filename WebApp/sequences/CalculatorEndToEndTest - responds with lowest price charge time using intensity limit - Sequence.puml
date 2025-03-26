@@ -1,5 +1,5 @@
 @startuml
-title CalculatorEndToEndTest - responds with optimal charge time using intensity limit
+title CalculatorEndToEndTest - responds with lowest price charge time using intensity limit
 participant "User"
 participant "App"
 participant "Octopus"

@@ -145,11 +145,19 @@ class Calculator(
     }
 
     private fun priceLimitedChargeTime(electricity: Electricity, priceLimit: BigDecimal, time: Long): ChargeTime {
-        return limit.priceLimit(
+        val chargeTime = limit.priceLimit(
             electricity,
             priceLimit,
             time
         )
+        if (chargeTime == null) {
+            return weights.chargeTime(
+                electricity,
+                Weights(1.0, 0.0),
+                time
+            )
+        }
+        return chargeTime
     }
 
     private fun createSlots(
@@ -169,7 +177,7 @@ class Calculator(
 
 interface LimitCalculator {
     fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime?
-    fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime
+    fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime?
 }
 
 interface WeightsCalculator {
@@ -197,7 +205,7 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
             null
         }
     }
-    override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime {
+    override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime? {
         val response = httpHandler(
             Request(
                 POST,
@@ -211,7 +219,11 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
                 )
             )
         )
-        return chargeTimeLens(response)
+        return if (response.status == OK) {
+            chargeTimeLens(response)
+        } else {
+            null
+        }
     }
 }
 

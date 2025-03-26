@@ -1,10 +1,11 @@
 @startuml
-title CalculatorEndToEndTest - responds with optimal charge time using price limit
+title CalculatorEndToEndTest - responds with lowest intensity charge time when not possible under intensity limit
 participant "User"
 participant "App"
 participant "Octopus"
 participant "National Grid"
 participant "Limit Calculator"
+participant "Weights Calculator"
 "User" -> "App": POST octopus/charge-time
 activate "App"
 "App" -> "Octopus": GET {productCode}/electricity-tariffs/{tariffCode}/standard-unit-rates
@@ -17,11 +18,16 @@ activate "National Grid"
 
 "National Grid" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
 deactivate "National Grid"
-"App" -> "Limit Calculator": POST calculate/price/{limit}
+"App" -> "Limit Calculator": POST calculate/intensity/{limit}
 activate "Limit Calculator"
 
-"Limit Calculator" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+"Limit Calculator" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found
 deactivate "Limit Calculator"
+"App" -> "Weights Calculator": POST calculate
+activate "Weights Calculator"
+
+"Weights Calculator" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "Weights Calculator"
 "App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
 deactivate "App"
 @enduml

@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter
 
 class CalculatorEndToEndTest : EndToEndTest() {
     @Test
-    fun `responds with optimal charge time using intensity limit`() {
+    fun `responds with lowest price charge time using intensity limit`() {
         val time = ZonedDateTime.parse("2025-03-25T12:00:00Z")
 
         octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(14.8, 13.7, 13.6))
@@ -39,7 +39,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
     }
 
     @Test
-    fun `responds with optimal charge time for cheapest price if charge time not possible under limit`() {
+    fun `responds with lowest intensity charge time when not possible under intensity limit`() {
         val time = ZonedDateTime.parse("2025-03-25T12:00:00Z")
 
         octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(14.8, 13.7, 13.6))
@@ -61,12 +61,12 @@ class CalculatorEndToEndTest : EndToEndTest() {
         assertThat(response.status, equalTo(OK))
         assertThat(
             response,
-            hasBody("""{"from":"${time.plusMinutes(60).formatted()}","to":"${time.plusMinutes(90).formatted()}"}""")
+            hasBody("""{"from":"2025-03-25T13:00:00Z","to":"2025-03-25T13:30:00Z"}""")
         )
     }
 
     @Test
-    fun `responds with optimal charge time using price limit`() {
+    fun `responds with lowest intensity charge time using price limit`() {
         val time = ZonedDateTime.parse("2025-03-25T12:00:00Z")
 
         octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(13.8, 13.7, 13.6))
@@ -89,6 +89,33 @@ class CalculatorEndToEndTest : EndToEndTest() {
         assertThat(
             response,
             hasBody("""{"from":"2025-03-25T12:00:00Z","to":"2025-03-25T12:30:00Z"}""")
+        )
+    }
+
+    @Test
+    fun `responds with lowest price charge time when not possible under price limit`() {
+        val time = ZonedDateTime.parse("2025-03-25T12:00:00Z")
+
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(13.8, 13.7, 13.6))
+        nationalGrid.setDateData(time.toInstant(), listOf(99, 100, 101), listOf(null, null, null))
+        weightsCalculator.setChargeTime(FakeWeights(1.0, 0.0), "2025-03-25T13:00:00Z" to "2025-03-25T13:30:00Z")
+
+        val requestBody = """{
+                "product":"octopusProduct",
+                "tariff":"octopusTariff",
+                "start":"${time.formatted()}",
+                "end":"${time.plusMinutes(90).formatted()}",
+                "time":30,
+                "priceLimit":13
+            }""".trimMargin()
+        val response = User(events, server).call(
+            Request(POST, "/octopus/charge-time").body(requestBody)
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response,
+            hasBody("""{"from":"2025-03-25T13:00:00Z","to":"2025-03-25T13:30:00Z"}""")
         )
     }
 }
