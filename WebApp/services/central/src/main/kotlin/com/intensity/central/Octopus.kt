@@ -113,19 +113,43 @@ class Calculator(
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
         val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start.toInstant())
         val electricity = Electricity(createSlots(prices.valueOrNull()!!, intensity.valueOrNull()!!))
+        return when {
+            calculationData.intensityLimit != null -> intensityLimitedChargeTime(
+                electricity,
+                calculationData.intensityLimit,
+                calculationData.time
+            )
+
+            else -> priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time)
+        }
+    }
+
+    private fun intensityLimitedChargeTime(
+        electricity: Electricity,
+        intensityLimit: BigDecimal,
+        time: Long
+    ): ChargeTime {
         val chargeTime = limit.intensityLimit(
             electricity,
-            calculationData.intensityLimit,
-            calculationData.time
+            intensityLimit,
+            time
         )
         if (chargeTime == null) {
             return weights.chargeTime(
                 electricity,
                 Weights(0.0, 1.0),
-                calculationData.time
+                time
             )
         }
         return chargeTime
+    }
+
+    private fun priceLimitedChargeTime(electricity: Electricity, priceLimit: BigDecimal, time: Long): ChargeTime {
+        return limit.priceLimit(
+            electricity,
+            priceLimit,
+            time
+        )
     }
 
     private fun createSlots(
@@ -145,6 +169,7 @@ class Calculator(
 
 interface LimitCalculator {
     fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime?
+    fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime
 }
 
 interface WeightsCalculator {
@@ -171,6 +196,22 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
         } else {
             null
         }
+    }
+    override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime {
+        val response = httpHandler(
+            Request(
+                POST,
+                "/calculate/price/$limit"
+            ).with(
+                ScheduleRequest.lens of ScheduleRequest(
+                    time,
+                    electricity,
+                    electricity.slots.first().from,
+                    electricity.slots.last().to
+                )
+            )
+        )
+        return chargeTimeLens(response)
     }
 }
 
@@ -225,7 +266,8 @@ data class CalculationData(
     val start: ZonedDateTime,
     val end: ZonedDateTime,
     val time: Long,
-    val intensityLimit: BigDecimal
+    val intensityLimit: BigDecimal?,
+    val priceLimit: BigDecimal?
 ) {
     companion object {
         val lens = Jackson.autoBody<CalculationData>().toLens()

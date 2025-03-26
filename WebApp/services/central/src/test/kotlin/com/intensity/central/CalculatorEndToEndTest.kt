@@ -64,6 +64,33 @@ class CalculatorEndToEndTest : EndToEndTest() {
             hasBody("""{"from":"${time.plusMinutes(60).formatted()}","to":"${time.plusMinutes(90).formatted()}"}""")
         )
     }
+
+    @Test
+    fun `responds with optimal charge time using price limit`() {
+        val time = ZonedDateTime.parse("2025-03-25T12:00:00Z")
+
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(13.8, 13.7, 13.6))
+        nationalGrid.setDateData(time.toInstant(), listOf(99, 100, 101), listOf(null, null, null))
+        limitCalculator.setPriceChargeTime(14.0, "2025-03-25T12:00:00Z" to "2025-03-25T12:30:00Z")
+
+        val requestBody = """{
+                "product":"octopusProduct",
+                "tariff":"octopusTariff",
+                "start":"${time.formatted()}",
+                "end":"${time.plusMinutes(90).formatted()}",
+                "time":30,
+                "priceLimit":14.0
+            }""".trimMargin()
+        val response = User(events, server).call(
+            Request(POST, "/octopus/charge-time").body(requestBody)
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response,
+            hasBody("""{"from":"2025-03-25T12:00:00Z","to":"2025-03-25T12:30:00Z"}""")
+        )
+    }
 }
 
 private fun ZonedDateTime.formatted() = this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))

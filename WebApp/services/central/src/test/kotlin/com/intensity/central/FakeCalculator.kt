@@ -33,6 +33,10 @@ class FakeLimitCalculator : HttpHandler {
     fun setIntensityChargeTime(limit: Double, chargeTime: Pair<String, String>) {
         chargeTimeToRespondWith[FakeLimits(0.0, limit)] = chargeTime
     }
+
+    fun setPriceChargeTime(limit: Double, chargeTime: Pair<String, String>) {
+        chargeTimeToRespondWith[FakeLimits(limit, 0.0)] = chargeTime
+    }
 }
 
 class FakeWeightsCalculator : HttpHandler {
