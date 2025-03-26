@@ -18,7 +18,7 @@ activate "National Grid"
 
 "National Grid" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
 deactivate "National Grid"
-"App" -> "Limit Calculator": POST calculate/price/{limit}
+"App" -> "Limit Calculator": POST calculate/intensity/{limit}
 activate "Limit Calculator"
 
 "Limit Calculator" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found

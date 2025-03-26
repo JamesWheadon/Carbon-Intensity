@@ -156,7 +156,7 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
         val response = httpHandler(
             Request(
                 POST,
-                "/calculate/price/$limit"
+                "/calculate/intensity/$limit"
             ).with(
                 ScheduleRequest.lens of ScheduleRequest(
                     time,

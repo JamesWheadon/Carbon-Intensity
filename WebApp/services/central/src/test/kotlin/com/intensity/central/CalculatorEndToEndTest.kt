@@ -17,7 +17,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
 
         octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(14.8, 13.7, 13.6))
         nationalGrid.setDateData(time.toInstant(), listOf(100, 100, 101), listOf(null, null, null))
-        limitCalculator.setChargeTime("2025-03-25T12:30:00Z" to "2025-03-25T13:00:00Z")
+        limitCalculator.setIntensityChargeTime(100.0, "2025-03-25T12:30:00Z" to "2025-03-25T13:00:00Z")
 
         val requestBody = """{
                 "product":"octopusProduct",
