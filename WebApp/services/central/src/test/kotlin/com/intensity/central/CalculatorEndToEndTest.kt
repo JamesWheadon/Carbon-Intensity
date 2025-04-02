@@ -126,7 +126,28 @@ class CalculatorEndToEndTest : EndToEndTest() {
 
         octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(13.8, 13.7, 13.6))
         nationalGrid.shouldFail()
-        weightsCalculator.setChargeTime(FakeWeights(1.0, 0.0), "2025-03-25T13:00:00Z" to "2025-03-25T13:30:00Z")
+
+        val requestBody = """{
+                "product":"octopusProduct",
+                "tariff":"octopusTariff",
+                "start":"${time.formatted()}",
+                "end":"${time.plusMinutes(90).formatted()}",
+                "time":30,
+                "priceLimit":13
+            }""".trimMargin()
+        val response = User(events, server).call(
+            Request(POST, "/octopus/charge-time").body(requestBody)
+        )
+
+        assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
+    }
+
+    @Test
+    fun `no price data exists for calculation`() {
+        val time = ZonedDateTime.parse("2025-03-25T12:00:00Z")
+
+        octopus.fail()
+        nationalGrid.setDateData(time.toInstant(), listOf(99, 100, 101), listOf(null, null, null))
 
         val requestBody = """{
                 "product":"octopusProduct",

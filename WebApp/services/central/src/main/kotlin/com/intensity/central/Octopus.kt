@@ -122,6 +122,9 @@ class Calculator(
         if (intensity is Failure) {
             return intensity
         }
+        if (prices is Failure) {
+            return prices
+        }
         val electricity = Electricity(createSlots(prices.valueOrNull()!!, intensity.valueOrNull()!!))
         return when {
             calculationData.intensityLimit != null -> Success(

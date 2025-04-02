@@ -1,0 +1,21 @@
+@startuml
+title CalculatorEndToEndTest - no price data exists for calculation
+participant "User"
+participant "App"
+participant "Octopus"
+participant "National Grid"
+"User" -> "App": POST octopus/charge-time
+activate "App"
+"App" -> "Octopus": GET octopusProduct/electricity-tariffs/octopusTariff/standard-unit-rates/
+activate "Octopus"
+
+"Octopus" X-[#FireBrick]> "App": <color:FireBrick> 500 Internal Server Error
+deactivate "Octopus"
+"App" -> "National Grid": GET intensity/{time}/fw48h
+activate "National Grid"
+
+"National Grid" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "National Grid"
+"App" X-[#FireBrick]> "User": <color:FireBrick> 500 Internal Server Error
+deactivate "App"
+@enduml
