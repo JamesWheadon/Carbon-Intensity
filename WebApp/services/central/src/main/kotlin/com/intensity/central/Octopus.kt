@@ -17,6 +17,7 @@ import com.intensity.octopus.OctopusProduct
 import com.intensity.octopus.OctopusTariff
 import com.intensity.octopus.Prices
 import dev.forkhandles.result4k.Failure
+import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.fold
@@ -98,8 +99,14 @@ fun octopusChargeTimes(
     calculator: Calculator
 ) = "/octopus/charge-time" bind POST to { request ->
     val calculationData = CalculationData.lens(request)
-    val chargeTime = calculator.calculate(calculationData)
-    Response(OK).with(chargeTimeLens of chargeTime)
+    calculator.calculate(calculationData).fold(
+        { chargeTime ->
+            Response(OK).with(chargeTimeLens of chargeTime)
+        },
+        { failed ->
+            Response(INTERNAL_SERVER_ERROR).with(errorResponseLens of failed.toErrorResponse())
+        }
+    )
 }
 
 class Calculator(
@@ -108,19 +115,24 @@ class Calculator(
     private val limit: LimitCalculator,
     private val weights: WeightsCalculator
 ) {
-    fun calculate(calculationData: CalculationData): ChargeTime {
+    fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
         val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start.toInstant())
+        if (intensity is Failure) {
+            return intensity
+        }
         val electricity = Electricity(createSlots(prices.valueOrNull()!!, intensity.valueOrNull()!!))
         return when {
-            calculationData.intensityLimit != null -> intensityLimitedChargeTime(
+            calculationData.intensityLimit != null -> Success(
+                intensityLimitedChargeTime(
                 electricity,
                 calculationData.intensityLimit,
                 calculationData.time
+                )
             )
 
-            else -> priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time)
+            else -> Success(priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time))
         }
     }
 

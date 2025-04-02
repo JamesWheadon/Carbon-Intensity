@@ -15,9 +15,10 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class IntensitiesEndToEndTest : EndToEndTest() {
+    private val date = LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC"))
+
     @Test
     fun `returns intensity data from the scheduler`() {
-        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
         scheduler.hasIntensityData(Intensities(List(96) { 212 }, date.toInstant()))
 
         val response = User(events, server).call(
@@ -39,7 +40,6 @@ class IntensitiesEndToEndTest : EndToEndTest() {
 
     @Test
     fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
-        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
         nationalGrid.setDateData(date.toInstant(), List(97) { 210 }, List(97) { null })
 
         val response = User(events, server).call(
@@ -62,7 +62,6 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     @Test
     fun `calls national grid and updates scheduler if scheduler is out of date`() {
         scheduler.hasIntensityData(Intensities(List(96) { 212 }, getTestInstant()))
-        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
         nationalGrid.setDateData(date.toInstant(), List(97) { 210 }, List(97) { null })
 
         val response = User(events, server).call(
@@ -96,7 +95,6 @@ class IntensitiesEndToEndTest : EndToEndTest() {
 
     @Test
     fun `handles error when scheduler fails to accept data`() {
-        val date = LocalDate.now(ZoneId.of("Europe/London")).atStartOfDay(ZoneId.of("Europe/London"))
         nationalGrid.setDateData(date.toInstant(), List(99) { 210 }, List(99) { null })
 
         val response = User(events, server).call(
