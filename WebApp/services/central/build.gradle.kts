@@ -15,7 +15,6 @@ dependencies {
 
     testImplementation(projects.libraries.coreTest)
     testImplementation(testFixtures(projects.clients.nationalGrid))
-    testImplementation(testFixtures(projects.clients.scheduler))
     testImplementation(testFixtures(projects.clients.octopus))
 
     testImplementation(libs.junit.engine)
