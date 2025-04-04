@@ -2,15 +2,9 @@
 title IntensitiesEndToEndTest - handles error from national grid with the correct response
 participant "User"
 participant "App"
-participant "Scheduler"
 participant "National Grid"
 "User" -> "App": POST intensities
 activate "App"
-"App" -> "Scheduler": GET intensities
-activate "Scheduler"
-
-"Scheduler" X-[#DarkOrange]> "App": <color:DarkOrange> 404 Not Found
-deactivate "Scheduler"
 "App" -> "National Grid": GET intensity/{time}/fw48h
 activate "National Grid"
 

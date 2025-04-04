@@ -4,8 +4,6 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
-import com.intensity.scheduler.FakeScheduler
-import com.intensity.scheduler.PythonScheduler
 import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
@@ -44,15 +42,11 @@ abstract class EndToEndTest {
     private val appClientStack = clientStack("App", events)
 
     val octopus = FakeOctopus()
-    val scheduler = FakeScheduler()
     val nationalGrid = FakeNationalGrid()
     val limitCalculator = FakeLimitCalculator()
     val weightsCalculator = FakeWeightsCalculator()
     val server = serverStack("App", events).then(
         carbonIntensity(
-            PythonScheduler(
-                appClientStack.then(scheduler.traced(serverStack("Scheduler", events)))
-            ),
             NationalGridCloud(
                 appClientStack.then(nationalGrid.traced(serverStack("National Grid", events)))
             ),

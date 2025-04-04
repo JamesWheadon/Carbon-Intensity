@@ -4,8 +4,6 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
-import com.intensity.scheduler.FakeScheduler
-import com.intensity.scheduler.PythonScheduler
 import com.natpryce.hamkrest.and
 import com.natpryce.hamkrest.assertion.assertThat
 import org.http4k.client.JavaHttpClient
@@ -26,9 +24,6 @@ class OpenApiTest {
     private val client = JavaHttpClient()
     private val server = carbonIntensityServer(
         1000,
-        PythonScheduler(
-            FakeScheduler()
-        ),
         NationalGridCloud(
             FakeNationalGrid()
         ),

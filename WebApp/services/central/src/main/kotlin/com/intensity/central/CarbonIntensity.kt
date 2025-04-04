@@ -9,9 +9,6 @@ import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.octopus.octopusClient
 import com.intensity.openapi.openApi3
-import com.intensity.scheduler.PythonScheduler
-import com.intensity.scheduler.Scheduler
-import com.intensity.scheduler.schedulerClient
 import org.http4k.client.JavaHttpClient
 import org.http4k.contract.PreFlightExtraction.Companion.None
 import org.http4k.contract.contract
@@ -31,12 +28,10 @@ import org.http4k.server.asServer
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 9000
-    val schedulerUrl = System.getenv("SCHEDULER_URL") ?: "http://localhost:8080"
     val limitCalculatorUrl = "http://localhost:9001"
     val weightsCalculatorUrl = "http://localhost:9002"
     val server = carbonIntensityServer(
         port,
-        PythonScheduler(schedulerClient(schedulerUrl)),
         NationalGridCloud(nationalGridClient()),
         OctopusCloud(octopusClient()),
         LimitCalculatorCloud(calculatorClient(limitCalculatorUrl)),
@@ -53,15 +48,13 @@ val corsMiddleware = Cors(CorsPolicy.UnsafeGlobalPermissive)
 
 fun carbonIntensityServer(
     port: Int,
-    scheduler: Scheduler,
     nationalGrid: NationalGrid,
     octopus: Octopus,
     limitCalculator: LimitCalculator,
     weightsCalculator: WeightsCalculator
-) = carbonIntensity(scheduler, nationalGrid, octopus, limitCalculator, weightsCalculator).asServer(SunHttp(port))
+) = carbonIntensity(nationalGrid, octopus, limitCalculator, weightsCalculator).asServer(SunHttp(port))
 
 fun carbonIntensity(
-    scheduler: Scheduler,
     nationalGrid: NationalGrid,
     octopus: Octopus,
     limitCalculator: LimitCalculator,
@@ -72,16 +65,16 @@ fun carbonIntensity(
     })
     .then(
         routes(
-            contractRoutes(scheduler, nationalGrid),
+            contractRoutes(nationalGrid),
             octopusProducts(octopus),
             octopusPrices(octopus),
             octopusChargeTimes(Calculator(octopus, nationalGrid, limitCalculator, weightsCalculator))
         )
     )
 
-private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = contract {
+private fun contractRoutes(nationalGrid: NationalGrid) = contract {
     renderer = openApi3()
     descriptionPath = "/openapi.json"
     preFlightExtraction = None
-    routes += intensities(scheduler, nationalGrid)
+    routes += intensities(nationalGrid)
 }

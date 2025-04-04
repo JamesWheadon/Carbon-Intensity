@@ -6,7 +6,6 @@ dependencies {
     implementation(projects.libraries.core)
     implementation(projects.libraries.openApi)
     implementation(projects.clients.nationalGrid)
-    implementation(projects.clients.scheduler)
     implementation(projects.clients.octopus)
 
     implementation(libs.http4k.core)
