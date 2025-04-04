@@ -120,7 +120,7 @@ class Calculator(
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
         val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start.toInstant())
         return flatZip(prices, intensity) { priceData, intensityData ->
-            Success(Electricity(createSlots(priceData, intensityData)))
+            Success(createElectricityFrom(priceData, intensityData))
         }.flatMap { electricity ->
             when {
                 calculationData.intensityLimit != null -> Success(
@@ -172,18 +172,18 @@ class Calculator(
         return chargeTime
     }
 
-    private fun createSlots(
+    fun createElectricityFrom(
         prices: Prices,
         intensity: NationalGridData
-    ): List<HalfHourElectricity> {
-        return prices.results.zip(intensity.data).map {
+    ): Electricity {
+        return Electricity(prices.results.zip(intensity.data).map {
             HalfHourElectricity(
                 it.first.from,
                 it.first.to,
                 it.first.retailPrice.toBigDecimal(),
                 it.second.intensity.forecast.toBigDecimal()
             )
-        }
+        })
     }
 }
 
