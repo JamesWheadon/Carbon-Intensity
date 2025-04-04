@@ -7,6 +7,7 @@ import com.intensity.core.Failed
 import com.intensity.core.HalfHourElectricity
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
+import com.intensity.nationalgrid.HalfHourData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
 import com.intensity.octopus.HalfHourPrices
@@ -40,6 +41,7 @@ import org.http4k.lens.Query
 import org.http4k.lens.zonedDateTime
 import org.http4k.routing.bind
 import java.math.BigDecimal
+import java.time.ZoneId
 import java.time.ZonedDateTime
 
 fun octopusProducts(
@@ -178,22 +180,38 @@ class Calculator(
     ): Electricity {
         val sortedPrice = prices.results.sortedBy { it.from }
         val sortedIntensity = intensity.data.sortedBy { it.from }
-        val slots = mutableListOf<HalfHourElectricity>()
-        for (price in sortedPrice) {
-            sortedIntensity.firstOrNull { it.from == price.from.toInstant() && it.to == price.to.toInstant() }?.let {
-                slots.add(
-                    HalfHourElectricity(
-                        price.from,
-                        price.to,
-                        price.retailPrice.toBigDecimal(),
-                        it.intensity.forecast.toBigDecimal()
-                    )
-                )
-            }
+        val slots = sortedPrice.flatMap { price ->
+            sortedIntensity.filter { it.overlaps(price.from, price.to) }.map { createElectricityData(price, it) }
         }
         return Electricity(slots)
     }
+
+    private fun createElectricityData(price: HalfHourPrices, intensity: HalfHourData): HalfHourElectricity {
+        return HalfHourElectricity(
+            latest(price.from, intensity.from.atZone(ZoneId.of("UTC"))),
+            earliest(price.to, intensity.to.atZone(ZoneId.of("UTC"))),
+            price.retailPrice.toBigDecimal(),
+            intensity.intensity.forecast.toBigDecimal()
+        )
+    }
+
+    private fun latest(first: ZonedDateTime, second: ZonedDateTime) =
+        if (first.isBefore(second)) {
+            second
+        } else {
+            first
+        }
+
+    private fun earliest(first: ZonedDateTime, second: ZonedDateTime) =
+        if (first.isBefore(second)) {
+            first
+        } else {
+            second
+        }
 }
+
+private fun HalfHourData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =
+    this.from >= from.toInstant() && this.from < to.toInstant() || this.to > from.toInstant() && this.to <= to.toInstant()
 
 interface LimitCalculator {
     fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime?
