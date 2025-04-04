@@ -7,15 +7,15 @@ import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
-import com.intensity.nationalgrid.HalfHourData
+import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
-import com.intensity.octopus.HalfHourPrices
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCommunicationFailed
 import com.intensity.octopus.OctopusProduct
 import com.intensity.octopus.OctopusTariff
+import com.intensity.octopus.PriceData
 import com.intensity.octopus.Prices
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
@@ -186,7 +186,7 @@ class Calculator(
         return Electricity(slots)
     }
 
-    private fun createElectricityData(price: HalfHourPrices, intensity: HalfHourData): ElectricityData {
+    private fun createElectricityData(price: PriceData, intensity: IntensityData): ElectricityData {
         return ElectricityData(
             latest(price.from, intensity.from.atZone(ZoneId.of("UTC"))),
             earliest(price.to, intensity.to.atZone(ZoneId.of("UTC"))),
@@ -210,7 +210,7 @@ class Calculator(
         }
 }
 
-private fun HalfHourData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =
+private fun IntensityData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =
     this.from >= from.toInstant() && this.from < to.toInstant() || this.to > from.toInstant() && this.to <= to.toInstant()
 
 interface LimitCalculator {
@@ -298,13 +298,13 @@ private data class OctopusProducts(val products: List<OctopusProductResponse>) {
 
 private data class OctopusProductResponse(val name: OctopusProduct, val tariffs: List<OctopusTariff>)
 
-private data class OctopusPricesResponse(val prices: List<HalfHourPricesResponse>) {
+private data class OctopusPricesResponse(val prices: List<PricesResponse>) {
     companion object {
         val lens = Jackson.autoBody<OctopusPricesResponse>().toLens()
     }
 }
 
-private data class HalfHourPricesResponse(
+private data class PricesResponse(
     val wholesalePrice: Double,
     val retailPrice: Double,
     val from: ZonedDateTime,
@@ -340,8 +340,8 @@ data class ScheduleRequest(
 
 data class Weights(val priceWeight: Double, val intensityWeight: Double)
 
-private fun Prices.toResponse() = OctopusPricesResponse(this.results.map(HalfHourPrices::toResponse))
-private fun HalfHourPrices.toResponse() = HalfHourPricesResponse(wholesalePrice, retailPrice, from, to)
+private fun Prices.toResponse() = OctopusPricesResponse(this.results.map(PriceData::toResponse))
+private fun PriceData.toResponse() = PricesResponse(wholesalePrice, retailPrice, from, to)
 
 private object NoOctopusProducts : Failed {
     override fun toErrorResponse() = ErrorResponse("No Octopus products")

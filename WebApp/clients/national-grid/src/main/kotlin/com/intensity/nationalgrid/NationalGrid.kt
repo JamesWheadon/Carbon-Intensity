@@ -39,8 +39,8 @@ class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
 fun nationalGridClient() = ClientFilters.SetHostFrom(Uri.of("https://api.carbonintensity.org.uk"))
     .then(JavaHttpClient())
 
-data class NationalGridData(val data: List<HalfHourData>)
-data class HalfHourData(val from: Instant, val to: Instant, val intensity: Intensity)
+data class NationalGridData(val data: List<IntensityData>)
+data class IntensityData(val from: Instant, val to: Instant, val intensity: Intensity)
 data class Intensity(val forecast: Int, val actual: Int?, val index: String)
 
 val nationalGridDataLens = NationalGridJackson.autoBody<NationalGridData>().toLens()

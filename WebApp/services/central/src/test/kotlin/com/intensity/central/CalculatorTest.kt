@@ -4,14 +4,14 @@ import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
 import com.intensity.core.Failed
-import com.intensity.nationalgrid.HalfHourData
 import com.intensity.nationalgrid.Intensity
+import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
-import com.intensity.octopus.HalfHourPrices
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusProduct
 import com.intensity.octopus.OctopusTariff
+import com.intensity.octopus.PriceData
 import com.intensity.octopus.Prices
 import com.intensity.octopus.ProductDetails
 import com.intensity.octopus.Products
@@ -33,26 +33,26 @@ class CalculatorTest {
     fun `creates electricity data from prices and intensity data`() {
         val prices = Prices(
             listOf(
-                HalfHourPrices(12.5, 13.0, startTime, startTime.plusMinutes(30)),
-                HalfHourPrices(12.6, 13.1, startTime.plusMinutes(30), startTime.plusMinutes(60)),
-                HalfHourPrices(12.7, 13.2, startTime.plusMinutes(60), startTime.plusMinutes(90)),
-                HalfHourPrices(12.8, 13.3, startTime.plusMinutes(90), startTime.plusMinutes(120))
+                PriceData(12.5, 13.0, startTime, startTime.plusMinutes(30)),
+                PriceData(12.6, 13.1, startTime.plusMinutes(30), startTime.plusMinutes(60)),
+                PriceData(12.7, 13.2, startTime.plusMinutes(60), startTime.plusMinutes(90)),
+                PriceData(12.8, 13.3, startTime.plusMinutes(90), startTime.plusMinutes(120))
             )
         )
         val intensity = NationalGridData(
             listOf(
-                HalfHourData(startTime.toInstant(), startTime.plusMinutes(30).toInstant(), Intensity(100, null, "")),
-                HalfHourData(
+                IntensityData(startTime.toInstant(), startTime.plusMinutes(30).toInstant(), Intensity(100, null, "")),
+                IntensityData(
                     startTime.plusMinutes(30).toInstant(),
                     startTime.plusMinutes(60).toInstant(),
                     Intensity(99, null, "")
                 ),
-                HalfHourData(
+                IntensityData(
                     startTime.plusMinutes(60).toInstant(),
                     startTime.plusMinutes(90).toInstant(),
                     Intensity(101, null, "")
                 ),
-                HalfHourData(
+                IntensityData(
                     startTime.plusMinutes(90).toInstant(),
                     startTime.plusMinutes(120).toInstant(),
                     Intensity(102, null, "")
@@ -92,26 +92,26 @@ class CalculatorTest {
     fun `creates electricity data only with data at same time slots`() {
         val prices = Prices(
             listOf(
-                HalfHourPrices(12.5, 13.0, startTime, startTime.plusMinutes(30)),
-                HalfHourPrices(12.6, 13.1, startTime.plusMinutes(30), startTime.plusMinutes(60)),
-                HalfHourPrices(12.7, 13.2, startTime.plusMinutes(60), startTime.plusMinutes(90)),
-                HalfHourPrices(12.8, 13.3, startTime.plusMinutes(120), startTime.plusMinutes(150))
+                PriceData(12.5, 13.0, startTime, startTime.plusMinutes(30)),
+                PriceData(12.6, 13.1, startTime.plusMinutes(30), startTime.plusMinutes(60)),
+                PriceData(12.7, 13.2, startTime.plusMinutes(60), startTime.plusMinutes(90)),
+                PriceData(12.8, 13.3, startTime.plusMinutes(120), startTime.plusMinutes(150))
             )
         )
         val intensity = NationalGridData(
             listOf(
-                HalfHourData(startTime.toInstant(), startTime.plusMinutes(30).toInstant(), Intensity(100, null, "")),
-                HalfHourData(
+                IntensityData(startTime.toInstant(), startTime.plusMinutes(30).toInstant(), Intensity(100, null, "")),
+                IntensityData(
                     startTime.plusMinutes(30).toInstant(),
                     startTime.plusMinutes(60).toInstant(),
                     Intensity(99, null, "")
                 ),
-                HalfHourData(
+                IntensityData(
                     startTime.plusMinutes(60).toInstant(),
                     startTime.plusMinutes(90).toInstant(),
                     Intensity(101, null, "")
                 ),
-                HalfHourData(
+                IntensityData(
                     startTime.plusMinutes(90).toInstant(),
                     startTime.plusMinutes(120).toInstant(),
                     Intensity(102, null, "")
@@ -145,26 +145,26 @@ class CalculatorTest {
     fun `creates electricity data only with data at same time slots even when not a full half hour`() {
         val prices = Prices(
             listOf(
-                HalfHourPrices(12.5, 13.0, startTime, startTime.plusMinutes(30)),
-                HalfHourPrices(12.6, 13.1, startTime.plusMinutes(30), startTime.plusMinutes(60)),
-                HalfHourPrices(12.7, 13.2, startTime.plusMinutes(60), startTime.plusMinutes(75)),
-                HalfHourPrices(12.8, 13.3, startTime.plusMinutes(75), startTime.plusMinutes(90))
+                PriceData(12.5, 13.0, startTime, startTime.plusMinutes(30)),
+                PriceData(12.6, 13.1, startTime.plusMinutes(30), startTime.plusMinutes(60)),
+                PriceData(12.7, 13.2, startTime.plusMinutes(60), startTime.plusMinutes(75)),
+                PriceData(12.8, 13.3, startTime.plusMinutes(75), startTime.plusMinutes(90))
             )
         )
         val intensity = NationalGridData(
             listOf(
-                HalfHourData(startTime.toInstant(), startTime.plusMinutes(15).toInstant(), Intensity(100, null, "")),
-                HalfHourData(
+                IntensityData(startTime.toInstant(), startTime.plusMinutes(15).toInstant(), Intensity(100, null, "")),
+                IntensityData(
                     startTime.plusMinutes(15).toInstant(),
                     startTime.plusMinutes(30).toInstant(),
                     Intensity(102, null, "")
                 ),
-                HalfHourData(
+                IntensityData(
                     startTime.plusMinutes(30).toInstant(),
                     startTime.plusMinutes(60).toInstant(),
                     Intensity(99, null, "")
                 ),
-                HalfHourData(
+                IntensityData(
                     startTime.plusMinutes(60).toInstant(),
                     startTime.plusMinutes(90).toInstant(),
                     Intensity(101, null, "")

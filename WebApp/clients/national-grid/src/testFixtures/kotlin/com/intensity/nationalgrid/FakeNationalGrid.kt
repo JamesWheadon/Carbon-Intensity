@@ -36,9 +36,9 @@ class FakeNationalGrid : HttpHandler {
         }
     )
 
-    private fun createHalfHourWindows(startTime: Instant): MutableList<HalfHourData> {
+    private fun createHalfHourWindows(startTime: Instant): MutableList<IntensityData> {
         val currentTime = Instant.now()
-        val dataWindows = mutableListOf<HalfHourData>()
+        val dataWindows = mutableListOf<IntensityData>()
         for (window in 0 until 97) {
             val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
             val actualIntensity = if (windowStart.isBefore(currentTime)) {
@@ -46,7 +46,7 @@ class FakeNationalGrid : HttpHandler {
             } else {
                 null
             }
-            dataWindows.add(HalfHourData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate")))
+            dataWindows.add(IntensityData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate")))
         }
         return dataWindows
     }
@@ -71,7 +71,7 @@ class FakeNationalGrid : HttpHandler {
                     data.first <= 160 -> "high"
                     else -> "very high"
                 }
-                HalfHourData(start, end, Intensity(data.first, data.second, index))
+                IntensityData(start, end, Intensity(data.first, data.second, index))
             }
         )
     }

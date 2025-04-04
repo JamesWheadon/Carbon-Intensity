@@ -83,8 +83,8 @@ value class OctopusProduct(val code: String)
 @JvmInline
 value class OctopusTariff(val code: String)
 
-data class Prices(val results: List<HalfHourPrices>)
-data class HalfHourPrices(
+data class Prices(val results: List<PriceData>)
+data class PriceData(
     @JsonProperty("value_exc_vat") val wholesalePrice: Double,
     @JsonProperty("value_inc_vat") val retailPrice: Double,
     @JsonProperty("valid_from") val from: ZonedDateTime,

@@ -23,7 +23,7 @@ abstract class OctopusContractTest {
             ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
 
-        assertThat(prices.results.map(HalfHourPrices::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
+        assertThat(prices.results.map(PriceData::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
         assertThat(
             prices.results.first().from,
             equalTo(ZonedDateTime.of(2023, 3, 26, 1, 0, 0, 0, ZoneId.ofOffset("", ZoneOffset.UTC)))
@@ -39,7 +39,7 @@ abstract class OctopusContractTest {
             ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
         ).valueOrNull()!!
 
-        assertThat(prices.results.map(HalfHourPrices::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
+        assertThat(prices.results.map(PriceData::wholesalePrice), equalTo(listOf(23.4, 26.0, 24.3)))
     }
 
     @Test
@@ -52,7 +52,7 @@ abstract class OctopusContractTest {
         ).valueOrNull()!!
 
         assertThat(
-            prices.results.map(HalfHourPrices::wholesalePrice),
+            prices.results.map(PriceData::wholesalePrice),
             equalTo(listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2))
         )
         assertThat(
