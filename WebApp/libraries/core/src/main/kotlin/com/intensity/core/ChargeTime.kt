@@ -9,7 +9,7 @@ import java.time.Duration
 import java.time.ZonedDateTime
 
 fun interface SlotScore {
-    fun getSlotScore(slot: HalfHourElectricity): BigDecimal
+    fun getSlotScore(slot: ElectricityData): BigDecimal
 }
 
 data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
@@ -17,7 +17,7 @@ data class ChargeTime(val from: ZonedDateTime, val to: ZonedDateTime)
 val chargeTimeLens = Jackson.autoBody<ChargeTime>().toLens()
 
 fun calculateChargeTime(
-    data: List<HalfHourElectricity>,
+    data: List<ElectricityData>,
     time: Long,
     slotScore: SlotScore
 ): Result<ChargeTime, Failed> {
@@ -67,9 +67,9 @@ fun calculateChargeTime(
     return Success(ChargeTime(bestStartTime, bestStartTime.plusMinutes(time)))
 }
 
-private fun getTimeChunks(data: List<HalfHourElectricity>) =
+private fun getTimeChunks(data: List<ElectricityData>) =
     data.sortedBy { it.from }
-        .fold<HalfHourElectricity, MutableList<MutableList<HalfHourElectricity>>>(mutableListOf()) { acc, slot ->
+        .fold<ElectricityData, MutableList<MutableList<ElectricityData>>>(mutableListOf()) { acc, slot ->
             if (acc.isEmpty() || acc.last().last().to != slot.from) {
                 acc.add(mutableListOf(slot))
             } else {

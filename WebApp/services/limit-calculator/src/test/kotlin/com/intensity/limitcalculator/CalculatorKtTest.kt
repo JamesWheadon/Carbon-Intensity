@@ -2,7 +2,7 @@ package com.intensity.limitcalculator
 
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
-import com.intensity.core.HalfHourElectricity
+import com.intensity.core.ElectricityData
 import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.OverlappingData
 import com.intensity.coretest.isFailure
@@ -91,5 +91,5 @@ class CalculatorKtTest {
     }
 
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =
-        HalfHourElectricity(from, from.plusMinutes(30), price, intensity)
+        ElectricityData(from, from.plusMinutes(30), price, intensity)
 }

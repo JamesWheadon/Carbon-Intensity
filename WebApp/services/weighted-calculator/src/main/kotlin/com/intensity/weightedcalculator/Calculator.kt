@@ -20,9 +20,9 @@ fun Result<Electricity, Failed>.normalize() =
     this.map { it.normalize() }
 
 fun Electricity.normalize(): Electricity {
-    val normalizedPrices = normalize(slots.map { it.price })
-    val normalizedIntensities = normalize(slots.map { it.intensity })
-    return Electricity(slots.mapIndexed { index, slot ->
+    val normalizedPrices = normalize(data.map { it.price })
+    val normalizedIntensities = normalize(data.map { it.intensity })
+    return Electricity(data.mapIndexed { index, slot ->
         slot.copy(
             price = normalizedPrices[index],
             intensity = normalizedIntensities[index]
@@ -38,7 +38,7 @@ fun normalize(values: List<BigDecimal>): List<BigDecimal> {
 private fun Result<Electricity, Failed>.bestChargeTime(weights: Weights, time: Long) =
     this.flatMap { electricity ->
         val weightedCalculation = SlotScore { it.price * weights.price + it.intensity * weights.intensity }
-        calculateChargeTime(electricity.slots, time, weightedCalculation)
+        calculateChargeTime(electricity.data, time, weightedCalculation)
     }
 
 data class Weights(val price: BigDecimal, val intensity: BigDecimal)

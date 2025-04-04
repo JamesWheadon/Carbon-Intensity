@@ -2,9 +2,9 @@ package com.intensity.central
 
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
+import com.intensity.core.ElectricityData
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
-import com.intensity.core.HalfHourElectricity
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.HalfHourData
@@ -186,8 +186,8 @@ class Calculator(
         return Electricity(slots)
     }
 
-    private fun createElectricityData(price: HalfHourPrices, intensity: HalfHourData): HalfHourElectricity {
-        return HalfHourElectricity(
+    private fun createElectricityData(price: HalfHourPrices, intensity: HalfHourData): ElectricityData {
+        return ElectricityData(
             latest(price.from, intensity.from.atZone(ZoneId.of("UTC"))),
             earliest(price.to, intensity.to.atZone(ZoneId.of("UTC"))),
             price.retailPrice.toBigDecimal(),
@@ -232,8 +232,8 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
                     electricity,
-                    electricity.slots.first().from,
-                    electricity.slots.last().to
+                    electricity.data.first().from,
+                    electricity.data.last().to
                 )
             )
         )
@@ -253,8 +253,8 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
                     electricity,
-                    electricity.slots.first().from,
-                    electricity.slots.last().to
+                    electricity.data.first().from,
+                    electricity.data.last().to
                 )
             )
         )

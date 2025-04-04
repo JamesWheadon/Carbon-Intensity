@@ -21,7 +21,7 @@ class LimitCalculatorAppKtTest {
                     "start":"2025-03-02T12:00:00Z",
                     "end":"2025-03-02T13:00:00Z",
                     "electricity": {
-                        "slots":[
+                        "data":[
                             ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 145.0)},
                             ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
                         ]
@@ -47,7 +47,7 @@ class LimitCalculatorAppKtTest {
                     "start":"2025-03-02T12:00:00Z",
                     "end":"2025-03-02T13:00:00Z",
                     "electricity": {
-                        "slots": [
+                        "data": [
                             ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
                             ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
                         ]
@@ -116,7 +116,7 @@ class LimitCalculatorAppKtTest {
                     "start":"2025-03-02T12:00:00Z",
                     "end":"2025-03-02T13:00:00Z",
                     "electricity": {
-                        "slots": [
+                        "data": [
                             ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
                             ${halfHourJSON("2025-03-02T12:15:00Z", 23.55, 145.0)}
                         ]
@@ -141,7 +141,7 @@ class LimitCalculatorAppKtTest {
                     "start":"2025-03-02T12:00:00Z",
                     "end":"2025-03-02T13:00:00Z",
                     "electricity": {
-                        "slots": [
+                        "data": [
                             ${halfHourJSON("2025-03-02T12:00:00Z", 23.56, 144.0)},
                             ${halfHourJSON("2025-03-02T12:30:00Z", 23.55, 145.0)}
                         ]

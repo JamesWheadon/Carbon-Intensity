@@ -1,7 +1,7 @@
 package com.intensity.weightedcalculator
 
 import com.intensity.core.Electricity
-import com.intensity.core.HalfHourElectricity
+import com.intensity.core.ElectricityData
 import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
@@ -57,9 +57,9 @@ data class HalfHourElectricityData(
     val price: Double,
     val intensity: Double
 ) {
-    fun toHalfHourElectricity(): HalfHourElectricity {
+    fun toHalfHourElectricity(): ElectricityData {
         val start = ZonedDateTime.parse(startTime)
-        return HalfHourElectricity(
+        return ElectricityData(
             start,
             start.plusMinutes(30),
             price.toBigDecimal(),

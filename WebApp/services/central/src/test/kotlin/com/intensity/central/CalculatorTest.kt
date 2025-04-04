@@ -2,8 +2,8 @@ package com.intensity.central
 
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
+import com.intensity.core.ElectricityData
 import com.intensity.core.Failed
-import com.intensity.core.HalfHourElectricity
 import com.intensity.nationalgrid.HalfHourData
 import com.intensity.nationalgrid.Intensity
 import com.intensity.nationalgrid.NationalGrid
@@ -61,20 +61,20 @@ class CalculatorTest {
         )
         val expectedElectricity = Electricity(
             listOf(
-                HalfHourElectricity(startTime, startTime.plusMinutes(30), BigDecimal("13.0"), BigDecimal("100")),
-                HalfHourElectricity(
+                ElectricityData(startTime, startTime.plusMinutes(30), BigDecimal("13.0"), BigDecimal("100")),
+                ElectricityData(
                     startTime.plusMinutes(30),
                     startTime.plusMinutes(60),
                     BigDecimal("13.1"),
                     BigDecimal("99")
                 ),
-                HalfHourElectricity(
+                ElectricityData(
                     startTime.plusMinutes(60),
                     startTime.plusMinutes(90),
                     BigDecimal("13.2"),
                     BigDecimal("101")
                 ),
-                HalfHourElectricity(
+                ElectricityData(
                     startTime.plusMinutes(90),
                     startTime.plusMinutes(120),
                     BigDecimal("13.3"),
@@ -120,14 +120,14 @@ class CalculatorTest {
         )
         val expectedElectricity = Electricity(
             listOf(
-                HalfHourElectricity(startTime, startTime.plusMinutes(30), BigDecimal("13.0"), BigDecimal("100")),
-                HalfHourElectricity(
+                ElectricityData(startTime, startTime.plusMinutes(30), BigDecimal("13.0"), BigDecimal("100")),
+                ElectricityData(
                     startTime.plusMinutes(30),
                     startTime.plusMinutes(60),
                     BigDecimal("13.1"),
                     BigDecimal("99")
                 ),
-                HalfHourElectricity(
+                ElectricityData(
                     startTime.plusMinutes(60),
                     startTime.plusMinutes(90),
                     BigDecimal("13.2"),
@@ -173,26 +173,26 @@ class CalculatorTest {
         )
         val expectedElectricity = Electricity(
             listOf(
-                HalfHourElectricity(startTime, startTime.plusMinutes(15), BigDecimal("13.0"), BigDecimal("100")),
-                HalfHourElectricity(
+                ElectricityData(startTime, startTime.plusMinutes(15), BigDecimal("13.0"), BigDecimal("100")),
+                ElectricityData(
                     startTime.plusMinutes(15),
                     startTime.plusMinutes(30),
                     BigDecimal("13.0"),
                     BigDecimal("102")
                 ),
-                HalfHourElectricity(
+                ElectricityData(
                     startTime.plusMinutes(30),
                     startTime.plusMinutes(60),
                     BigDecimal("13.1"),
                     BigDecimal("99")
                 ),
-                HalfHourElectricity(
+                ElectricityData(
                     startTime.plusMinutes(60),
                     startTime.plusMinutes(75),
                     BigDecimal("13.2"),
                     BigDecimal("101")
                 ),
-                HalfHourElectricity(
+                ElectricityData(
                     startTime.plusMinutes(75),
                     startTime.plusMinutes(90),
                     BigDecimal("13.3"),

@@ -2,7 +2,7 @@ package com.intensity.weightedcalculator
 
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
-import com.intensity.core.HalfHourElectricity
+import com.intensity.core.ElectricityData
 import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.OverlappingData
 import com.intensity.coretest.isFailure
@@ -53,11 +53,11 @@ class CalculatorKtTest {
         val normalizedElectricity = electricity.normalize()
 
         assertThat(
-            normalizedElectricity.slots.map { it.price },
+            normalizedElectricity.data.map { it.price },
             equalTo(listOf(BD("0.81774"), BD("1.00000"), BD("0.94113")))
         )
         assertThat(
-            normalizedElectricity.slots.map { it.intensity },
+            normalizedElectricity.data.map { it.intensity },
             equalTo(listOf(BD("0.84127"), BD("0.92063"), BD("1.00000")))
         )
     }
@@ -111,5 +111,5 @@ class CalculatorKtTest {
     }
 
     private fun halfHourSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now()) =
-        HalfHourElectricity(from, from.plusMinutes(30), price, intensity)
+        ElectricityData(from, from.plusMinutes(30), price, intensity)
 }

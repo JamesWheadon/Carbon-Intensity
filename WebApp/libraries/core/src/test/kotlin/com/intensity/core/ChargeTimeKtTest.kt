@@ -124,5 +124,5 @@ class ChargeTimeKtTest {
     }
 
     private fun timeSlot(price: BD, intensity: BD, from: ZonedDateTime = ZonedDateTime.now(), length: Long = 30) =
-        HalfHourElectricity(from, from.plusMinutes(length), price, intensity)
+        ElectricityData(from, from.plusMinutes(length), price, intensity)
 }

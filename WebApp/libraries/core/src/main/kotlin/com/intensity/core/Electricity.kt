@@ -6,8 +6,8 @@ import dev.forkhandles.result4k.Success
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
-data class Electricity(val slots: List<HalfHourElectricity>)
-data class HalfHourElectricity(
+data class Electricity(val data: List<ElectricityData>)
+data class ElectricityData(
     val from: ZonedDateTime,
     val to: ZonedDateTime,
     val price: BigDecimal,
@@ -15,7 +15,7 @@ data class HalfHourElectricity(
 )
 
 fun Electricity.validate(): Result<Electricity, Failed> =
-    if (this.slots.sortedBy { it.from }.windowed(2).any { it.last().from.isBefore(it.first().to) }) {
+    if (this.data.sortedBy { it.from }.windowed(2).any { it.last().from.isBefore(it.first().to) }) {
         Failure(OverlappingData)
     } else {
         Success(this)
