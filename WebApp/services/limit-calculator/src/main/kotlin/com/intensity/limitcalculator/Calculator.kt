@@ -10,7 +10,7 @@ fun underIntensityLimit(electricity: Electricity, intensityLimit: BigDecimal, ti
     electricity
         .validate()
         .flatMap {
-            val data = electricity.data.filter { halfHour -> halfHour.intensity <= intensityLimit }
+            val data = electricity.data.filter { dataPoint -> dataPoint.intensity <= intensityLimit }
             calculateChargeTime(data, time) { it.price }
         }
 
@@ -18,6 +18,6 @@ fun underPriceLimit(electricity: Electricity, priceLimit: BigDecimal, time: Long
     electricity
         .validate()
         .flatMap {
-            val data = electricity.data.filter { halfHour -> halfHour.price <= priceLimit }
+            val data = electricity.data.filter { dataPoint -> dataPoint.price <= priceLimit }
             calculateChargeTime(data, time) { it.intensity }
         }

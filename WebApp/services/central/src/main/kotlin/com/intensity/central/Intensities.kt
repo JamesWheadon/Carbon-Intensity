@@ -82,7 +82,7 @@ private fun updateSchedulerIntensities(
     startOfDay: Instant,
     scheduler: Scheduler
 ) = nationalGrid.fortyEightHourIntensity(startOfDay).flatMap { gridData ->
-    val intensitiesForecast = gridData.data.map { halfHourSlot -> halfHourSlot.intensity.forecast }
+    val intensitiesForecast = gridData.data.map { dataPoint -> dataPoint.intensity.forecast }
     scheduler.sendIntensities(Intensities(intensitiesForecast, startOfDay))
         .map { intensitiesForecast }
 }

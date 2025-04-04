@@ -19,18 +19,22 @@ class WeightedCalculatorAppKtTest {
                     "time":45,
                     "priceWeight":1.0,
                     "intensityWeight":1.0,
-                    "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":145.0
-                       },
-                       {
-                           "startTime":"2025-03-02T12:30:00Z",
-                           "price":23.57,
-                           "intensity":145.0
-                       }
-                    ]
+                    "electricity": {
+                        "data": [
+                           {
+                               "from":"2025-03-02T12:00:00Z",
+                               "to":"2025-03-02T12:30:00Z",
+                               "price":23.56,
+                               "intensity":145.0
+                           },
+                           {
+                               "from":"2025-03-02T12:30:00Z",
+                               "to":"2025-03-02T13:00:00Z",
+                               "price":23.57,
+                               "intensity":145.0
+                           }
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -51,18 +55,22 @@ class WeightedCalculatorAppKtTest {
                     "time":45,
                     "priceWeight":1.0,
                     "intensityWeight":1.0,
-                    "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":145.0
-                       },
-                       {
-                           "startTime":"2025-03-02T12:15:00Z",
-                           "price":23.57,
-                           "intensity":145.0
-                       }
-                    ]
+                    "electricity": {
+                        "data": [
+                           {
+                               "from":"2025-03-02T12:00:00Z",
+                               "to":"2025-03-02T12:30:00Z",
+                               "price":23.56,
+                               "intensity":145.0
+                           },
+                           {
+                               "from":"2025-03-02T12:15:00Z",
+                               "to":"2025-03-02T12:45:00Z",
+                               "price":23.57,
+                               "intensity":145.0
+                           }
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -83,13 +91,16 @@ class WeightedCalculatorAppKtTest {
                     "time":45,
                     "priceWeight":1.0,
                     "intensityWeight":1.0,
-                    "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":145.0
-                       }
-                    ]
+                    "electricity": {
+                        "data": [
+                           {
+                               "from":"2025-03-02T12:00:00Z",
+                               "to":"2025-03-02T12:30:00Z",
+                               "price":23.56,
+                               "intensity":145.0
+                           }
+                        ]
+                    }
                 }""".trimIndent()
         )
 
@@ -105,13 +116,16 @@ class WeightedCalculatorAppKtTest {
             """{
                     "time":45,
                     "intensityWeight":1.0,
-                    "electricityData": [
-                       {
-                           "startTime":"2025-03-02T12:00:00Z",
-                           "price":23.56,
-                           "intensity":145.0
-                       }
-                    ]
+                    "electricity": {
+                        "data": [
+                           {
+                               "from":"2025-03-02T12:00:00Z",
+                               "to":"2025-03-02T12:30:00Z",
+                               "price":23.56,
+                               "intensity":145.0
+                           }
+                        ]
+                    }
                 }""".trimIndent()
         )
 
