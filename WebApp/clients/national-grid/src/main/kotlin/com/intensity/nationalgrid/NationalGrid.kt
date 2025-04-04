@@ -20,14 +20,14 @@ import org.http4k.format.ConfigurableJackson
 import org.http4k.format.asConfigurable
 import org.http4k.format.withStandardMappings
 import org.http4k.lens.BiDiMapping
-import java.time.Instant
+import java.time.ZonedDateTime
 
 interface NationalGrid {
-    fun fortyEightHourIntensity(time: Instant): Result<NationalGridData, Failed>
+    fun fortyEightHourIntensity(time: ZonedDateTime): Result<NationalGridData, Failed>
 }
 
 class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
-    override fun fortyEightHourIntensity(time: Instant): Result<NationalGridData, Failed> {
+    override fun fortyEightHourIntensity(time: ZonedDateTime): Result<NationalGridData, Failed> {
         val response = httpHandler(Request(Method.GET, "/intensity/$time/fw48h"))
         return when (response.status) {
             OK -> Success(NationalGridData(nationalGridDataLens(response).data.drop(1)))
@@ -40,7 +40,7 @@ fun nationalGridClient() = ClientFilters.SetHostFrom(Uri.of("https://api.carboni
     .then(JavaHttpClient())
 
 data class NationalGridData(val data: List<IntensityData>)
-data class IntensityData(val from: Instant, val to: Instant, val intensity: Intensity)
+data class IntensityData(val from: ZonedDateTime, val to: ZonedDateTime, val intensity: Intensity)
 data class Intensity(val forecast: Int, val actual: Int?, val index: String)
 
 val nationalGridDataLens = NationalGridJackson.autoBody<NationalGridData>().toLens()
@@ -57,7 +57,7 @@ object NationalGridJackson : ConfigurableJackson(
         .withStandardMappings()
         .text(
             BiDiMapping(
-                { timestamp -> Instant.from(formatWith(gridPattern).parse(timestamp)) },
+                { timestamp -> ZonedDateTime.from(formatWith(gridPattern).parse(timestamp)) },
                 { instant -> formatWith(gridPattern).format(instant) }
             )
         )

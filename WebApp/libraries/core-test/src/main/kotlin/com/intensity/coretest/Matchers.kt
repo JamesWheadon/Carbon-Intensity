@@ -12,24 +12,16 @@ import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.get
 import org.http4k.core.Response
-import java.time.Instant
+import java.time.ZonedDateTime
 
 const val TIME_DIFFERENCE_TOLERANCE = 5L
 
-fun inTimeRange(expectedStart: Instant, expectedEnd: Instant): Matcher<Instant> {
+fun inTimeRange(expectedStart: ZonedDateTime, expectedEnd: ZonedDateTime): Matcher<ZonedDateTime> {
     return Matcher(
-        Instant::isAfter, expectedStart.minusSeconds(TIME_DIFFERENCE_TOLERANCE)
+        ZonedDateTime::isAfter, expectedStart.minusSeconds(TIME_DIFFERENCE_TOLERANCE)
     ) and Matcher(
-        Instant::isBefore, expectedEnd.plusSeconds(TIME_DIFFERENCE_TOLERANCE)
+        ZonedDateTime::isBefore, expectedEnd.plusSeconds(TIME_DIFFERENCE_TOLERANCE)
     )
-}
-
-fun <T> isNotNull() = object : Matcher<T?> {
-    override fun invoke(actual: T?): MatchResult =
-        if (actual != null) Match else Mismatch("value is null")
-
-    override val description: String get() = "is not null"
-    override val negatedDescription: String get() = "is null"
 }
 
 fun <T, E> isSuccess() = object : Matcher<Result<T, E>> {

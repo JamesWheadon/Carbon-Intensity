@@ -41,7 +41,6 @@ import org.http4k.lens.Query
 import org.http4k.lens.zonedDateTime
 import org.http4k.routing.bind
 import java.math.BigDecimal
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 fun octopusProducts(
@@ -120,7 +119,7 @@ class Calculator(
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
-        val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start.toInstant())
+        val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start)
         return flatZip(prices, intensity) { priceData, intensityData ->
             Success(createElectricityFrom(priceData, intensityData))
         }.flatMap { electricity ->
@@ -188,8 +187,8 @@ class Calculator(
 
     private fun createElectricityData(price: PriceData, intensity: IntensityData): ElectricityData {
         return ElectricityData(
-            latest(price.from, intensity.from.atZone(ZoneId.of("UTC"))),
-            earliest(price.to, intensity.to.atZone(ZoneId.of("UTC"))),
+            latest(price.from, intensity.from),
+            earliest(price.to, intensity.to),
             price.retailPrice.toBigDecimal(),
             intensity.intensity.forecast.toBigDecimal()
         )
@@ -211,7 +210,7 @@ class Calculator(
 }
 
 private fun IntensityData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =
-    this.from >= from.toInstant() && this.from < to.toInstant() || this.to > from.toInstant() && this.to <= to.toInstant()
+    this.from >= from && this.from < to || this.to > from && this.to <= to
 
 interface LimitCalculator {
     fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime?

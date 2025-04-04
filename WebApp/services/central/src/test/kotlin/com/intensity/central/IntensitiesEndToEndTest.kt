@@ -17,7 +17,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
 
     @Test
     fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
-        nationalGrid.setDateData(date.toInstant(), List(97) { 212 }, List(97) { null })
+        nationalGrid.setDateData(date, List(97) { 212 }, List(97) { null })
 
         val response = User(events, server).call(
             Request(POST, "/intensities")
@@ -28,9 +28,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
             response.body.toString(),
             equalTo(
                 """{"intensities":${intensityList(212)},"date":"${
-                    date.format(
-                        DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
-                    )
+                    date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC))
                 }"}"""
             )
         )
@@ -38,7 +36,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
 
     @Test
     fun `calls national grid and updates scheduler if scheduler is out of date`() {
-        nationalGrid.setDateData(date.toInstant(), List(97) { 210 }, List(97) { null })
+        nationalGrid.setDateData(date, List(97) { 210 }, List(97) { null })
 
         val response = User(events, server).call(
             Request(POST, "/intensities")
@@ -49,9 +47,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
             response.body.toString(),
             equalTo(
                 """{"intensities":${intensityList(210)},"date":"${
-                    date.format(
-                        DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss").withZone(ZoneOffset.UTC)
-                    )
+                    date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC))
                 }"}"""
             )
         )

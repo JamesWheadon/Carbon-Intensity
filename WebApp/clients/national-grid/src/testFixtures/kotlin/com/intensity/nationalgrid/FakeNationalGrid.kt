@@ -10,11 +10,9 @@ import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
-import java.time.Instant
-import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
-private const val TIMEZONE = "Europe/London"
 private const val SECONDS_IN_HALF_HOUR = 1800L
 
 class FakeNationalGrid : HttpHandler {
@@ -29,15 +27,15 @@ class FakeNationalGrid : HttpHandler {
             if (dayData != null) {
                 Response(Status.OK).with(nationalGridDataLens of dayData!!)
             } else {
-                val startTime = Instant.parse(request.path("time")!!)
+                val startTime = ZonedDateTime.parse(request.path("time")!!)
                 val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60))
                 Response(Status.OK).with(nationalGridDataLens of NationalGridData(dataWindows))
             }
         }
     )
 
-    private fun createHalfHourWindows(startTime: Instant): MutableList<IntensityData> {
-        val currentTime = Instant.now()
+    private fun createHalfHourWindows(startTime: ZonedDateTime): MutableList<IntensityData> {
+        val currentTime = ZonedDateTime.now()
         val dataWindows = mutableListOf<IntensityData>()
         for (window in 0 until 97) {
             val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
@@ -51,16 +49,16 @@ class FakeNationalGrid : HttpHandler {
         return dataWindows
     }
 
-    private fun halfHourWindow(windowTime: Instant): Pair<Instant, Instant> {
+    private fun halfHourWindow(windowTime: ZonedDateTime): Pair<ZonedDateTime, ZonedDateTime> {
         val truncatedToMinutes = windowTime.truncatedTo(ChronoUnit.MINUTES)
-        val minutesPastNearestHalHour = truncatedToMinutes.atZone(ZoneId.of(TIMEZONE)).minute % 30
+        val minutesPastNearestHalHour = truncatedToMinutes.minute % 30
         return Pair(
             truncatedToMinutes.minusSeconds(minutesPastNearestHalHour * 60L),
             truncatedToMinutes.plusSeconds((30 - minutesPastNearestHalHour) * 60L)
         )
     }
 
-    fun setDateData(startOfDay: Instant, forecasts: List<Int>, actual: List<Int?>) {
+    fun setDateData(startOfDay: ZonedDateTime, forecasts: List<Int>, actual: List<Int?>) {
         dayData = NationalGridData(
             forecasts.zip(actual).mapIndexed { i, data ->
                 val (start, end) = halfHourWindow(startOfDay.plusSeconds(i * SECONDS_IN_HALF_HOUR))

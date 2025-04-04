@@ -16,9 +16,9 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 fun intensities(
     nationalGrid: NationalGrid
@@ -33,11 +33,11 @@ fun intensities(
         OK,
         intensitiesResponseLens to IntensitiesResponse(
             List(48) { 100 },
-            Instant.parse("2024-09-30T00:00:00Z")
+            ZonedDateTime.parse("2024-09-30T00:00:00Z")
         )
     )
 } bindContract POST to { _: Request ->
-    val startOfDay = LocalDate.now().atStartOfDay().atOffset(ZoneOffset.UTC).toInstant()
+    val startOfDay = LocalDate.now().atStartOfDay().atZone(ZoneId.of("UTC").normalized())
     nationalGrid.fortyEightHourIntensity(startOfDay)
         .fold(
             { intensitiesForecast ->
@@ -54,7 +54,7 @@ fun intensities(
         )
 }
 
-data class IntensitiesResponse(val intensities: List<Int>, val date: Instant) : ContractSchema {
+data class IntensitiesResponse(val intensities: List<Int>, val date: ZonedDateTime) : ContractSchema {
     override fun schemas(): Map<String, FieldMetadata> =
         mapOf(
             "intensities" to FieldMetadata("minItems" to 48, "maxItems" to 48),

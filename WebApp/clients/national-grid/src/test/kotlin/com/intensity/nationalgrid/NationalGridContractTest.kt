@@ -9,13 +9,14 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.ZoneOffset.UTC
+import java.time.ZonedDateTime
 
 abstract class NationalGridContractTest {
+    val time: ZonedDateTime = LocalDate.now().atStartOfDay(UTC.normalized())
     abstract val nationalGrid: NationalGrid
 
     @Test
     fun `responds with forecast for the requested 48 hour period`() {
-        val time = LocalDate.now().atStartOfDay(UTC.normalized()).toInstant()
         val intensities = nationalGrid.fortyEightHourIntensity(time).valueOrNull()!!
 
         assertThat(intensities.data.size, equalTo(96))
@@ -33,7 +34,6 @@ class FakeNationalGridTest : NationalGridContractTest() {
     @Test
     fun `responds with correct failure if error getting data`() {
         fakeNationalGrid.shouldFail()
-        val time = LocalDate.now().atStartOfDay(UTC.normalized()).toInstant()
         val response = nationalGrid.fortyEightHourIntensity(time)
 
         assertThat(response, isFailure(NationalGridFailed))

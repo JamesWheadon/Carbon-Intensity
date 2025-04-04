@@ -20,7 +20,6 @@ import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Result
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -41,22 +40,10 @@ class CalculatorTest {
         )
         val intensity = NationalGridData(
             listOf(
-                IntensityData(startTime.toInstant(), startTime.plusMinutes(30).toInstant(), Intensity(100, null, "")),
-                IntensityData(
-                    startTime.plusMinutes(30).toInstant(),
-                    startTime.plusMinutes(60).toInstant(),
-                    Intensity(99, null, "")
-                ),
-                IntensityData(
-                    startTime.plusMinutes(60).toInstant(),
-                    startTime.plusMinutes(90).toInstant(),
-                    Intensity(101, null, "")
-                ),
-                IntensityData(
-                    startTime.plusMinutes(90).toInstant(),
-                    startTime.plusMinutes(120).toInstant(),
-                    Intensity(102, null, "")
-                )
+                IntensityData(startTime, startTime.plusMinutes(30), Intensity(100, null, "")),
+                IntensityData(startTime.plusMinutes(30), startTime.plusMinutes(60), Intensity(99, null, "")),
+                IntensityData(startTime.plusMinutes(60), startTime.plusMinutes(90), Intensity(101, null, "")),
+                IntensityData(startTime.plusMinutes(90), startTime.plusMinutes(120), Intensity(102, null, ""))
             )
         )
         val expectedElectricity = Electricity(
@@ -100,22 +87,10 @@ class CalculatorTest {
         )
         val intensity = NationalGridData(
             listOf(
-                IntensityData(startTime.toInstant(), startTime.plusMinutes(30).toInstant(), Intensity(100, null, "")),
-                IntensityData(
-                    startTime.plusMinutes(30).toInstant(),
-                    startTime.plusMinutes(60).toInstant(),
-                    Intensity(99, null, "")
-                ),
-                IntensityData(
-                    startTime.plusMinutes(60).toInstant(),
-                    startTime.plusMinutes(90).toInstant(),
-                    Intensity(101, null, "")
-                ),
-                IntensityData(
-                    startTime.plusMinutes(90).toInstant(),
-                    startTime.plusMinutes(120).toInstant(),
-                    Intensity(102, null, "")
-                )
+                IntensityData(startTime, startTime.plusMinutes(30), Intensity(100, null, "")),
+                IntensityData(startTime.plusMinutes(30), startTime.plusMinutes(60), Intensity(99, null, "")),
+                IntensityData(startTime.plusMinutes(60), startTime.plusMinutes(90), Intensity(101, null, "")),
+                IntensityData(startTime.plusMinutes(90), startTime.plusMinutes(120), Intensity(102, null, ""))
             )
         )
         val expectedElectricity = Electricity(
@@ -153,22 +128,10 @@ class CalculatorTest {
         )
         val intensity = NationalGridData(
             listOf(
-                IntensityData(startTime.toInstant(), startTime.plusMinutes(15).toInstant(), Intensity(100, null, "")),
-                IntensityData(
-                    startTime.plusMinutes(15).toInstant(),
-                    startTime.plusMinutes(30).toInstant(),
-                    Intensity(102, null, "")
-                ),
-                IntensityData(
-                    startTime.plusMinutes(30).toInstant(),
-                    startTime.plusMinutes(60).toInstant(),
-                    Intensity(99, null, "")
-                ),
-                IntensityData(
-                    startTime.plusMinutes(60).toInstant(),
-                    startTime.plusMinutes(90).toInstant(),
-                    Intensity(101, null, "")
-                )
+                IntensityData(startTime, startTime.plusMinutes(15), Intensity(100, null, "")),
+                IntensityData(startTime.plusMinutes(15), startTime.plusMinutes(30), Intensity(102, null, "")),
+                IntensityData(startTime.plusMinutes(30), startTime.plusMinutes(60), Intensity(99, null, "")),
+                IntensityData(startTime.plusMinutes(60), startTime.plusMinutes(90), Intensity(101, null, ""))
             )
         )
         val expectedElectricity = Electricity(
@@ -227,7 +190,7 @@ class OctopusFake : Octopus {
 }
 
 class NationalGridFake : NationalGrid {
-    override fun fortyEightHourIntensity(time: Instant): Result<NationalGridData, Failed> {
+    override fun fortyEightHourIntensity(time: ZonedDateTime): Result<NationalGridData, Failed> {
         TODO("Not yet implemented")
     }
 }
