@@ -9,7 +9,6 @@ import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class IntensitiesEndToEndTest : EndToEndTest() {
@@ -18,6 +17,8 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     @Test
     fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
         nationalGrid.setDateData(date, List(97) { 212 }, List(97) { null })
+        println(date)
+        println(date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")))
 
         val response = User(events, server).call(
             Request(POST, "/intensities")
@@ -28,7 +29,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
             response.body.toString(),
             equalTo(
                 """{"intensities":${intensityList(212)},"date":"${
-                    date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC))
+                    date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'"))
                 }"}"""
             )
         )
@@ -47,7 +48,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
             response.body.toString(),
             equalTo(
                 """{"intensities":${intensityList(210)},"date":"${
-                    date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC))
+                    date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'"))
                 }"}"""
             )
         )

@@ -1,6 +1,5 @@
 package com.intensity.central
 
-import com.intensity.core.SchedulerJackson
 import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.openapi.ContractSchema
@@ -16,6 +15,7 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
+import org.http4k.format.Jackson
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -37,7 +37,7 @@ fun intensities(
         )
     )
 } bindContract POST to { _: Request ->
-    val startOfDay = LocalDate.now().atStartOfDay().atZone(ZoneId.of("UTC").normalized())
+    val startOfDay = LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC").normalized())
     nationalGrid.fortyEightHourIntensity(startOfDay)
         .fold(
             { intensitiesForecast ->
@@ -62,4 +62,4 @@ data class IntensitiesResponse(val intensities: List<Int>, val date: ZonedDateTi
         )
 }
 
-val intensitiesResponseLens = SchedulerJackson.autoBody<IntensitiesResponse>().toLens()
+val intensitiesResponseLens = Jackson.autoBody<IntensitiesResponse>().toLens()

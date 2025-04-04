@@ -20,13 +20,14 @@ import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Result
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 class CalculatorTest {
     private val calculator = Calculator(OctopusFake(), NationalGridFake(), LimitFake(), WeightsFake())
-    private val startTime = ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC")).truncatedTo(ChronoUnit.MINUTES)
+    private val startTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized()).truncatedTo(ChronoUnit.MINUTES)
 
     @Test
     fun `creates electricity data from prices and intensity data`() {
