@@ -83,6 +83,5 @@ private fun contractRoutes(scheduler: Scheduler, nationalGrid: NationalGrid) = c
     renderer = openApi3()
     descriptionPath = "/openapi.json"
     preFlightExtraction = None
-    routes += chargeTimes(scheduler)
     routes += intensities(scheduler, nationalGrid)
 }
