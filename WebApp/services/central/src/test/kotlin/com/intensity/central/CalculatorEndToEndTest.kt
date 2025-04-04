@@ -1,5 +1,6 @@
 package com.intensity.central
 
+import com.intensity.coretest.formatted
 import com.intensity.coretest.hasBody
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -8,15 +9,11 @@ import org.http4k.core.Request
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 class CalculatorEndToEndTest : EndToEndTest() {
-    private val time = ZonedDateTime.parse("2025-03-25T12:00:00Z")
-
     @Test
     fun `responds with lowest price charge time using intensity limit`() {
-        octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(14.8, 13.7, 13.6))
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(14.8, 13.7, 13.6))
         nationalGrid.setDateData(time, listOf(100, 100, 101), listOf(null, null, null))
         limitCalculator.setIntensityChargeTime(100.0, "2025-03-25T12:30:00Z" to "2025-03-25T13:00:00Z")
 
@@ -41,7 +38,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
 
     @Test
     fun `responds with lowest intensity charge time when not possible under intensity limit`() {
-        octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(14.8, 13.7, 13.6))
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(14.8, 13.7, 13.6))
         nationalGrid.setDateData(time, listOf(100, 100, 101), listOf(null, null, null))
         weightsCalculator.setChargeTime(FakeWeights(0.0, 1.0), "2025-03-25T13:00:00Z" to "2025-03-25T13:30:00Z")
 
@@ -66,7 +63,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
 
     @Test
     fun `responds with lowest intensity charge time using price limit`() {
-        octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(13.8, 13.7, 13.6))
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(13.8, 13.7, 13.6))
         nationalGrid.setDateData(time, listOf(99, 100, 101), listOf(null, null, null))
         limitCalculator.setPriceChargeTime(14.0, "2025-03-25T12:00:00Z" to "2025-03-25T12:30:00Z")
 
@@ -91,7 +88,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
 
     @Test
     fun `responds with lowest price charge time when not possible under price limit`() {
-        octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(13.8, 13.7, 13.6))
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(13.8, 13.7, 13.6))
         nationalGrid.setDateData(time, listOf(99, 100, 101), listOf(null, null, null))
         weightsCalculator.setChargeTime(FakeWeights(1.0, 0.0), "2025-03-25T13:00:00Z" to "2025-03-25T13:30:00Z")
 
@@ -116,7 +113,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
 
     @Test
     fun `no intensity data exists for calculation`() {
-        octopus.setPricesFor("octopusProduct", "octopusTariff" to time.formatted(), listOf(13.8, 13.7, 13.6))
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(13.8, 13.7, 13.6))
         nationalGrid.shouldFail()
 
         val requestBody = """{
@@ -154,5 +151,3 @@ class CalculatorEndToEndTest : EndToEndTest() {
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
     }
 }
-
-private fun ZonedDateTime.formatted() = this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))

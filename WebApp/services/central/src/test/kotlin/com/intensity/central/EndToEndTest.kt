@@ -27,7 +27,7 @@ import org.http4k.tracing.renderer.PumlSequenceDiagram
 import org.http4k.tracing.tracer.HttpTracer
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
-import java.time.Instant
+import java.time.ZonedDateTime
 
 abstract class EndToEndTest {
     @RegisterExtension
@@ -40,6 +40,7 @@ abstract class EndToEndTest {
     )
 
     private val appClientStack = clientStack("App", events)
+    val time: ZonedDateTime = ZonedDateTime.parse("2025-03-25T12:00:00Z")
 
     val octopus = FakeOctopus()
     val nationalGrid = FakeNationalGrid()
@@ -82,5 +83,3 @@ private fun serverStack(actorName: String, events: Events) =
         .then(ReportHttpTransaction { traceEvents(actorName).then(events)(Incoming(it)) })
 
 private fun HttpHandler.traced(events: Filter) = events.then(this)
-
-fun getTestInstant(): Instant = Instant.ofEpochSecond(1727727696L)

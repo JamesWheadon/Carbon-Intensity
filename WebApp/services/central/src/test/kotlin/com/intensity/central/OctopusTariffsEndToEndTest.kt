@@ -1,5 +1,6 @@
 package com.intensity.central
 
+import com.intensity.coretest.formatted
 import com.intensity.coretest.hasBody
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -10,16 +11,19 @@ import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 class OctopusTariffsEndToEndTest : EndToEndTest() {
+    private val currentTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized())
+
     @Test
     fun `returns octopus products`() {
         octopus.setPricesFor(
             "AGILE-24-10-01",
-            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2023-03-26T00:00:00Z"),
             listOf(23.4, 26.0, 24.3)
         )
 
@@ -40,7 +44,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     fun `returns only the octopus products that have tariffs`() {
         octopus.setPricesFor(
             "AGILE-24-10-01",
-            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2023-03-26T00:00:00Z"),
             listOf(23.4, 26.0, 24.3)
         )
         octopus.incorrectOctopusProductCode("error-product")
@@ -94,7 +98,6 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
 
     @Test
     fun `returns price data for a tariff`() {
-        val currentTime = ZonedDateTime.now()
         val currentHalfHour = zonedDateTimeAtHalfHour(currentTime)
         octopus.setPricesFor(
             "AGILE-24-10-01",
@@ -115,20 +118,20 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
                             {
                                 "wholesalePrice":23.4,
                                 "retailPrice":24.57,
-                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}",
-                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(90))}"
+                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60)).formatted()}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(90)).formatted()}"
                             },
                             {
                                 "wholesalePrice":26.0,
                                 "retailPrice":27.3,
-                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}",
-                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}"
+                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30)).formatted()}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60)).formatted()}"
                             },
                             {
                                 "wholesalePrice":24.3,
                                 "retailPrice":25.515,
-                                "from":"${zonedDateTimeAtHalfHour(currentTime)}",
-                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}"
+                                "from":"${zonedDateTimeAtHalfHour(currentTime).formatted()}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30)).formatted()}"
                             }
                         ]
                     }"""
@@ -138,7 +141,6 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
 
     @Test
     fun `accepts an end time for pricing data`() {
-        val currentTime = ZonedDateTime.now()
         val currentHalfHour = zonedDateTimeAtHalfHour(currentTime)
         octopus.setPricesFor(
             "AGILE-24-10-01",
@@ -149,7 +151,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         val response = User(events, server).call(
             Request(
                 GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?end=${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}"
+                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?end=${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30)).formatted()}"
             )
         )
 
@@ -162,14 +164,14 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
                             {
                                 "wholesalePrice":23.4,
                                 "retailPrice":24.57,
-                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}",
-                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60))}"
+                                "from":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30)).formatted()}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(60)).formatted()}"
                             },
                             {
                                 "wholesalePrice":26.0,
                                 "retailPrice":27.3,
-                                "from":"${zonedDateTimeAtHalfHour(currentTime)}",
-                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30))}"
+                                "from":"${zonedDateTimeAtHalfHour(currentTime).formatted()}",
+                                "to":"${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30)).formatted()}"
                             }
                         ]
                     }"""
@@ -181,7 +183,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     fun `accepts a start time for pricing data`() {
         octopus.setPricesFor(
             "AGILE-24-10-01",
-            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2023-03-26T00:00:00Z"),
             mutableListOf(23.4, 26.0, 24.3)
         )
 
@@ -226,7 +228,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     fun `handles tariff not existing`() {
         octopus.setPricesFor(
             "AGILE-24-10-01",
-            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2023-03-26T00:00:00Z"),
             mutableListOf(23.4, 26.0, 24.3)
         )
 
@@ -260,7 +262,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     fun `handles error when end time before start time`() {
         octopus.setPricesFor(
             "AGILE-24-10-01",
-            "E-1R-AGILE-24-10-01-A" to "2023-03-26T00:00:00Z",
+            "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2023-03-26T00:00:00Z"),
             mutableListOf(23.4, 26.0, 24.3)
         )
 
@@ -300,5 +302,4 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
 
     private fun zonedDateTimeAtHalfHour(time: ZonedDateTime) =
         time.truncatedTo(ChronoUnit.HOURS).plusMinutes(time.minute / 30 * 30L)
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
 }

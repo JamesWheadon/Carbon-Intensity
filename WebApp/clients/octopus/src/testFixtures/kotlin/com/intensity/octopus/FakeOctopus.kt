@@ -11,14 +11,15 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
-import java.time.Instant
+import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 import kotlin.math.min
 
 class FakeOctopus : HttpHandler {
     private val products = mutableSetOf<String>()
     private val errorProducts = mutableSetOf<String>()
-    private val tariffCodePrices = mutableMapOf<Pair<String, String>, List<Double>>()
+    private val tariffCodePrices = mutableMapOf<Pair<String, ZonedDateTime>, List<Double>>()
     private var fail = false
 
     val routes = routes(
@@ -70,30 +71,30 @@ class FakeOctopus : HttpHandler {
                     parseTimestamp(request.query("period_from")!!)
                 } catch (e: DateTimeParseException) {
                     errors.add(""""period_from":["Enter a valid date/time."]""")
-                    Instant.now()
+                    ZonedDateTime.now()
                 }
                 var periodTo = try {
                     parseTimestamp(request.query("period_to")!!)
                 } catch (e: DateTimeParseException) {
                     errors.add(""""period_to":["Enter a valid date/time."]""")
-                    Instant.now()
+                    ZonedDateTime.now()
                 }
                 if (errors.isNotEmpty()) {
                     Response(BAD_REQUEST).body(errors.joinToString(",", "{", "}"))
                 } else if (periodTo.isBefore(periodFrom)) {
                     Response(BAD_REQUEST).body("""{"period_from":["Must not be greater than `period_to`."]}""")
                 } else {
-                    periodFrom = Instant.ofEpochSecond(periodFrom.epochSecond / 1800 * 1800)
-                    periodTo = Instant.ofEpochSecond(periodTo.epochSecond / 1800 * 1800 + 1800)
+                    periodFrom = periodFrom.truncatedTo(ChronoUnit.MINUTES).minusMinutes(periodFrom.minute % 30L)
+                    periodTo = periodTo.truncatedTo(ChronoUnit.MINUTES).plusMinutes(30 - periodTo.minute % 30L)
                     val halfHourPrices = mutableListOf<String>()
-                    val halfHourIntervals = ((periodTo.epochSecond - periodFrom.epochSecond) / 1800).toInt()
-                    val providedPriceData = tariffCodePrices[tariffCode to periodFrom.toString()]!!.size
-                    val count = min(halfHourIntervals, providedPriceData)
+                    val halfHourIntervals = ((periodTo.toEpochSecond() - periodFrom.toEpochSecond()) / 1800).toInt()
+                    val providedPriceData = tariffCodePrices[tariffCode to periodFrom]!!
+                    val count = min(halfHourIntervals, providedPriceData.size)
                     for (i in 0 until count) {
                         halfHourPrices.add(
                             """{
-                                "value_exc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i]},
-                                "value_inc_vat":${tariffCodePrices[tariffCode to periodFrom.toString()]!![count - 1 - i] * 1.05},
+                                "value_exc_vat":${providedPriceData[count - 1 - i]},
+                                "value_inc_vat":${providedPriceData[count - 1 - i] * 1.05},
                                 "valid_from":"${periodFrom.plusSeconds(i * 1800L)}",
                                 "valid_to":"${periodFrom.plusSeconds((i + 1) * 1800L)}",
                                 "payment_method":null
@@ -119,9 +120,9 @@ class FakeOctopus : HttpHandler {
         }
     )
 
-    private fun parseTimestamp(timestamp: String) = Instant.parse(timestamp)
+    private fun parseTimestamp(timestamp: String) = ZonedDateTime.parse(timestamp)
 
-    fun setPricesFor(productCode: String, tariffCodeAtTime: Pair<String, String>, prices: List<Double>) {
+    fun setPricesFor(productCode: String, tariffCodeAtTime: Pair<String, ZonedDateTime>, prices: List<Double>) {
         products.add(productCode)
         tariffCodePrices[tariffCodeAtTime] = prices
     }

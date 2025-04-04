@@ -137,16 +137,16 @@ class FakeOctopusTest : OctopusContractTest() {
     private val fakeOctopus = FakeOctopus().also { fake ->
         fake.setPricesFor(
             "AGILE-FLEX-22-11-25",
-            "E-1R-AGILE-FLEX-22-11-25-C" to "2023-03-26T00:00:00Z",
+            "E-1R-AGILE-FLEX-22-11-25-C" to ZonedDateTime.parse("2023-03-26T00:00:00Z"),
             listOf(23.4, 26.0, 24.3)
         )
         fake.setPricesFor(
             "AGILE-FLEX-22-11-25",
-            "E-1R-AGILE-FLEX-22-11-25-B" to "2023-03-26T00:00:00Z",
+            "E-1R-AGILE-FLEX-22-11-25-B" to ZonedDateTime.parse("2023-03-26T00:00:00Z"),
             listOf(23.4, 26.0, 24.3)
         )
         fake.setPricesFor(
-            "AGILE-FLEX-22-11-25", "E-1R-AGILE-FLEX-22-11-25-C" to "2023-03-28T01:00:00Z",
+            "AGILE-FLEX-22-11-25", "E-1R-AGILE-FLEX-22-11-25-C" to ZonedDateTime.parse("2023-03-28T01:00:00Z"),
             listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2)
         )
     }
