@@ -20,10 +20,10 @@ import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
+import dev.forkhandles.result4k.flatZip
 import dev.forkhandles.result4k.fold
 import dev.forkhandles.result4k.map
 import dev.forkhandles.result4k.partition
-import dev.forkhandles.result4k.valueOrNull
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
@@ -119,23 +119,20 @@ class Calculator(
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
         val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start.toInstant())
-        if (intensity is Failure) {
-            return intensity
-        }
-        if (prices is Failure) {
-            return prices
-        }
-        val electricity = Electricity(createSlots(prices.valueOrNull()!!, intensity.valueOrNull()!!))
-        return when {
-            calculationData.intensityLimit != null -> Success(
-                intensityLimitedChargeTime(
-                electricity,
-                calculationData.intensityLimit,
-                calculationData.time
+        return flatZip(prices, intensity) { priceData, intensityData ->
+            Success(Electricity(createSlots(priceData, intensityData)))
+        }.flatMap { electricity ->
+            when {
+                calculationData.intensityLimit != null -> Success(
+                    intensityLimitedChargeTime(
+                        electricity,
+                        calculationData.intensityLimit,
+                        calculationData.time
+                    )
                 )
-            )
 
-            else -> Success(priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time))
+                else -> Success(priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time))
+            }
         }
     }
 
@@ -220,6 +217,7 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler) : LimitCalculator {
             null
         }
     }
+
     override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime? {
         val response = httpHandler(
             Request(
