@@ -86,6 +86,61 @@ class CalculatorTest {
 
         assertThat(electricity, equalTo(expectedElectricity))
     }
+
+
+    @Test
+    fun `creates electricity data only with data at same time slots`() {
+        val startTime = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES)
+        val prices = Prices(
+            listOf(
+                HalfHourPrices(12.5, 13.0, startTime, startTime.plusMinutes(30)),
+                HalfHourPrices(12.6, 13.1, startTime.plusMinutes(30), startTime.plusMinutes(60)),
+                HalfHourPrices(12.7, 13.2, startTime.plusMinutes(60), startTime.plusMinutes(90)),
+                HalfHourPrices(12.8, 13.3, startTime.plusMinutes(120), startTime.plusMinutes(150))
+            )
+        )
+        val intensity = NationalGridData(
+            listOf(
+                HalfHourData(startTime.toInstant(), startTime.plusMinutes(30).toInstant(), Intensity(100, null, "")),
+                HalfHourData(
+                    startTime.plusMinutes(30).toInstant(),
+                    startTime.plusMinutes(60).toInstant(),
+                    Intensity(99, null, "")
+                ),
+                HalfHourData(
+                    startTime.plusMinutes(60).toInstant(),
+                    startTime.plusMinutes(90).toInstant(),
+                    Intensity(101, null, "")
+                ),
+                HalfHourData(
+                    startTime.plusMinutes(90).toInstant(),
+                    startTime.plusMinutes(120).toInstant(),
+                    Intensity(102, null, "")
+                )
+            )
+        )
+        val expectedElectricity = Electricity(
+            listOf(
+                HalfHourElectricity(startTime, startTime.plusMinutes(30), BigDecimal("13.0"), BigDecimal("100")),
+                HalfHourElectricity(
+                    startTime.plusMinutes(30),
+                    startTime.plusMinutes(60),
+                    BigDecimal("13.1"),
+                    BigDecimal("99")
+                ),
+                HalfHourElectricity(
+                    startTime.plusMinutes(60),
+                    startTime.plusMinutes(90),
+                    BigDecimal("13.2"),
+                    BigDecimal("101")
+                )
+            )
+        )
+
+        val electricity = calculator.createElectricityFrom(prices, intensity)
+
+        assertThat(electricity, equalTo(expectedElectricity))
+    }
 }
 
 class OctopusFake : Octopus {

@@ -176,14 +176,22 @@ class Calculator(
         prices: Prices,
         intensity: NationalGridData
     ): Electricity {
-        return Electricity(prices.results.zip(intensity.data).map {
-            HalfHourElectricity(
-                it.first.from,
-                it.first.to,
-                it.first.retailPrice.toBigDecimal(),
-                it.second.intensity.forecast.toBigDecimal()
-            )
-        })
+        val sortedPrice = prices.results.sortedBy { it.from }
+        val sortedIntensity = intensity.data.sortedBy { it.from }
+        val slots = mutableListOf<HalfHourElectricity>()
+        for (price in sortedPrice) {
+            sortedIntensity.firstOrNull { it.from == price.from.toInstant() && it.to == price.to.toInstant() }?.let {
+                slots.add(
+                    HalfHourElectricity(
+                        price.from,
+                        price.to,
+                        price.retailPrice.toBigDecimal(),
+                        it.intensity.forecast.toBigDecimal()
+                    )
+                )
+            }
+        }
+        return Electricity(slots)
     }
 }
 
