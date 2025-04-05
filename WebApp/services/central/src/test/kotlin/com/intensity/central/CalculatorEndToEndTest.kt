@@ -112,6 +112,34 @@ class CalculatorEndToEndTest : EndToEndTest() {
     }
 
     @Test
+    fun `responds with best charge time according to weights`() {
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(13.8, 13.7, 13.6))
+        nationalGrid.setDateData(time, listOf(99, 100, 101), listOf(null, null, null))
+        weightsCalculator.setChargeTime(FakeWeights(1.0, 0.7), "2025-03-25T13:00:00Z" to "2025-03-25T13:30:00Z")
+
+        val requestBody = """{
+                "product":"octopusProduct",
+                "tariff":"octopusTariff",
+                "start":"${time.formatted()}",
+                "end":"${time.plusMinutes(90).formatted()}",
+                "time":30,
+                "weights": {
+                    "priceWeight":1.0,
+                    "intensityWeight":0.7
+                }
+            }""".trimMargin()
+        val response = User(events, server).call(
+            Request(POST, "/octopus/charge-time").body(requestBody)
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response,
+            hasBody("""{"from":"2025-03-25T13:00:00Z","to":"2025-03-25T13:30:00Z"}""")
+        )
+    }
+
+    @Test
     fun `no intensity data exists for calculation`() {
         octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(13.8, 13.7, 13.6))
         nationalGrid.shouldFail()
