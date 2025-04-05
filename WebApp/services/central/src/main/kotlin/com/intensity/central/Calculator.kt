@@ -30,19 +30,59 @@ class Calculator(
         return flatZip(prices, intensity) { priceData, intensityData ->
             Success(createElectricityFrom(priceData, intensityData))
         }.flatMap { electricity ->
-            when {
-                calculationData.intensityLimit != null -> Success(
-                    intensityLimitedChargeTime(
-                        electricity,
-                        calculationData.intensityLimit,
-                        calculationData.time
-                    )
-                )
-
-                else -> Success(priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time))
-            }
+            getChargeTime(calculationData, electricity)
         }
     }
+
+    fun createElectricityFrom(
+        prices: Prices,
+        intensity: NationalGridData
+    ): Electricity {
+        val sortedPrice = prices.results.sortedBy { it.from }
+        val sortedIntensity = intensity.data.sortedBy { it.from }
+        val slots = sortedPrice.flatMap { price ->
+            sortedIntensity.filter { it.overlaps(price.from, price.to) }.map { createElectricityData(price, it) }
+        }
+        return Electricity(slots)
+    }
+
+    fun getChargeTime(
+        calculationData: CalculationData,
+        electricity: Electricity
+    ) = when {
+        calculationData.intensityLimit != null -> Success(
+            intensityLimitedChargeTime(
+                electricity,
+                calculationData.intensityLimit,
+                calculationData.time
+            )
+        )
+
+        else -> Success(priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time))
+    }
+
+    private fun createElectricityData(price: PriceData, intensity: IntensityData): ElectricityData {
+        return ElectricityData(
+            latest(price.from, intensity.from),
+            earliest(price.to, intensity.to),
+            price.retailPrice.toBigDecimal(),
+            intensity.intensity.forecast.toBigDecimal()
+        )
+    }
+
+    private fun latest(first: ZonedDateTime, second: ZonedDateTime) =
+        if (first.isBefore(second)) {
+            second
+        } else {
+            first
+        }
+
+    private fun earliest(first: ZonedDateTime, second: ZonedDateTime) =
+        if (first.isBefore(second)) {
+            first
+        } else {
+            second
+        }
 
     private fun intensityLimitedChargeTime(
         electricity: Electricity,
@@ -79,41 +119,6 @@ class Calculator(
         }
         return chargeTime
     }
-
-    fun createElectricityFrom(
-        prices: Prices,
-        intensity: NationalGridData
-    ): Electricity {
-        val sortedPrice = prices.results.sortedBy { it.from }
-        val sortedIntensity = intensity.data.sortedBy { it.from }
-        val slots = sortedPrice.flatMap { price ->
-            sortedIntensity.filter { it.overlaps(price.from, price.to) }.map { createElectricityData(price, it) }
-        }
-        return Electricity(slots)
-    }
-
-    private fun createElectricityData(price: PriceData, intensity: IntensityData): ElectricityData {
-        return ElectricityData(
-            latest(price.from, intensity.from),
-            earliest(price.to, intensity.to),
-            price.retailPrice.toBigDecimal(),
-            intensity.intensity.forecast.toBigDecimal()
-        )
-    }
-
-    private fun latest(first: ZonedDateTime, second: ZonedDateTime) =
-        if (first.isBefore(second)) {
-            second
-        } else {
-            first
-        }
-
-    private fun earliest(first: ZonedDateTime, second: ZonedDateTime) =
-        if (first.isBefore(second)) {
-            first
-        } else {
-            second
-        }
 }
 
 private fun IntensityData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =

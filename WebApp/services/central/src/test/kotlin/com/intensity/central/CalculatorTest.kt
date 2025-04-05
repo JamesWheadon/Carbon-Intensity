@@ -4,6 +4,7 @@ import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
 import com.intensity.core.Failed
+import com.intensity.coretest.isSuccess
 import com.intensity.nationalgrid.Intensity
 import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
@@ -26,8 +27,51 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 class CalculatorTest {
-    private val calculator = Calculator(OctopusFake(), NationalGridFake(), LimitFake(), WeightsFake())
+    private val fakeLimit = FakeLimitCalculator()
+    private val fakeWeights = FakeWeightsCalculator()
+    private val calculator = Calculator(
+        OctopusFake(),
+        NationalGridFake(),
+        LimitCalculatorCloud(fakeLimit),
+        WeightsCalculatorCloud(fakeWeights)
+    )
     private val startTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized()).truncatedTo(ChronoUnit.MINUTES)
+    private val calculatorData = CalculationData(
+        OctopusProduct("not needed"),
+        OctopusTariff("not needed"),
+        startTime,
+        startTime.plusMinutes(90),
+        45L
+    )
+    private val electricity = Electricity(
+        listOf(
+            ElectricityData(startTime, startTime.plusMinutes(15), BigDecimal("13.0"), BigDecimal("100")),
+            ElectricityData(
+                startTime.plusMinutes(15),
+                startTime.plusMinutes(30),
+                BigDecimal("13.0"),
+                BigDecimal("102")
+            ),
+            ElectricityData(
+                startTime.plusMinutes(30),
+                startTime.plusMinutes(60),
+                BigDecimal("13.1"),
+                BigDecimal("99")
+            ),
+            ElectricityData(
+                startTime.plusMinutes(60),
+                startTime.plusMinutes(75),
+                BigDecimal("13.2"),
+                BigDecimal("101")
+            ),
+            ElectricityData(
+                startTime.plusMinutes(75),
+                startTime.plusMinutes(90),
+                BigDecimal("13.3"),
+                BigDecimal("101")
+            )
+        )
+    )
 
     @Test
     fun `creates electricity data from prices and intensity data`() {
@@ -169,6 +213,42 @@ class CalculatorTest {
 
         assertThat(electricity, equalTo(expectedElectricity))
     }
+
+    @Test
+    fun `calculates charge time using intensity limit`() {
+        fakeLimit.setIntensityChargeTime(100.0, startTime.toString() to startTime.plusMinutes(45).toString())
+
+        val chargeTime = calculator.getChargeTime(calculatorData.copy(intensityLimit = BigDecimal(100)), electricity)
+
+        assertThat(chargeTime, isSuccess(ChargeTime(startTime, startTime.plusMinutes(45))))
+    }
+
+    @Test
+    fun `calculates charge time using full intensity weight if intensity limit not possible`() {
+        fakeWeights.setChargeTime(FakeWeights(0.0, 1.0), startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString())
+
+        val chargeTime = calculator.getChargeTime(calculatorData.copy(intensityLimit = BigDecimal(100)), electricity)
+
+        assertThat(chargeTime, isSuccess(ChargeTime(startTime.plusMinutes(15), startTime.plusMinutes(60))))
+    }
+
+    @Test
+    fun `calculates charge time using price limit`() {
+        fakeLimit.setPriceChargeTime(14.0, startTime.toString() to startTime.plusMinutes(45).toString())
+
+        val chargeTime = calculator.getChargeTime(calculatorData.copy(priceLimit = BigDecimal(14.0)), electricity)
+
+        assertThat(chargeTime, isSuccess(ChargeTime(startTime, startTime.plusMinutes(45))))
+    }
+
+    @Test
+    fun `calculates charge time using full price weight if intensity limit not possible`() {
+        fakeWeights.setChargeTime(FakeWeights(1.0, 0.0), startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString())
+
+        val chargeTime = calculator.getChargeTime(calculatorData.copy(priceLimit = BigDecimal(14.0)), electricity)
+
+        assertThat(chargeTime, isSuccess(ChargeTime(startTime.plusMinutes(15), startTime.plusMinutes(60))))
+    }
 }
 
 class OctopusFake : Octopus {
@@ -192,22 +272,6 @@ class OctopusFake : Octopus {
 
 class NationalGridFake : NationalGrid {
     override fun fortyEightHourIntensity(time: ZonedDateTime): Result<NationalGridData, Failed> {
-        TODO("Not yet implemented")
-    }
-}
-
-class LimitFake : LimitCalculator {
-    override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime? {
-        TODO("Not yet implemented")
-    }
-
-    override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): ChargeTime? {
-        TODO("Not yet implemented")
-    }
-}
-
-class WeightsFake : WeightsCalculator {
-    override fun chargeTime(electricity: Electricity, weights: Weights, time: Long): ChargeTime {
         TODO("Not yet implemented")
     }
 }
