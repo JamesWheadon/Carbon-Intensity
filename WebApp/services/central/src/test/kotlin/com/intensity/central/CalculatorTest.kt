@@ -249,6 +249,15 @@ class CalculatorTest {
 
         assertThat(chargeTime, isSuccess(ChargeTime(startTime.plusMinutes(15), startTime.plusMinutes(60))))
     }
+
+    @Test
+    fun `calculates charge time using weights if present in request`() {
+        fakeWeights.setChargeTime(FakeWeights(1.0, 0.5), startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString())
+
+        val chargeTime = calculator.getChargeTime(calculatorData.copy(weights = Weights(1.0, 0.5)), electricity)
+
+        assertThat(chargeTime, isSuccess(ChargeTime(startTime.plusMinutes(15), startTime.plusMinutes(60))))
+    }
 }
 
 class OctopusFake : Octopus {

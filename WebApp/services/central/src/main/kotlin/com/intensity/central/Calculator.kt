@@ -20,8 +20,8 @@ import java.time.ZonedDateTime
 class Calculator(
     private val octopus: Octopus,
     private val nationalGrid: NationalGrid,
-    private val limit: LimitCalculator,
-    private val weights: WeightsCalculator
+    private val limitCalc: LimitCalculator,
+    private val weightsCalc: WeightsCalculator
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
         val prices =
@@ -58,7 +58,10 @@ class Calculator(
             )
         )
 
-        else -> Success(priceLimitedChargeTime(electricity, calculationData.priceLimit!!, calculationData.time))
+        calculationData.priceLimit != null -> Success(priceLimitedChargeTime(electricity,
+            calculationData.priceLimit, calculationData.time))
+
+        else -> Success(weightLimitedChargeTime(electricity, calculationData.weights!!, calculationData.time))
     }
 
     private fun createElectricityData(price: PriceData, intensity: IntensityData): ElectricityData {
@@ -89,13 +92,13 @@ class Calculator(
         intensityLimit: BigDecimal,
         time: Long
     ): ChargeTime {
-        val chargeTime = limit.intensityLimit(
+        val chargeTime = limitCalc.intensityLimit(
             electricity,
             intensityLimit,
             time
         )
         if (chargeTime == null) {
-            return weights.chargeTime(
+            return weightsCalc.chargeTime(
                 electricity,
                 Weights(0.0, 1.0),
                 time
@@ -105,19 +108,23 @@ class Calculator(
     }
 
     private fun priceLimitedChargeTime(electricity: Electricity, priceLimit: BigDecimal, time: Long): ChargeTime {
-        val chargeTime = limit.priceLimit(
+        val chargeTime = limitCalc.priceLimit(
             electricity,
             priceLimit,
             time
         )
         if (chargeTime == null) {
-            return weights.chargeTime(
+            return weightsCalc.chargeTime(
                 electricity,
                 Weights(1.0, 0.0),
                 time
             )
         }
         return chargeTime
+    }
+
+    private fun weightLimitedChargeTime(electricity: Electricity, weights: Weights, time: Long): ChargeTime {
+        return weightsCalc.chargeTime(electricity, weights, time)
     }
 }
 

@@ -134,7 +134,8 @@ data class CalculationData(
     val end: ZonedDateTime,
     val time: Long,
     val intensityLimit: BigDecimal? = null,
-    val priceLimit: BigDecimal? = null
+    val priceLimit: BigDecimal? = null,
+    val weights: Weights? = null
 ) {
     companion object {
         val lens = Jackson.autoBody<CalculationData>().toLens()
