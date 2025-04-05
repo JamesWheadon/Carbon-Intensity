@@ -4,6 +4,7 @@ import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
 import com.intensity.core.Failed
+import com.intensity.coretest.isFailure
 import com.intensity.coretest.isSuccess
 import com.intensity.nationalgrid.Intensity
 import com.intensity.nationalgrid.IntensityData
@@ -225,7 +226,10 @@ class CalculatorTest {
 
     @Test
     fun `calculates charge time using full intensity weight if intensity limit not possible`() {
-        fakeWeights.setChargeTime(FakeWeights(0.0, 1.0), startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString())
+        fakeWeights.setChargeTime(
+            FakeWeights(0.0, 1.0),
+            startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString()
+        )
 
         val chargeTime = calculator.getChargeTime(calculatorData.copy(intensityLimit = BigDecimal(100)), electricity)
 
@@ -243,7 +247,10 @@ class CalculatorTest {
 
     @Test
     fun `calculates charge time using full price weight if intensity limit not possible`() {
-        fakeWeights.setChargeTime(FakeWeights(1.0, 0.0), startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString())
+        fakeWeights.setChargeTime(
+            FakeWeights(1.0, 0.0),
+            startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString()
+        )
 
         val chargeTime = calculator.getChargeTime(calculatorData.copy(priceLimit = BigDecimal(14.0)), electricity)
 
@@ -252,11 +259,30 @@ class CalculatorTest {
 
     @Test
     fun `calculates charge time using weights if present in request`() {
-        fakeWeights.setChargeTime(FakeWeights(1.0, 0.5), startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString())
+        fakeWeights.setChargeTime(
+            FakeWeights(1.0, 0.5),
+            startTime.plusMinutes(15).toString() to startTime.plusMinutes(60).toString()
+        )
 
         val chargeTime = calculator.getChargeTime(calculatorData.copy(weights = Weights(1.0, 0.5)), electricity)
 
         assertThat(chargeTime, isSuccess(ChargeTime(startTime.plusMinutes(15), startTime.plusMinutes(60))))
+    }
+
+    @Test
+    fun `returns failure if unable to calculate a charge time`() {
+        assertThat(
+            calculator.getChargeTime(calculatorData.copy(intensityLimit = BigDecimal(100)), electricity),
+            isFailure(UnableToCalculateChargeTime)
+        )
+        assertThat(
+            calculator.getChargeTime(calculatorData.copy(priceLimit = BigDecimal(14.0)), electricity),
+            isFailure(UnableToCalculateChargeTime)
+        )
+        assertThat(
+            calculator.getChargeTime(calculatorData.copy(weights = Weights(1.0, 0.5)), electricity),
+            isFailure(UnableToCalculateChargeTime)
+        )
     }
 }
 

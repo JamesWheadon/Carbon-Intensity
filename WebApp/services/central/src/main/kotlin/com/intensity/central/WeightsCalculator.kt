@@ -2,18 +2,23 @@ package com.intensity.central
 
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
+import com.intensity.core.Failed
 import com.intensity.core.chargeTimeLens
+import dev.forkhandles.result4k.Failure
+import dev.forkhandles.result4k.Result
+import dev.forkhandles.result4k.Success
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
+import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 
 interface WeightsCalculator {
-    fun chargeTime(electricity: Electricity, weights: Weights, time: Long): ChargeTime
+    fun chargeTime(electricity: Electricity, weights: Weights, time: Long): Result<ChargeTime, Failed>
 }
 
 class WeightsCalculatorCloud(val httpHandler: HttpHandler) : WeightsCalculator {
-    override fun chargeTime(electricity: Electricity, weights: Weights, time: Long): ChargeTime {
+    override fun chargeTime(electricity: Electricity, weights: Weights, time: Long): Result<ChargeTime, Failed> {
         val response = httpHandler(
             Request(
                 Method.POST,
@@ -27,6 +32,10 @@ class WeightsCalculatorCloud(val httpHandler: HttpHandler) : WeightsCalculator {
                 )
             )
         )
-        return chargeTimeLens(response)
+        return if (response.status == OK) {
+            Success(chargeTimeLens(response))
+        } else {
+            Failure(UnableToCalculateChargeTime)
+        }
     }
 }

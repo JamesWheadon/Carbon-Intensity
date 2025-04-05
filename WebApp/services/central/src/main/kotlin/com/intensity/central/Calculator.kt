@@ -3,6 +3,7 @@ package com.intensity.central
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
+import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
@@ -13,6 +14,7 @@ import com.intensity.octopus.Prices
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
+import dev.forkhandles.result4k.flatMapFailure
 import dev.forkhandles.result4k.flatZip
 import java.math.BigDecimal
 import java.time.ZonedDateTime
@@ -50,18 +52,17 @@ class Calculator(
         calculationData: CalculationData,
         electricity: Electricity
     ) = when {
-        calculationData.intensityLimit != null -> Success(
-            intensityLimitedChargeTime(
-                electricity,
-                calculationData.intensityLimit,
-                calculationData.time
-            )
-        )
+        calculationData.intensityLimit != null -> {
+            intensityLimitedChargeTime(electricity, calculationData.intensityLimit, calculationData.time)
+        }
 
-        calculationData.priceLimit != null -> Success(priceLimitedChargeTime(electricity,
-            calculationData.priceLimit, calculationData.time))
+        calculationData.priceLimit != null -> {
+            priceLimitedChargeTime(electricity, calculationData.priceLimit, calculationData.time)
+        }
 
-        else -> Success(weightLimitedChargeTime(electricity, calculationData.weights!!, calculationData.time))
+        else -> {
+            weightLimitedChargeTime(electricity, calculationData.weights!!, calculationData.time)
+        }
     }
 
     private fun createElectricityData(price: PriceData, intensity: IntensityData): ElectricityData {
@@ -91,42 +92,27 @@ class Calculator(
         electricity: Electricity,
         intensityLimit: BigDecimal,
         time: Long
-    ): ChargeTime {
-        val chargeTime = limitCalc.intensityLimit(
-            electricity,
-            intensityLimit,
-            time
-        )
-        if (chargeTime == null) {
-            return weightsCalc.chargeTime(
-                electricity,
-                Weights(0.0, 1.0),
-                time
-            )
-        }
-        return chargeTime
+    ) = limitCalc.intensityLimit(electricity, intensityLimit, time)
+        .flatMapFailure {
+            weightLimitedChargeTime(electricity, Weights(0.0, 1.0), time)
     }
 
-    private fun priceLimitedChargeTime(electricity: Electricity, priceLimit: BigDecimal, time: Long): ChargeTime {
-        val chargeTime = limitCalc.priceLimit(
-            electricity,
-            priceLimit,
-            time
-        )
-        if (chargeTime == null) {
-            return weightsCalc.chargeTime(
-                electricity,
-                Weights(1.0, 0.0),
-                time
-            )
-        }
-        return chargeTime
+    private fun priceLimitedChargeTime(
+        electricity: Electricity,
+        priceLimit: BigDecimal,
+        time: Long
+    ) = limitCalc.priceLimit(electricity, priceLimit, time)
+        .flatMapFailure {
+            weightLimitedChargeTime(electricity, Weights(1.0, 0.0), time)
     }
 
-    private fun weightLimitedChargeTime(electricity: Electricity, weights: Weights, time: Long): ChargeTime {
-        return weightsCalc.chargeTime(electricity, weights, time)
-    }
+    private fun weightLimitedChargeTime(electricity: Electricity, weights: Weights, time: Long) =
+        weightsCalc.chargeTime(electricity, weights, time)
 }
 
 private fun IntensityData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =
     this.from >= from && this.from < to || this.to > from && this.to <= to
+
+object UnableToCalculateChargeTime: Failed {
+    override fun toErrorResponse() = ErrorResponse("unable to calculate charge time")
+}
