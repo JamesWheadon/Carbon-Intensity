@@ -4,7 +4,6 @@ import com.intensity.core.Electricity
 import com.intensity.core.Failed
 import com.intensity.core.SlotScore
 import com.intensity.core.calculateChargeTime
-import com.intensity.core.validate
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.map

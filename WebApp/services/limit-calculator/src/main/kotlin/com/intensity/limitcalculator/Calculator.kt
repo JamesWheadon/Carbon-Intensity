@@ -2,15 +2,22 @@ package com.intensity.limitcalculator
 
 import com.intensity.core.Electricity
 import com.intensity.core.calculateChargeTime
-import com.intensity.core.validate
 import dev.forkhandles.result4k.flatMap
 import java.math.BigDecimal
+import java.time.ZonedDateTime
 
-fun underIntensityLimit(electricity: Electricity, intensityLimit: BigDecimal, time: Long) =
+fun underIntensityLimit(
+    electricity: Electricity,
+    intensityLimit: BigDecimal,
+    start: ZonedDateTime,
+    end: ZonedDateTime,
+    time: Long
+) =
     electricity
+        .windowed(start, end)
         .validate()
-        .flatMap {
-            val data = electricity.data.filter { dataPoint -> dataPoint.intensity <= intensityLimit }
+        .flatMap { windowedElectricity ->
+            val data = windowedElectricity.data.filter { dataPoint -> dataPoint.intensity <= intensityLimit }
             calculateChargeTime(data, time) { it.price }
         }
 

@@ -28,7 +28,7 @@ private fun limitRoutes() = routes(
     "/calculate/intensity/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val intensityLimit = limitLens(request)
-        underIntensityLimit(scheduleRequest.electricity, intensityLimit, scheduleRequest.time)
+        underIntensityLimit(scheduleRequest.electricity, intensityLimit, scheduleRequest.start, scheduleRequest.end, scheduleRequest.time)
             .fold(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> handleFailure(failed) }

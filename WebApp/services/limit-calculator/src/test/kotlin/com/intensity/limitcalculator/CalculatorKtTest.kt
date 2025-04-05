@@ -25,9 +25,15 @@ class CalculatorKtTest {
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underIntensityLimit(electricity, BD("65"), 45L)
+        val halfHoursInLimit = underIntensityLimit(
+            electricity,
+            BD("65"),
+            baseTime.plusMinutes(40),
+            baseTime.plusMinutes(90),
+            45L
+        )
 
-        assertThat(halfHoursInLimit, isSuccess(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(75))))
+        assertThat(halfHoursInLimit, isSuccess(ChargeTime(baseTime.plusMinutes(40), baseTime.plusMinutes(85))))
     }
 
     @Test
@@ -37,7 +43,7 @@ class CalculatorKtTest {
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underIntensityLimit(electricity, BD("65"), 30L)
+        val halfHoursInLimit = underIntensityLimit(electricity, BD("65"), baseTime, baseTime.plusMinutes(90), 30L)
 
         assertThat(halfHoursInLimit, isFailure(OverlappingData))
     }
@@ -49,7 +55,7 @@ class CalculatorKtTest {
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underIntensityLimit(electricity, BD("65"), 75L)
+        val halfHoursInLimit = underIntensityLimit(electricity, BD("65"), baseTime, baseTime.plusMinutes(90), 75L)
 
         assertThat(halfHoursInLimit, isFailure(NoChargeTimePossible))
     }
