@@ -7,6 +7,7 @@ import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
+import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
 
@@ -177,5 +178,30 @@ class CalculatorEndToEndTest : EndToEndTest() {
         )
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
+    }
+
+
+    @Test
+    fun `responds correctly when unable to calculate charge time`() {
+        octopus.setPricesFor("octopusProduct", "octopusTariff" to time, listOf(14.8, 13.7, 13.6))
+        nationalGrid.setDateData(time, listOf(100, 100, 101), listOf(null, null, null))
+
+        val requestBody = """{
+                "product":"octopusProduct",
+                "tariff":"octopusTariff",
+                "start":"${time.formatted()}",
+                "end":"${time.plusMinutes(90).formatted()}",
+                "time":30,
+                "intensityLimit":100
+            }""".trimMargin()
+        val response = User(events, server).call(
+            Request(POST, "/octopus/charge-time").body(requestBody)
+        )
+
+        assertThat(response.status, equalTo(NOT_FOUND))
+        assertThat(
+            response,
+            hasBody("""{"error":"unable to calculate charge time"}""")
+        )
     }
 }

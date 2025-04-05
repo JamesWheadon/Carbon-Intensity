@@ -96,7 +96,11 @@ fun octopusChargeTimes(
             Response(OK).with(chargeTimeLens of chargeTime)
         },
         { failed ->
-            Response(INTERNAL_SERVER_ERROR).with(errorResponseLens of failed.toErrorResponse())
+            val status = when (failed) {
+                UnableToCalculateChargeTime -> NOT_FOUND
+                else -> INTERNAL_SERVER_ERROR
+            }
+            Response(status).with(errorResponseLens of failed.toErrorResponse())
         }
     )
 }
