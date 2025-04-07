@@ -37,7 +37,7 @@ private fun limitRoutes() = routes(
     "/calculate/price/{limit}" bind POST to { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
-        underPriceLimit(scheduleRequest.electricity, priceLimit, scheduleRequest.time)
+        underPriceLimit(scheduleRequest.electricity, priceLimit, scheduleRequest.start, scheduleRequest.end, scheduleRequest.time)
             .fold(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> handleFailure(failed) }

@@ -64,12 +64,18 @@ class CalculatorKtTest {
     fun `finds the best time to charge by price when under the price limit`() {
         val firstHalfHour = halfHourSlot(BD("13.14"), BD("73"), baseTime)
         val secondHalfHour = halfHourSlot(BD("10.40"), BD("58"), baseTime.plusMinutes(30))
-        val thirdHalfHour = halfHourSlot(BD("11.67"), BD("57"), baseTime.plusMinutes(60))
+        val thirdHalfHour = halfHourSlot(BD("9.67"), BD("57"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underPriceLimit(electricity, BD("13.0"), 45L)
+        val halfHoursInLimit = underPriceLimit(
+            electricity,
+            BD("13.0"),
+            baseTime,
+            baseTime.plusMinutes(75),
+            45L
+        )
 
-        assertThat(halfHoursInLimit, isSuccess(ChargeTime(baseTime.plusMinutes(45), baseTime.plusMinutes(90))))
+        assertThat(halfHoursInLimit, isSuccess(ChargeTime(baseTime.plusMinutes(30), baseTime.plusMinutes(75))))
     }
 
     @Test
@@ -79,7 +85,7 @@ class CalculatorKtTest {
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underPriceLimit(electricity, BD("13.0"), 30L)
+        val halfHoursInLimit = underPriceLimit(electricity, BD("13.0"), baseTime, baseTime.plusMinutes(90), 30L)
 
         assertThat(halfHoursInLimit, isFailure(OverlappingData))
     }
@@ -91,7 +97,7 @@ class CalculatorKtTest {
         val thirdHalfHour = halfHourSlot(BD("11.67"), BD("63"), baseTime.plusMinutes(60))
         val electricity = Electricity(listOf(firstHalfHour, secondHalfHour, thirdHalfHour))
 
-        val halfHoursInLimit = underPriceLimit(electricity, BD("13.0"), 75L)
+        val halfHoursInLimit = underPriceLimit(electricity, BD("13.0"), baseTime, baseTime.plusMinutes(90), 75L)
 
         assertThat(halfHoursInLimit, isFailure(NoChargeTimePossible))
     }

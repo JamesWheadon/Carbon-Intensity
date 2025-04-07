@@ -21,10 +21,17 @@ fun underIntensityLimit(
             calculateChargeTime(data, time) { it.price }
         }
 
-fun underPriceLimit(electricity: Electricity, priceLimit: BigDecimal, time: Long) =
+fun underPriceLimit(
+    electricity: Electricity,
+    priceLimit: BigDecimal,
+    start: ZonedDateTime,
+    end: ZonedDateTime,
+    time: Long
+) =
     electricity
+        .windowed(start, end)
         .validate()
-        .flatMap {
-            val data = electricity.data.filter { dataPoint -> dataPoint.price <= priceLimit }
+        .flatMap { windowedElectricity ->
+            val data = windowedElectricity.data.filter { dataPoint -> dataPoint.price <= priceLimit }
             calculateChargeTime(data, time) { it.intensity }
         }
