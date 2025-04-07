@@ -15,13 +15,14 @@ import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.format.Jackson
 import org.http4k.routing.bind
+import java.time.ZonedDateTime
 
 fun weightedCalculatorApp() = handleLensFailures()
     .then(weightedCalculatorRoute())
 
 private fun weightedCalculatorRoute() = "/calculate" bind POST to { request ->
     val scheduleRequest = scheduleRequestLens(request)
-    calculate(scheduleRequest.electricity, scheduleRequest.weights(), scheduleRequest.time)
+    calculate(scheduleRequest.electricity, scheduleRequest.weights(), scheduleRequest.start, scheduleRequest.end, scheduleRequest.time)
         .fold(
             { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
             { failed ->
@@ -38,6 +39,8 @@ data class ScheduleRequest(
     val time: Long,
     val priceWeight: Double,
     val intensityWeight: Double,
+    val start: ZonedDateTime,
+    val end: ZonedDateTime,
     val electricity: Electricity
 ) {
     fun weights() = Weights(

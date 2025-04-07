@@ -19,6 +19,8 @@ class WeightedCalculatorAppKtTest {
                     "time":45,
                     "priceWeight":1.0,
                     "intensityWeight":1.0,
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
                     "electricity": {
                         "data": [
                            {
@@ -55,6 +57,8 @@ class WeightedCalculatorAppKtTest {
                     "time":45,
                     "priceWeight":1.0,
                     "intensityWeight":1.0,
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
                     "electricity": {
                         "data": [
                            {
@@ -91,6 +95,8 @@ class WeightedCalculatorAppKtTest {
                     "time":45,
                     "priceWeight":1.0,
                     "intensityWeight":1.0,
+                    "start":"2025-03-02T12:00:00Z",
+                    "end":"2025-03-02T13:00:00Z",
                     "electricity": {
                         "data": [
                            {

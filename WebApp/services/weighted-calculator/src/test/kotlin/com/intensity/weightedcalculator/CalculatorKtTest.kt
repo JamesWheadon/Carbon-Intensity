@@ -73,7 +73,7 @@ class CalculatorKtTest {
         )
         val weights = Weights(BD("0.8"), BD("1"))
 
-        val calculate = calculate(electricity, weights, 75)
+        val calculate = calculate(electricity, weights, baseTime, baseTime.plusMinutes(90), 75)
 
         assertThat(calculate, equalTo(Success(ChargeTime(baseTime.plusMinutes(15), baseTime.plusMinutes(90)))))
     }
@@ -89,7 +89,7 @@ class CalculatorKtTest {
         )
         val weights = Weights(BD("0.8"), BD("1"))
 
-        val calculate = calculate(electricity, weights, 91)
+        val calculate = calculate(electricity, weights, baseTime, baseTime.plusMinutes(90), 91)
 
         assertThat(calculate, isFailure(NoChargeTimePossible))
     }
@@ -105,7 +105,7 @@ class CalculatorKtTest {
         )
         val weights = Weights(BD("0.8"), BD("1"))
 
-        val calculate = calculate(electricity, weights, 30)
+        val calculate = calculate(electricity, weights, baseTime, baseTime.plusMinutes(90), 30)
 
         assertThat(calculate, isFailure(OverlappingData))
     }

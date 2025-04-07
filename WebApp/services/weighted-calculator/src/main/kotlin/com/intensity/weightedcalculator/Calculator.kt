@@ -9,9 +9,18 @@ import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.map
 import java.math.BigDecimal
 import java.math.RoundingMode.HALF_UP
+import java.time.ZonedDateTime
 
-fun calculate(electricity: Electricity, weights: Weights, time: Long) =
-    electricity.validate()
+fun calculate(
+    electricity: Electricity,
+    weights: Weights,
+    start: ZonedDateTime,
+    end: ZonedDateTime,
+    time: Long
+) =
+    electricity
+        .windowed(start, end)
+        .validate()
         .normalize()
         .bestChargeTime(weights, time)
 
