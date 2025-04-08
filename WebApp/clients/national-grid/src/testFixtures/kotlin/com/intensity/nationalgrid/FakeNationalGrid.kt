@@ -10,6 +10,7 @@ import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
+import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -28,16 +29,24 @@ class FakeNationalGrid : HttpHandler {
                 Response(Status.OK).with(nationalGridDataLens of dayData!!)
             } else {
                 val startTime = ZonedDateTime.parse(request.path("time")!!)
-                val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60))
+                val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60), 97)
                 Response(Status.OK).with(nationalGridDataLens of NationalGridData(dataWindows))
             }
+        },
+        "/intensity/{from}/{to}" bind Method.GET to handler@{ request ->
+            var startTime = ZonedDateTime.parse(request.path("from")!!)
+            startTime = startTime.minusMinutes(startTime.minute % 30L)
+            var endTime = ZonedDateTime.parse(request.path("to")!!)
+            endTime = endTime.minusMinutes(endTime.minute % 30L)
+            val dataWindows = createHalfHourWindows(startTime, ((Duration.between(startTime, endTime).toMinutes() + 29) / 30).toInt())
+            Response(Status.OK).with(nationalGridDataLens of NationalGridData(dataWindows))
         }
     )
 
-    private fun createHalfHourWindows(startTime: ZonedDateTime): MutableList<IntensityData> {
+    private fun createHalfHourWindows(startTime: ZonedDateTime, timeBlocks: Int = 97): MutableList<IntensityData> {
         val currentTime = ZonedDateTime.now()
         val dataWindows = mutableListOf<IntensityData>()
-        for (window in 0 until 97) {
+        for (window in 0 until timeBlocks) {
             val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
             val actualIntensity = if (windowStart.isBefore(currentTime)) {
                 60

@@ -25,6 +25,15 @@ abstract class NationalGridContractTest {
             inTimeRange(intensities.data.first().from, intensities.data.last().to)
         )
     }
+
+    @Test
+    fun `responds with forecast for the requested time period`() {
+        val intensities = nationalGrid.intensity(time.plusMinutes(1), time.plusHours(6).minusMinutes(7))
+
+        assertThat(intensities.data.size, equalTo(12))
+        assertThat(intensities.data.first().from, equalTo(time))
+        assertThat(intensities.data.last().to, equalTo(time.plusHours(6)))
+    }
 }
 
 class FakeNationalGridTest : NationalGridContractTest() {
