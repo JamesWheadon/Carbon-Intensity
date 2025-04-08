@@ -35,7 +35,7 @@ class FakeNationalGrid : HttpHandler {
         },
         "/intensity/{from}/{to}" bind Method.GET to handler@{ request ->
             var startTime = ZonedDateTime.parse(request.path("from")!!)
-            startTime = startTime.minusMinutes(startTime.minute % 30L)
+            startTime = startTime.minusMinutes(30 + startTime.minute % 30L)
             var endTime = ZonedDateTime.parse(request.path("to")!!)
             endTime = endTime.minusMinutes(endTime.minute % 30L)
             val dataWindows = createHalfHourWindows(startTime, ((Duration.between(startTime, endTime).toMinutes() + 29) / 30).toInt())

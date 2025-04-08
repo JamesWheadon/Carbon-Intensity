@@ -34,6 +34,15 @@ abstract class NationalGridContractTest {
         assertThat(intensities.data.first().from, equalTo(time))
         assertThat(intensities.data.last().to, equalTo(time.plusHours(6)))
     }
+
+    @Test
+    fun `responds with forecast for the requested time period and not an earlier time slot`() {
+        val intensities = nationalGrid.intensity(time, time.plusHours(6))
+
+        assertThat(intensities.data.size, equalTo(12))
+        assertThat(intensities.data.first().from, equalTo(time))
+        assertThat(intensities.data.last().to, equalTo(time.plusHours(6)))
+    }
 }
 
 class FakeNationalGridTest : NationalGridContractTest() {

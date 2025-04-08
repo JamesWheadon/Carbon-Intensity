@@ -31,8 +31,9 @@ class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
     }
 
     override fun intensity(from: ZonedDateTime, to: ZonedDateTime): NationalGridData {
+        val start = from.plusMinutes(30 - from.minute % 30L)
         val end = to.plusMinutes((30 - (to.minute % 30L)) % 30L)
-        val response = httpHandler(Request(Method.GET, "/intensity/$from/$end"))
+        val response = httpHandler(Request(Method.GET, "/intensity/$start/$end"))
         return nationalGridDataLens(response)
     }
 }
