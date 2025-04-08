@@ -28,7 +28,7 @@ abstract class NationalGridContractTest {
 
     @Test
     fun `responds with forecast for the requested time period`() {
-        val intensities = nationalGrid.intensity(time.plusMinutes(1), time.plusHours(6).minusMinutes(7))
+        val intensities = nationalGrid.intensity(time.plusMinutes(1), time.plusHours(6).minusMinutes(7)).valueOrNull()!!
 
         assertThat(intensities.data.size, equalTo(12))
         assertThat(intensities.data.first().from, equalTo(time))
@@ -37,7 +37,7 @@ abstract class NationalGridContractTest {
 
     @Test
     fun `responds with forecast for the requested time period and not an earlier time slot`() {
-        val intensities = nationalGrid.intensity(time, time.plusHours(6))
+        val intensities = nationalGrid.intensity(time, time.plusHours(6)).valueOrNull()!!
 
         assertThat(intensities.data.size, equalTo(12))
         assertThat(intensities.data.first().from, equalTo(time))
@@ -50,9 +50,17 @@ class FakeNationalGridTest : NationalGridContractTest() {
     override val nationalGrid = NationalGridCloud(fakeNationalGrid)
 
     @Test
-    fun `responds with correct failure if error getting data`() {
+    fun `responds with correct failure if error getting data for 48 hour forecast`() {
         fakeNationalGrid.shouldFail()
         val response = nationalGrid.fortyEightHourIntensity(time)
+
+        assertThat(response, isFailure(NationalGridFailed))
+    }
+
+    @Test
+    fun `responds with correct failure if error getting intensity data for time period`() {
+        fakeNationalGrid.shouldFail()
+        val response = nationalGrid.intensity(time, time.plusHours(6))
 
         assertThat(response, isFailure(NationalGridFailed))
     }

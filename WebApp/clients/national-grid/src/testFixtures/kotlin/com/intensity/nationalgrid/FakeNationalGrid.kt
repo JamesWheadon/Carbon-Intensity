@@ -34,6 +34,9 @@ class FakeNationalGrid : HttpHandler {
             }
         },
         "/intensity/{from}/{to}" bind Method.GET to handler@{ request ->
+            if (failure) {
+                return@handler Response(INTERNAL_SERVER_ERROR)
+            }
             var startTime = ZonedDateTime.parse(request.path("from")!!)
             startTime = startTime.minusMinutes(30 + startTime.minute % 30L)
             var endTime = ZonedDateTime.parse(request.path("to")!!)
