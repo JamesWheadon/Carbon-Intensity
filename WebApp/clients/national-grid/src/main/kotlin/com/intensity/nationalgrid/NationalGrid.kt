@@ -17,19 +17,10 @@ import org.http4k.format.Jackson
 import java.time.ZonedDateTime
 
 interface NationalGrid {
-    fun fortyEightHourIntensity(time: ZonedDateTime): Result<NationalGridData, Failed>
     fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed>
 }
 
 class NationalGridCloud(val httpHandler: HttpHandler) : NationalGrid {
-    override fun fortyEightHourIntensity(time: ZonedDateTime): Result<NationalGridData, Failed> {
-        val response = httpHandler(Request(Method.GET, "/intensity/$time/fw48h"))
-        return when (response.status) {
-            OK -> Success(NationalGridData(nationalGridDataLens(response).data.drop(1)))
-            else -> Failure(NationalGridFailed)
-        }
-    }
-
     override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
         val start = from.plusMinutes(30 - from.minute % 30L)
         val end = to.plusMinutes((30 - (to.minute % 30L)) % 30L)

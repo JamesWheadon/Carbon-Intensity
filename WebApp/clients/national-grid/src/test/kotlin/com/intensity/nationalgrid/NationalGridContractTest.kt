@@ -1,6 +1,5 @@
 package com.intensity.nationalgrid
 
-import com.intensity.coretest.inTimeRange
 import com.intensity.coretest.isFailure
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -14,17 +13,6 @@ import java.time.ZonedDateTime
 abstract class NationalGridContractTest {
     val time: ZonedDateTime = LocalDate.now().atStartOfDay(UTC.normalized())
     abstract val nationalGrid: NationalGrid
-
-    @Test
-    fun `responds with forecast for the requested 48 hour period`() {
-        val intensities = nationalGrid.fortyEightHourIntensity(time).valueOrNull()!!
-
-        assertThat(intensities.data.size, equalTo(96))
-        assertThat(
-            time,
-            inTimeRange(intensities.data.first().from, intensities.data.last().to)
-        )
-    }
 
     @Test
     fun `responds with forecast for the requested time period`() {
@@ -48,14 +36,6 @@ abstract class NationalGridContractTest {
 class FakeNationalGridTest : NationalGridContractTest() {
     private val fakeNationalGrid = FakeNationalGrid()
     override val nationalGrid = NationalGridCloud(fakeNationalGrid)
-
-    @Test
-    fun `responds with correct failure if error getting data for 48 hour forecast`() {
-        fakeNationalGrid.shouldFail()
-        val response = nationalGrid.fortyEightHourIntensity(time)
-
-        assertThat(response, isFailure(NationalGridFailed))
-    }
 
     @Test
     fun `responds with correct failure if error getting intensity data for time period`() {

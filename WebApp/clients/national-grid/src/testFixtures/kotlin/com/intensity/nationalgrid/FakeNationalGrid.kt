@@ -21,18 +21,6 @@ class FakeNationalGrid : HttpHandler {
     private var failure = false
 
     val routes = routes(
-        "/intensity/{time}/fw48h" bind Method.GET to handler@{ request ->
-            if (failure) {
-                return@handler Response(INTERNAL_SERVER_ERROR)
-            }
-            if (dayData != null) {
-                Response(Status.OK).with(nationalGridDataLens of dayData!!)
-            } else {
-                val startTime = ZonedDateTime.parse(request.path("time")!!)
-                val dataWindows = createHalfHourWindows(startTime.minusSeconds(30 * 60), 97)
-                Response(Status.OK).with(nationalGridDataLens of NationalGridData(dataWindows))
-            }
-        },
         "/intensity/{from}/{to}" bind Method.GET to handler@{ request ->
             if (failure) {
                 return@handler Response(INTERNAL_SERVER_ERROR)

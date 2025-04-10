@@ -306,9 +306,6 @@ class OctopusFake : Octopus {
 }
 
 class NationalGridFake : NationalGrid {
-    override fun fortyEightHourIntensity(time: ZonedDateTime): Result<NationalGridData, Failed> {
-        TODO("Not yet implemented")
-    }
     override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
         TODO("Not yet implemented")
     }
