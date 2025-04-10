@@ -42,7 +42,7 @@ class FakeNationalGrid : HttpHandler {
             var endTime = ZonedDateTime.parse(request.path("to")!!)
             endTime = endTime.minusMinutes(endTime.minute % 30L)
             val nationalGridData = if (dayData != null && startTime == dayData?.data?.first()?.from) {
-                dayData!!
+                dayData!!.copy(data = dayData!!.data.filter { !it.to.isAfter(endTime) })
             } else {
                 NationalGridData(
                     createHalfHourWindows(startTime, ((Duration.between(startTime, endTime).toMinutes() + 29) / 30).toInt())
