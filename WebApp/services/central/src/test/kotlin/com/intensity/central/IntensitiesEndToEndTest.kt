@@ -12,13 +12,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 class IntensitiesEndToEndTest : EndToEndTest() {
-    private val date = LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC"))
+    private val date = LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC").normalized())
 
     @Test
     fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
-        nationalGrid.setDateData(date, List(97) { 212 }, List(97) { null })
-        println(date)
-        println(date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")))
+        nationalGrid.setDateData(date, List(96) { 212 }, List(96) { null })
 
         val response = User(events, server).call(
             Request(POST, "/intensities")
@@ -29,25 +27,6 @@ class IntensitiesEndToEndTest : EndToEndTest() {
             response.body.toString(),
             equalTo(
                 """{"intensities":${intensityList(212)},"date":"${
-                    date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'"))
-                }"}"""
-            )
-        )
-    }
-
-    @Test
-    fun `calls national grid and updates scheduler if scheduler is out of date`() {
-        nationalGrid.setDateData(date, List(97) { 210 }, List(97) { null })
-
-        val response = User(events, server).call(
-            Request(POST, "/intensities")
-        )
-
-        assertThat(response.status, equalTo(OK))
-        assertThat(
-            response.body.toString(),
-            equalTo(
-                """{"intensities":${intensityList(210)},"date":"${
                     date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'"))
                 }"}"""
             )

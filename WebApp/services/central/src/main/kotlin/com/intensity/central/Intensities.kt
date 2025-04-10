@@ -38,7 +38,7 @@ fun intensities(
     )
 } bindContract POST to { _: Request ->
     val startOfDay = LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC").normalized())
-    nationalGrid.fortyEightHourIntensity(startOfDay)
+    nationalGrid.intensity(startOfDay, startOfDay.plusDays(2))
         .fold(
             { intensitiesForecast ->
                 Response(OK).with(
