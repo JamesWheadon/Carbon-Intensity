@@ -13,7 +13,7 @@ activate "Octopus"
 
 "Octopus" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
 deactivate "Octopus"
-"App" -> "National Grid": GET intensity/{time}/fw48h
+"App" -> "National Grid": GET intensity/{from}/{to}
 activate "National Grid"
 
 "National Grid" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK

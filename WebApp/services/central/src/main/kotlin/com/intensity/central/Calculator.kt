@@ -28,7 +28,7 @@ class Calculator(
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
-        val intensity = nationalGrid.fortyEightHourIntensity(calculationData.start)
+        val intensity = nationalGrid.intensity(calculationData.start, calculationData.end)
         return flatZip(prices, intensity) { priceData, intensityData ->
             Success(createElectricityFrom(priceData, intensityData))
         }.flatMap { electricity ->
