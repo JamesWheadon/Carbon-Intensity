@@ -3,7 +3,6 @@ package com.intensity.central
 import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
-import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
@@ -91,18 +90,7 @@ fun octopusChargeTimes(
     calculator: Calculator
 ) = "/octopus/charge-time" bind POST to { request ->
     val calculationData = CalculationData.lens(request)
-    calculator.calculate(calculationData).fold(
-        { chargeTime ->
-            Response(OK).with(chargeTimeLens of chargeTime)
-        },
-        { failed ->
-            val status = when (failed) {
-                UnableToCalculateChargeTime -> NOT_FOUND
-                else -> INTERNAL_SERVER_ERROR
-            }
-            Response(status).with(errorResponseLens of failed.toErrorResponse())
-        }
-    )
+    calculator.calculate(calculationData).toChargeTimeResponse()
 }
 
 private val endTimeLens = Query.zonedDateTime().optional("end")

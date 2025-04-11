@@ -66,6 +66,7 @@ fun carbonIntensity(
     .then(
         routes(
             contractRoutes(nationalGrid),
+            intensityChargeTime(nationalGrid, weightsCalculator),
             octopusProducts(octopus),
             octopusPrices(octopus),
             octopusChargeTimes(Calculator(octopus, nationalGrid, limitCalculator, weightsCalculator))

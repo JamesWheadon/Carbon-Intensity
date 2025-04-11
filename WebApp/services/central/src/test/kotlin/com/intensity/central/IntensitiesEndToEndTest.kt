@@ -1,5 +1,7 @@
 package com.intensity.central
 
+import com.intensity.coretest.formatted
+import com.intensity.coretest.hasBody
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
@@ -43,6 +45,28 @@ class IntensitiesEndToEndTest : EndToEndTest() {
 
         assertThat(response.status, equalTo(NOT_FOUND))
         assertThat(response.body.toString(), equalTo(getErrorResponse("Failed to get intensity data")))
+    }
+
+    @Test
+    fun `calculates lowest charge time based on intensity data`() {
+        nationalGrid.setDateData(time, listOf(100, 100, 101, 101, 100), listOf(null, null, null, null, null))
+        weightsCalculator.setChargeTime(FakeWeights(0.0, 1.0), time.formatted() to time.plusMinutes(45).formatted())
+
+        val response = User(events, server).call(
+            Request(POST, "/intensities/charge-time").body(
+                """{
+                    "start":"${time.formatted()}",
+                    "end":"${time.plusMinutes(150).formatted()}",
+                    "time":45
+                    }""".trimMargin()
+            )
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response,
+            hasBody("""{"from":"2025-03-25T12:00:00Z","to":"2025-03-25T12:45:00Z"}""")
+        )
     }
 
     private fun intensityList(intensity: Int) =
