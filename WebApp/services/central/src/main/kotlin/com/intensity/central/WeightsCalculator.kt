@@ -12,13 +12,26 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
+import java.time.ZonedDateTime
 
 interface WeightsCalculator {
-    fun chargeTime(electricity: Electricity, weights: Weights, time: Long): Result<ChargeTime, Failed>
+    fun chargeTime(
+        electricity: Electricity,
+        weights: Weights,
+        time: Long,
+        start: ZonedDateTime,
+        end: ZonedDateTime
+    ): Result<ChargeTime, Failed>
 }
 
 class WeightsCalculatorCloud(val httpHandler: HttpHandler) : WeightsCalculator {
-    override fun chargeTime(electricity: Electricity, weights: Weights, time: Long): Result<ChargeTime, Failed> {
+    override fun chargeTime(
+        electricity: Electricity,
+        weights: Weights,
+        time: Long,
+        start: ZonedDateTime,
+        end: ZonedDateTime
+    ): Result<ChargeTime, Failed> {
         val response = httpHandler(
             Request(
                 Method.POST,
@@ -27,6 +40,8 @@ class WeightsCalculatorCloud(val httpHandler: HttpHandler) : WeightsCalculator {
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
                     electricity,
+                    start,
+                    end,
                     priceWeight = weights.priceWeight,
                     intensityWeight = weights.intensityWeight
                 )

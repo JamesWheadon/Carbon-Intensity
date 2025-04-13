@@ -40,6 +40,9 @@ fun Electricity.normalize(): Electricity {
 
 fun normalize(values: List<BigDecimal>): List<BigDecimal> {
     val max = values.max()
+    if (max == BigDecimal.ZERO) {
+        return values
+    }
     return values.map { it.divide(max, 5, HALF_UP) }
 }
 

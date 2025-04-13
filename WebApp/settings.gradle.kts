@@ -15,6 +15,7 @@ dependencyResolutionManagement {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+include("system")
 includeSubProjects("clients")
 includeSubProjects("libraries")
 includeSubProjects("services")

@@ -64,7 +64,7 @@ class FakeNationalGrid : HttpHandler {
         )
     }
 
-    fun setDateData(startOfDay: ZonedDateTime, forecasts: List<Int>, actual: List<Int?>) {
+    fun setDateData(startOfDay: ZonedDateTime, forecasts: List<Int>, actual: List<Int?> = forecasts.map { null }) {
         dayData = NationalGridData(
             forecasts.zip(actual).mapIndexed { i, data ->
                 val (start, end) = halfHourWindow(startOfDay.plusSeconds(i * SECONDS_IN_HALF_HOUR))

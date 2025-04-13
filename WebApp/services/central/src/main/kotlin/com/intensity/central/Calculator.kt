@@ -53,15 +53,33 @@ class Calculator(
         electricity: Electricity
     ) = when {
         calculationData.intensityLimit != null -> {
-            intensityLimitedChargeTime(electricity, calculationData.intensityLimit, calculationData.time)
+            intensityLimitedChargeTime(
+                electricity,
+                calculationData.intensityLimit,
+                calculationData.time,
+                calculationData.start,
+                calculationData.end
+            )
         }
 
         calculationData.priceLimit != null -> {
-            priceLimitedChargeTime(electricity, calculationData.priceLimit, calculationData.time)
+            priceLimitedChargeTime(
+                electricity,
+                calculationData.priceLimit,
+                calculationData.time,
+                calculationData.start,
+                calculationData.end
+            )
         }
 
         else -> {
-            weightLimitedChargeTime(electricity, calculationData.weights!!, calculationData.time)
+            weightsCalc.chargeTime(
+                electricity,
+                calculationData.weights!!,
+                calculationData.time,
+                calculationData.start,
+                calculationData.end
+            )
         }
     }
 
@@ -91,28 +109,29 @@ class Calculator(
     private fun intensityLimitedChargeTime(
         electricity: Electricity,
         intensityLimit: BigDecimal,
-        time: Long
+        time: Long,
+        start: ZonedDateTime,
+        end: ZonedDateTime
     ) = limitCalc.intensityLimit(electricity, intensityLimit, time)
         .flatMapFailure {
-            weightLimitedChargeTime(electricity, Weights(0.0, 1.0), time)
-    }
+            weightsCalc.chargeTime(electricity, Weights(0.0, 1.0), time, start, end)
+        }
 
     private fun priceLimitedChargeTime(
         electricity: Electricity,
         priceLimit: BigDecimal,
-        time: Long
+        time: Long,
+        start: ZonedDateTime,
+        end: ZonedDateTime
     ) = limitCalc.priceLimit(electricity, priceLimit, time)
         .flatMapFailure {
-            weightLimitedChargeTime(electricity, Weights(1.0, 0.0), time)
-    }
-
-    private fun weightLimitedChargeTime(electricity: Electricity, weights: Weights, time: Long) =
-        weightsCalc.chargeTime(electricity, weights, time)
+            weightsCalc.chargeTime(electricity, Weights(1.0, 0.0), time, start, end)
+        }
 }
 
 private fun IntensityData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =
     this.from >= from && this.from < to || this.to > from && this.to <= to
 
-object UnableToCalculateChargeTime: Failed {
+object UnableToCalculateChargeTime : Failed {
     override fun toErrorResponse() = ErrorResponse("unable to calculate charge time")
 }

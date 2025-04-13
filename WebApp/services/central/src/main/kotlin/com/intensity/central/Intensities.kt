@@ -67,9 +67,22 @@ fun intensityChargeTime(
     val calculationData = IntensityCalculationData.lens(request)
     nationalGrid.intensity(calculationData.start, calculationData.end)
         .map { intensities ->
-            Electricity(intensities.data.map { data -> ElectricityData(data.from, data.to, data.intensity.forecast.toBigDecimal(), BigDecimal("0")) })
+            Electricity(intensities.data.map { data ->
+                ElectricityData(
+                    data.from,
+                    data.to,
+                    BigDecimal("0"),
+                    data.intensity.forecast.toBigDecimal()
+                )
+            })
         }.flatMap { electricity ->
-            weightsCalculator.chargeTime(electricity, Weights(0.0, 1.0), calculationData.time)
+            weightsCalculator.chargeTime(
+                electricity,
+                Weights(0.0, 1.0),
+                calculationData.time,
+                calculationData.start,
+                calculationData.end
+            )
         }.toChargeTimeResponse()
 }
 
