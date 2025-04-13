@@ -29,6 +29,16 @@ class Scenarios {
 
         customer `should start charging at` "2025-04-10 12:30:00" `and end charging at` "2025-04-10 13:00:00"
     }
+
+    @Test
+    fun `finding the best charge time for price`() {
+        customer `is an octopus customer on product` "AGILE-24-10-01" `and tariff` "E-1R-AGILE-24-10-01-A"
+        customer `wants to charge between at` "2025-04-10 09:00:00" `and ending at` "2025-04-10 17:00:00" `for` "1 hour"
+
+        customer `wants the charge time for the` "lowest price"
+
+        customer `should start charging at` "2025-04-10 10:30:00" `and end charging at` "2025-04-10 11:30:00"
+    }
 }
 
 class Customer {
@@ -37,7 +47,13 @@ class Customer {
         forecasts[4] = 99
         this.setDateData(ZonedDateTime.parse("2025-04-10T10:30:00Z"), forecasts)
     }
-    private val octopusFake = FakeOctopus()
+    private val octopusFake = FakeOctopus().apply {
+        this.setPricesFor(
+            "AGILE-24-10-01",
+            "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2025-04-10T09:00:00Z"),
+            listOf(10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 9.0, 9.0, 10.0, 10.0, 10.0)
+        )
+    }
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake),
         OctopusCloud(octopusFake),
@@ -47,6 +63,8 @@ class Customer {
     private var startTime = ""
     private var endTime = ""
     private var minutes = 30
+    private var octopusProduct = ""
+    private var octopusTariff = ""
     private lateinit var response: Response
 
     infix fun `wants to charge between at`(start: String): Customer {
@@ -61,15 +79,36 @@ class Customer {
 
     infix fun `for`(time: String): Customer {
         minutes = time.split(" ")[0].toInt()
+        if (time.split(" ")[1] == "hour") {
+            minutes *= 60
+        }
         return this
     }
 
     infix fun `wants the charge time for the`(condition: String) {
-        response = app(Request(POST, "/intensities/charge-time").body("""{
-            "start":"$startTime",
-            "end":"$endTime",
-            "time":$minutes
-        }""".trimMargin())).also { println(it) }
+        val request = when {
+            condition == "lowest intensity" && octopusProduct == "" -> {
+                Request(POST, "/intensities/charge-time").body("""{
+                    "start":"$startTime",
+                    "end":"$endTime",
+                    "time":$minutes
+                }""".trimMargin())
+            }
+            else -> {
+                Request(POST, "/octopus/charge-time").body("""{
+                    "product":"$octopusProduct",
+                    "tariff":"$octopusTariff",
+                    "start":"$startTime",
+                    "end":"$endTime",
+                    "time":$minutes,
+                    "weights": {
+                        "priceWeight":1.0,
+                        "intensityWeight":0.0
+                    }
+                }""".trimMargin())
+            }
+        }
+        response = app(request)
     }
 
     infix fun `should start charging at`(expectedStartTime: String): Customer {
@@ -82,6 +121,15 @@ class Customer {
     infix fun `and end charging at`(expectedEndTime: String): Customer {
         assertThat(chargeTimeLens(response).to, equalTo(ZonedDateTime.parse(expectedEndTime.toISO8601())))
         return this
+    }
+
+    infix fun `is an octopus customer on product`(octopusProductCode: String): Customer {
+        octopusProduct = octopusProductCode
+        return this
+    }
+
+    infix fun `and tariff`(octopusTariffCode: String) {
+        octopusTariff = octopusTariffCode
     }
 
     private fun String.toISO8601() = replace(" ", "T") + "Z"
