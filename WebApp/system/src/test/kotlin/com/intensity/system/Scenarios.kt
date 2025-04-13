@@ -49,20 +49,30 @@ class Scenarios {
 
         customer `should start charging at` "2025-04-10 14:00:00" `and end charging at` "2025-04-10 15:00:00"
     }
+
+    @Test
+    fun `customer finds the best charge time for intensity under a limited value for price`() {
+        customer `is an octopus customer on product` "AGILE-24-10-01" `and tariff` "E-1R-AGILE-24-10-01-A"
+        customer `wants to charge between at` "2025-04-10 09:00:00" `and ending at` "2025-04-10 17:00:00" `for` "1 hour"
+
+        customer `wants the charge time for the` "lowest intensity" `with price under` "10.0"
+
+        customer `should start charging at` "2025-04-10 14:00:00" `and end charging at` "2025-04-10 15:00:00"
+    }
 }
 
 class Customer {
     private val nationalGridFake = FakeNationalGrid().apply {
         this.setDateData(
             ZonedDateTime.parse("2025-04-10T09:00:00Z"),
-            listOf(101, 101, 101, 101, 101, 101, 100, 99, 100, 100, 100, 100, 100, 100, 100, 100)
+            listOf(101, 101, 101, 101, 101, 101, 100, 99, 100, 100, 100, 100, 100, 100, 90, 90)
         )
     }
     private val octopusFake = FakeOctopus().apply {
         this.setPricesFor(
             "AGILE-24-10-01",
             "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2025-04-10T09:00:00Z"),
-            listOf(10.0, 10.0, 10.0, 10.0, 9.9, 9.9, 10.0, 10.0, 10.0, 10.0, 10.0, 9.0, 9.0, 10.0, 10.0, 10.0)
+            listOf(9.8, 9.8, 10.0, 10.0, 9.5, 9.5, 10.0, 10.0, 10.0, 10.0, 10.0, 9.0, 9.0, 10.0, 9.8, 9.8)
         )
     }
     private val app = carbonIntensity(
@@ -131,6 +141,18 @@ class Customer {
             "end":"$endTime",
             "time":$minutes,
             "intensityLimit":$intensityLimit
+        }""".trimMargin())
+        response = app(request)
+    }
+
+    infix fun `with price under`(priceLimit: String) {
+        val request = Request(POST, "/octopus/charge-time").body("""{
+            "product":"$octopusProduct",
+            "tariff":"$octopusTariff",
+            "start":"$startTime",
+            "end":"$endTime",
+            "time":$minutes,
+            "priceLimit":$priceLimit
         }""".trimMargin())
         response = app(request)
     }
