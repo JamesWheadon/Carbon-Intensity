@@ -17,7 +17,7 @@ import java.time.temporal.ChronoUnit
 private const val SECONDS_IN_HALF_HOUR = 1800L
 
 class FakeNationalGrid : HttpHandler {
-    private var dayData: NationalGridData? = null
+    private var intensityData = mutableListOf<IntensityData>()
     private var failure = false
 
     val routes = routes(
@@ -29,13 +29,9 @@ class FakeNationalGrid : HttpHandler {
             startTime = startTime.minusMinutes(30 + startTime.minute % 30L)
             var endTime = ZonedDateTime.parse(request.path("to")!!)
             endTime = endTime.minusMinutes(endTime.minute % 30L)
-            val nationalGridData = if (dayData != null && startTime == dayData?.data?.first()?.from) {
-                dayData!!.copy(data = dayData!!.data.filter { !it.to.isAfter(endTime) })
-            } else {
-                NationalGridData(
-                    createHalfHourWindows(startTime, ((Duration.between(startTime, endTime).toMinutes() + 29) / 30).toInt())
-                )
-            }
+            val nationalGridData = NationalGridData(
+                createHalfHourWindows(startTime, ((Duration.between(startTime, endTime).toMinutes() + 29) / 30).toInt())
+            )
             Response(Status.OK).with(nationalGridDataLens of nationalGridData)
         }
     )
@@ -45,12 +41,15 @@ class FakeNationalGrid : HttpHandler {
         val dataWindows = mutableListOf<IntensityData>()
         for (window in 0 until timeBlocks) {
             val (windowStart, windowEnd) = halfHourWindow(startTime.plusSeconds(window * SECONDS_IN_HALF_HOUR))
-            val actualIntensity = if (windowStart.isBefore(currentTime)) {
-                60
-            } else {
-                null
+            val timeBlockData = intensityData.firstOrNull { it.from == windowStart && it.to == windowEnd } ?: let {
+                val actualIntensity = if (windowStart.isBefore(currentTime)) {
+                    60
+                } else {
+                    null
+                }
+                IntensityData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate"))
             }
-            dataWindows.add(IntensityData(windowStart, windowEnd, Intensity(60, actualIntensity, "moderate")))
+            dataWindows.add(timeBlockData)
         }
         return dataWindows
     }
@@ -65,7 +64,7 @@ class FakeNationalGrid : HttpHandler {
     }
 
     fun setDateData(startOfDay: ZonedDateTime, forecasts: List<Int>, actual: List<Int?> = forecasts.map { null }) {
-        dayData = NationalGridData(
+        intensityData.addAll(
             forecasts.zip(actual).mapIndexed { i, data ->
                 val (start, end) = halfHourWindow(startOfDay.plusSeconds(i * SECONDS_IN_HALF_HOUR))
                 val index = when {

@@ -22,7 +22,7 @@ class Scenarios {
     private val customer = Customer()
 
     @Test
-    fun `finding the best charge time for intensity`() {
+    fun `customer finds the best charge time for intensity`() {
         customer `wants to charge between at` "2025-04-10 10:30:00" `and ending at` "2025-04-10 15:30:00" `for` "30 minutes"
 
         customer `wants the charge time for the` "lowest intensity"
@@ -31,7 +31,7 @@ class Scenarios {
     }
 
     @Test
-    fun `finding the best charge time for price`() {
+    fun `customer finds the best charge time for price`() {
         customer `is an octopus customer on product` "AGILE-24-10-01" `and tariff` "E-1R-AGILE-24-10-01-A"
         customer `wants to charge between at` "2025-04-10 09:00:00" `and ending at` "2025-04-10 17:00:00" `for` "1 hour"
 
@@ -39,19 +39,30 @@ class Scenarios {
 
         customer `should start charging at` "2025-04-10 10:30:00" `and end charging at` "2025-04-10 11:30:00"
     }
+
+    @Test
+    fun `customer finds the best charge time for price under a limited value for intensity`() {
+        customer `is an octopus customer on product` "AGILE-24-10-01" `and tariff` "E-1R-AGILE-24-10-01-A"
+        customer `wants to charge between at` "2025-04-10 09:00:00" `and ending at` "2025-04-10 17:00:00" `for` "1 hour"
+
+        customer `wants the charge time for the` "lowest price" `with intensity under` "100"
+
+        customer `should start charging at` "2025-04-10 14:00:00" `and end charging at` "2025-04-10 15:00:00"
+    }
 }
 
 class Customer {
     private val nationalGridFake = FakeNationalGrid().apply {
-        val forecasts = MutableList(10) { 100 }
-        forecasts[4] = 99
-        this.setDateData(ZonedDateTime.parse("2025-04-10T10:30:00Z"), forecasts)
+        this.setDateData(
+            ZonedDateTime.parse("2025-04-10T09:00:00Z"),
+            listOf(101, 101, 101, 101, 101, 101, 100, 99, 100, 100, 100, 100, 100, 100, 100, 100)
+        )
     }
     private val octopusFake = FakeOctopus().apply {
         this.setPricesFor(
             "AGILE-24-10-01",
             "E-1R-AGILE-24-10-01-A" to ZonedDateTime.parse("2025-04-10T09:00:00Z"),
-            listOf(10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 9.0, 9.0, 10.0, 10.0, 10.0)
+            listOf(10.0, 10.0, 10.0, 10.0, 9.9, 9.9, 10.0, 10.0, 10.0, 10.0, 10.0, 9.0, 9.0, 10.0, 10.0, 10.0)
         )
     }
     private val app = carbonIntensity(
@@ -85,7 +96,7 @@ class Customer {
         return this
     }
 
-    infix fun `wants the charge time for the`(condition: String) {
+    infix fun `wants the charge time for the`(condition: String): Customer {
         val request = when {
             condition == "lowest intensity" && octopusProduct == "" -> {
                 Request(POST, "/intensities/charge-time").body("""{
@@ -108,6 +119,19 @@ class Customer {
                 }""".trimMargin())
             }
         }
+        response = app(request)
+        return this
+    }
+
+    infix fun `with intensity under`(intensityLimit: String) {
+        val request = Request(POST, "/octopus/charge-time").body("""{
+            "product":"$octopusProduct",
+            "tariff":"$octopusTariff",
+            "start":"$startTime",
+            "end":"$endTime",
+            "time":$minutes,
+            "intensityLimit":$intensityLimit
+        }""".trimMargin())
         response = app(request)
     }
 
