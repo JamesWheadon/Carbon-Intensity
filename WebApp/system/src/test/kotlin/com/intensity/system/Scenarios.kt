@@ -45,7 +45,7 @@ class Scenarios {
         customer `is an octopus customer on product` "AGILE-24-10-01" `and tariff` "E-1R-AGILE-24-10-01-A"
         customer `wants to charge between at` "2025-04-10 09:00:00" `and ending at` "2025-04-10 17:00:00" `for` "1 hour"
 
-        customer `wants the charge time for the` "lowest price" `with intensity under` "100"
+        customer `wants the charge time for the lowest price with intensity under` "100"
 
         customer `should start charging at` "2025-04-10 14:00:00" `and end charging at` "2025-04-10 15:00:00"
     }
@@ -55,7 +55,7 @@ class Scenarios {
         customer `is an octopus customer on product` "AGILE-24-10-01" `and tariff` "E-1R-AGILE-24-10-01-A"
         customer `wants to charge between at` "2025-04-10 09:00:00" `and ending at` "2025-04-10 17:00:00" `for` "1 hour"
 
-        customer `wants the charge time for the` "lowest intensity" `with price under` "10.0"
+        customer `wants the charge time for the lowest intensity with price under` "10.0"
 
         customer `should start charging at` "2025-04-10 14:00:00" `and end charging at` "2025-04-10 15:00:00"
     }
@@ -133,7 +133,7 @@ class Customer {
         return this
     }
 
-    infix fun `with intensity under`(intensityLimit: String) {
+    infix fun `wants the charge time for the lowest price with intensity under`(intensityLimit: String) {
         val request = Request(POST, "/octopus/charge-time").body("""{
             "product":"$octopusProduct",
             "tariff":"$octopusTariff",
@@ -145,7 +145,7 @@ class Customer {
         response = app(request)
     }
 
-    infix fun `with price under`(priceLimit: String) {
+    infix fun `wants the charge time for the lowest intensity with price under`(priceLimit: String) {
         val request = Request(POST, "/octopus/charge-time").body("""{
             "product":"$octopusProduct",
             "tariff":"$octopusTariff",
