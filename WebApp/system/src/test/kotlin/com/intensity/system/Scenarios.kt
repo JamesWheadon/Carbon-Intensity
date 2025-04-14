@@ -59,6 +59,16 @@ class Scenarios {
 
         customer `should start charging at` "2025-04-10 14:00:00" `and end charging at` "2025-04-10 15:00:00"
     }
+
+    @Test
+    fun `customer finds the best charge time for intensity with a balance for intensity and price`() {
+        customer `is an octopus customer on product` "AGILE-24-10-01" `and tariff` "E-1R-AGILE-24-10-01-A"
+        customer `wants to charge between at` "2025-04-10 09:00:00" `and ending at` "2025-04-10 17:00:00" `for` "45 minutes"
+
+        customer `wants the charge time considering price and intensity` "equally"
+
+        customer `should start charging at` "2025-04-10 16:00:00" `and end charging at` "2025-04-10 16:45:00"
+    }
 }
 
 class Customer {
@@ -155,6 +165,21 @@ class Customer {
             "priceLimit":$priceLimit
         }""".trimMargin())
         response = app(request)
+    }
+
+    infix fun `wants the charge time considering price and intensity`(condition: String): Customer {
+        response = app(Request(POST, "/octopus/charge-time").body("""{
+                    "product":"$octopusProduct",
+                    "tariff":"$octopusTariff",
+                    "start":"$startTime",
+                    "end":"$endTime",
+                    "time":$minutes,
+                    "weights": {
+                        "priceWeight":0.5,
+                        "intensityWeight":0.5
+                    }
+                }""".trimMargin()))
+        return this
     }
 
     infix fun `should start charging at`(expectedStartTime: String): Customer {
