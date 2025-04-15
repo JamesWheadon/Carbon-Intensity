@@ -17,7 +17,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     private val date = LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC").normalized())
 
     @Test
-    fun `calls national grid and updates scheduler if no data present in scheduler then returns intensities`() {
+    fun `calls national grid and returns intensities`() {
         nationalGrid.setDateData(date, List(96) { 212 }, List(96) { null })
 
         val response = User(events, server).call(
