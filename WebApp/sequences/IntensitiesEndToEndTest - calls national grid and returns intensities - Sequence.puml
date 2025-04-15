@@ -1,0 +1,15 @@
+@startuml
+title IntensitiesEndToEndTest - calls national grid and returns intensities
+participant "User"
+participant "App"
+participant "National Grid"
+"User" -> "App": POST intensities
+activate "App"
+"App" -> "National Grid": GET intensity/{from}/{to}
+activate "National Grid"
+
+"National Grid" -[#DarkGreen]> "App": <color:DarkGreen> 200 OK
+deactivate "National Grid"
+"App" -[#DarkGreen]> "User": <color:DarkGreen> 200 OK
+deactivate "App"
+@enduml

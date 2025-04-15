@@ -1,7 +1,6 @@
 package com.intensity.core
 
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
+import org.http4k.lens.Query
+import org.http4k.lens.zonedDateTime
 
-fun formatWith(pattern: String): DateTimeFormatter = DateTimeFormatter.ofPattern(pattern)
-    .withZone(ZoneOffset.UTC)
+val startTimeLens = Query.zonedDateTime().optional("start")

@@ -3,6 +3,7 @@ package com.intensity.central
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
 import com.intensity.core.errorResponseLens
+import com.intensity.core.startTimeLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.openapi.ContractSchema
 import dev.forkhandles.result4k.flatMap
@@ -42,8 +43,8 @@ fun intensities(
             ZonedDateTime.parse("2024-09-30T00:00:00Z")
         )
     )
-} bindContract POST to { _: Request ->
-    val startOfDay = LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC").normalized())
+} bindContract POST to { request: Request ->
+    val startOfDay = startTimeLens(request) ?: LocalDate.now(ZoneId.of("UTC")).atStartOfDay(ZoneId.of("UTC").normalized())
     nationalGrid.intensity(startOfDay, startOfDay.plusDays(2))
         .fold(
             { intensitiesForecast ->

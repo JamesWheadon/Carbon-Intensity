@@ -1,5 +1,5 @@
 @startuml
-title IntensitiesEndToEndTest - calls national grid and updates scheduler if no data present in scheduler then returns intensities
+title IntensitiesEndToEndTest - accepts start time without end time and returns 48 hour of intensities
 participant "User"
 participant "App"
 participant "National Grid"

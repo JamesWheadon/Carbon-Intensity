@@ -36,6 +36,25 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     }
 
     @Test
+    fun `accepts start time without end time and returns 48 hour of intensities`() {
+        nationalGrid.setDateData(date.plusDays(5), List(96) { 134 })
+
+        val response = User(events, server).call(
+            Request(POST, "/intensities?start=${date.plusDays(5).formatted()}")
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response.body.toString(),
+            equalTo(
+                """{"intensities":${intensityList(134)},"date":"${
+                    date.plusDays(5).formatted()
+                }"}"""
+            )
+        )
+    }
+
+    @Test
     fun `handles error from national grid with the correct response`() {
         nationalGrid.shouldFail()
 

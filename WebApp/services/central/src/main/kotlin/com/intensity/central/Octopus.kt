@@ -4,6 +4,7 @@ import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
 import com.intensity.core.errorResponseLens
+import com.intensity.core.startTimeLens
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCommunicationFailed
@@ -94,7 +95,6 @@ fun octopusChargeTimes(
 }
 
 private val endTimeLens = Query.zonedDateTime().optional("end")
-private val startTimeLens = Query.zonedDateTime().optional("start")
 private val octopusProductLens = Path.map { OctopusProduct(it) }.of("productCode")
 private val octopusTariffLens = Path.map { OctopusTariff(it) }.of("tariffCode")
 
