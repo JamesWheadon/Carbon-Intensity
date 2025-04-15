@@ -3,6 +3,7 @@ package com.intensity.central
 import com.intensity.core.Electricity
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
+import com.intensity.core.endTimeLens
 import com.intensity.core.errorResponseLens
 import com.intensity.core.startTimeLens
 import com.intensity.octopus.InvalidRequestFailed
@@ -28,8 +29,6 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
 import org.http4k.format.Jackson
 import org.http4k.lens.Path
-import org.http4k.lens.Query
-import org.http4k.lens.zonedDateTime
 import org.http4k.routing.bind
 import java.math.BigDecimal
 import java.time.ZonedDateTime
@@ -94,7 +93,6 @@ fun octopusChargeTimes(
     calculator.calculate(calculationData).toChargeTimeResponse()
 }
 
-private val endTimeLens = Query.zonedDateTime().optional("end")
 private val octopusProductLens = Path.map { OctopusProduct(it) }.of("productCode")
 private val octopusTariffLens = Path.map { OctopusTariff(it) }.of("tariffCode")
 

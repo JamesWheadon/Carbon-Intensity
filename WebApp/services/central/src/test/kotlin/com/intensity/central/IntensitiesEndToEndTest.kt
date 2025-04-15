@@ -28,7 +28,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":${intensityList(212)},"date":"${
+                """{"intensities":${intensityList(212, 96)},"date":"${
                     date.format(DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'"))
                 }"}"""
             )
@@ -47,8 +47,27 @@ class IntensitiesEndToEndTest : EndToEndTest() {
         assertThat(
             response.body.toString(),
             equalTo(
-                """{"intensities":${intensityList(134)},"date":"${
+                """{"intensities":${intensityList(134, 96)},"date":"${
                     date.plusDays(5).formatted()
+                }"}"""
+            )
+        )
+    }
+
+    @Test
+    fun `accepts end time without start time and returns intensities between now and end`() {
+        nationalGrid.setDateData(date, List(96) { 134 })
+
+        val response = User(events, server).call(
+            Request(POST, "/intensities?end=${date.plusHours(7).formatted()}")
+        )
+
+        assertThat(response.status, equalTo(OK))
+        assertThat(
+            response.body.toString(),
+            equalTo(
+                """{"intensities":${intensityList(134, 14)},"date":"${
+                    date.formatted()
                 }"}"""
             )
         )
@@ -88,6 +107,6 @@ class IntensitiesEndToEndTest : EndToEndTest() {
         )
     }
 
-    private fun intensityList(intensity: Int) =
-        List(96) { intensity }.joinToString(prefix = "[", separator = ",", postfix = "]")
+    private fun intensityList(intensity: Int, dataPoints: Int) =
+        List(dataPoints) { intensity }.joinToString(prefix = "[", separator = ",", postfix = "]")
 }
