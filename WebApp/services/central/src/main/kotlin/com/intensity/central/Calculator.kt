@@ -16,6 +16,8 @@ import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.flatMapFailure
 import dev.forkhandles.result4k.flatZip
+import io.opentelemetry.api.OpenTelemetry
+import org.http4k.metrics.Http4kOpenTelemetry
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
@@ -23,16 +25,22 @@ class Calculator(
     private val octopus: Octopus,
     private val nationalGrid: NationalGrid,
     private val limitCalc: LimitCalculator,
-    private val weightsCalc: WeightsCalculator
+    private val weightsCalc: WeightsCalculator,
+    private val openTelemetry: OpenTelemetry = OpenTelemetry.noop()
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
+        val span = openTelemetry.tracerProvider.get(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculation").startSpan()
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
+        span.addEvent("pricesRetrieved")
         val intensity = nationalGrid.intensity(calculationData.start, calculationData.end)
+        span.addEvent("intensityRetrieved")
         return flatZip(prices, intensity) { priceData, intensityData ->
             Success(createElectricityFrom(priceData, intensityData))
         }.flatMap { electricity ->
             getChargeTime(calculationData, electricity)
+        }.also {
+            span.end()
         }
     }
 

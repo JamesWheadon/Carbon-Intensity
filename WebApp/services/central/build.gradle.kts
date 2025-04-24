@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.http4k.core)
     implementation(libs.http4k.jackson)
     implementation(libs.http4k.contract)
+    implementation(libs.http4k.openTelemetry)
     implementation(libs.result4k)
 
     testImplementation(projects.libraries.coreTest)
@@ -21,6 +22,7 @@ dependencies {
     testImplementation(libs.http4k.hamkrest)
     testImplementation(libs.http4k.approval)
     testImplementation(libs.http4k.tracerbullet)
+    testImplementation(libs.openTelemetry.testing)
 }
 
 jib {

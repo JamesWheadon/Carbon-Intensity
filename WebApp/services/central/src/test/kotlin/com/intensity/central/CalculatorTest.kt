@@ -20,6 +20,11 @@ import com.intensity.octopus.Products
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Result
+import dev.forkhandles.result4k.Success
+import io.opentelemetry.sdk.OpenTelemetrySdk
+import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
+import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -28,13 +33,21 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 class CalculatorTest {
+    private val spanExporter = InMemorySpanExporter.create()
+    private val tracerProvider = SdkTracerProvider.builder()
+        .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
+        .build()
+    private val openTelemetry = OpenTelemetrySdk.builder()
+        .setTracerProvider(tracerProvider)
+        .build()
     private val fakeLimit = FakeLimitCalculator()
     private val fakeWeights = FakeWeightsCalculator()
     private val calculator = Calculator(
         OctopusFake(),
         NationalGridFake(),
         LimitCalculatorCloud(fakeLimit),
-        WeightsCalculatorCloud(fakeWeights)
+        WeightsCalculatorCloud(fakeWeights),
+        openTelemetry
     )
     private val startTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized()).truncatedTo(ChronoUnit.MINUTES)
     private val calculatorData = CalculationData(
@@ -284,6 +297,25 @@ class CalculatorTest {
             isFailure(UnableToCalculateChargeTime)
         )
     }
+
+    @Test
+    fun `spans and traces are created`() {
+        fakeLimit.setIntensityChargeTime(100.0, startTime.toString() to startTime.plusMinutes(45).toString())
+
+        calculator.calculate(
+            CalculationData(
+                OctopusProduct("product"),
+                OctopusTariff("tariff"),
+                startTime,
+                startTime.plusHours(2),
+                45L,
+                intensityLimit = BigDecimal("100")
+            )
+        )
+
+        val spans = spanExporter.finishedSpanItems
+        assertThat(spans.first { it.name == "calculation" }.events.map { it.name }, equalTo(listOf("pricesRetrieved", "intensityRetrieved")))
+    }
 }
 
 class OctopusFake : Octopus {
@@ -300,13 +332,27 @@ class OctopusFake : Octopus {
         tariff: OctopusTariff,
         start: ZonedDateTime,
         end: ZonedDateTime
-    ): Result<Prices, Failed> {
-        TODO("Not yet implemented")
-    }
+    ) = Success(
+        Prices(
+            listOf(
+                PriceData(12.5, 13.0, start, start.plusMinutes(30)),
+                PriceData(12.6, 13.1, start.plusMinutes(30), start.plusMinutes(60)),
+                PriceData(12.7, 13.2, start.plusMinutes(60), start.plusMinutes(90)),
+                PriceData(12.8, 13.3, start.plusMinutes(90), start.plusMinutes(120))
+            )
+        )
+    )
 }
 
 class NationalGridFake : NationalGrid {
-    override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
-        TODO("Not yet implemented")
-    }
+    override fun intensity(from: ZonedDateTime, to: ZonedDateTime) = Success(
+        NationalGridData(
+            listOf(
+                IntensityData(from, from.plusMinutes(30), Intensity(100, null, "")),
+                IntensityData(from.plusMinutes(30), from.plusMinutes(60), Intensity(99, null, "")),
+                IntensityData(from.plusMinutes(60), from.plusMinutes(90), Intensity(101, null, "")),
+                IntensityData(from.plusMinutes(90), from.plusMinutes(120), Intensity(102, null, ""))
+            )
+        )
+    )
 }
