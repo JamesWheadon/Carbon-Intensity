@@ -29,7 +29,7 @@ class Calculator(
     private val openTelemetry: OpenTelemetry = OpenTelemetry.noop()
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
-        val span = openTelemetry.tracerProvider.get(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculation").startSpan()
+        val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculation").startSpan()
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
         span.addEvent("pricesRetrieved")

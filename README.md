@@ -57,3 +57,21 @@ gcloud run services add-iam-policy-binding react-app-service \
     --role="roles/run.invoker" \
     --region=us-central1
 ```
+
+## Running Jaeger locally
+
+### Starting container
+
+```shell
+docker run --rm -it --name jaeger \
+  -e COLLECTOR_OTLP_ENABLED=true \
+  -p 4317:4317 \
+  -p 16686:16686 \
+  jaegertracing/all-in-one:1.68.0
+```
+
+### Stopping container
+
+```shell
+docker stop jaeger
+```

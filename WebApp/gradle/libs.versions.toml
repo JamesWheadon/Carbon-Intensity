@@ -12,9 +12,14 @@ http4k-openTelemetry = { group = "org.http4k", name = "http4k-opentelemetry", ve
 
 result4k = { group = "dev.forkhandles", name = "result4k", version.ref = "forkhandles" }
 
+openTelemetry-api = { group = "io.opentelemetry", name = "opentelemetry-api", version.ref = "openTelemetry" }
+openTelemetry-sdk = { group = "io.opentelemetry", name = "opentelemetry-sdk", version.ref = "openTelemetry" }
+openTelemetry-exporter = { group = "io.opentelemetry", name = "opentelemetry-exporter-otlp", version.ref = "openTelemetry" }
+openTelemetry-semconv = { group = "io.opentelemetry.semconv", name = "opentelemetry-semconv", version.ref = "openTelemetry" }
+openTelemetry-testing = { group = "io.opentelemetry", name = "opentelemetry-sdk-testing", version.ref = "openTelemetry" }
+
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
 
 http4k-hamkrest = { group = "org.http4k", name = "http4k-testing-hamkrest", version.ref = "http4k" }
 http4k-approval = { group = "org.http4k", name = "http4k-testing-approval", version.ref = "http4k" }
 http4k-tracerbullet = { group = "org.http4k", name = "http4k-testing-tracerbullet", version.ref = "http4k" }
-openTelemetry-testing = { group = "io.opentelemetry", name = "opentelemetry-sdk-testing", version.ref="openTelemetry" }

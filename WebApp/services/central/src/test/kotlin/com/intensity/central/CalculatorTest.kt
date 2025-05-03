@@ -1,5 +1,6 @@
 package com.intensity.central
 
+import com.intensity.central.TestOpenTelemetry.Companion.TestProfile.Jaeger
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
@@ -21,10 +22,7 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
-import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -33,15 +31,9 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 class CalculatorTest {
-    private val spanExporter = InMemorySpanExporter.create()
-    private val tracerProvider = SdkTracerProvider.builder()
-        .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
-        .build()
-    private val openTelemetry = OpenTelemetrySdk.builder()
-        .setTracerProvider(tracerProvider)
-        .build()
     private val fakeLimit = FakeLimitCalculator()
     private val fakeWeights = FakeWeightsCalculator()
+    private val openTelemetry = TestOpenTelemetry(Jaeger)
     private val calculator = Calculator(
         OctopusFake(),
         NationalGridFake(),
@@ -86,6 +78,11 @@ class CalculatorTest {
             )
         )
     )
+
+    @AfterEach
+    fun tearDown() {
+        openTelemetry.shutdown()
+    }
 
     @Test
     fun `creates electricity data from prices and intensity data`() {
@@ -313,7 +310,7 @@ class CalculatorTest {
             )
         )
 
-        val spans = spanExporter.finishedSpanItems
+        val spans = openTelemetry.spans()
         assertThat(spans.first { it.name == "calculation" }.events.map { it.name }, equalTo(listOf("pricesRetrieved", "intensityRetrieved")))
     }
 }

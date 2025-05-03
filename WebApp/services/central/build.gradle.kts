@@ -14,6 +14,11 @@ dependencies {
     implementation(libs.http4k.openTelemetry)
     implementation(libs.result4k)
 
+    implementation(libs.openTelemetry.api)
+    implementation(libs.openTelemetry.sdk)
+    implementation(libs.openTelemetry.exporter)
+    implementation(libs.openTelemetry.semconv)
+
     testImplementation(projects.libraries.coreTest)
     testImplementation(testFixtures(projects.clients.nationalGrid))
     testImplementation(testFixtures(projects.clients.octopus))
