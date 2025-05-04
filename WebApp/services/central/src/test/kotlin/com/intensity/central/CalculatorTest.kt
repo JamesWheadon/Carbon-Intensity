@@ -1,6 +1,6 @@
 package com.intensity.central
 
-import com.intensity.central.TestOpenTelemetry.Companion.TestProfile.Jaeger
+import com.intensity.central.TestOpenTelemetry.Companion.TestProfile.Local
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
@@ -33,7 +33,7 @@ import java.time.temporal.ChronoUnit
 class CalculatorTest {
     private val fakeLimit = FakeLimitCalculator()
     private val fakeWeights = FakeWeightsCalculator()
-    private val openTelemetry = TestOpenTelemetry(Jaeger)
+    private val openTelemetry = TestOpenTelemetry(Local)
     private val calculator = Calculator(
         OctopusFake(),
         NationalGridFake(),
@@ -311,7 +311,8 @@ class CalculatorTest {
         )
 
         val spans = openTelemetry.spans()
-        assertThat(spans.first { it.name == "calculation" }.events.map { it.name }, equalTo(listOf("pricesRetrieved", "intensityRetrieved", "electricityDataCreated")))
+        assertThat(spans.first { it.name == "fetch electricity data" }.events.map { it.name }, equalTo(listOf("prices retrieved", "intensity retrieved", "electricity data created")))
+        assertThat(spans.first { it.name == "calculate charge time" }.events.map { it.name }, equalTo(listOf("calculated using intensity limit")))
     }
 }
 

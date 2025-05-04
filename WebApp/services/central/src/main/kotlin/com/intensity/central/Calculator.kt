@@ -16,7 +16,9 @@ import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.flatMapFailure
 import dev.forkhandles.result4k.flatZip
+import dev.forkhandles.result4k.peek
 import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.api.trace.Span
 import org.http4k.metrics.Http4kOpenTelemetry
 import java.math.BigDecimal
 import java.time.ZonedDateTime
@@ -29,21 +31,25 @@ class Calculator(
     private val openTelemetry: OpenTelemetry = OpenTelemetry.noop()
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
-        val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculation").startSpan()
-        val prices = octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end).also {
-            span.addEvent("pricesRetrieved")
-        }
+        val span =
+            openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("fetch electricity data")
+                .startSpan()
+
+        val prices =
+            octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
+                .also {
+                    span.addEvent("prices retrieved")
+                }
         val intensity = nationalGrid.intensity(calculationData.start, calculationData.end).also {
-            span.addEvent("intensityRetrieved")
+            span.addEvent("intensity retrieved")
         }
         return flatZip(prices, intensity) { priceData, intensityData ->
             Success(createElectricityFrom(priceData, intensityData)).also {
-                span.addEvent("electricityDataCreated")
+                span.addEvent("electricity data created")
+                span.end()
             }
         }.flatMap { electricity ->
             getChargeTime(calculationData, electricity)
-        }.also {
-            span.end()
         }
     }
 
@@ -62,35 +68,41 @@ class Calculator(
     fun getChargeTime(
         calculationData: CalculationData,
         electricity: Electricity
-    ) = when {
-        calculationData.intensityLimit != null -> {
-            intensityLimitedChargeTime(
-                electricity,
-                calculationData.intensityLimit,
-                calculationData.time,
-                calculationData.start,
-                calculationData.end
-            )
-        }
+    ): Result<ChargeTime, Failed> {
+        val span =
+            openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculate charge time")
+                .startSpan()
+        span.makeCurrent()
+        return when {
+            calculationData.intensityLimit != null -> {
+                intensityLimitedChargeTime(
+                    electricity,
+                    calculationData.intensityLimit,
+                    calculationData.time,
+                    calculationData.start,
+                    calculationData.end
+                )
+            }
 
-        calculationData.priceLimit != null -> {
-            priceLimitedChargeTime(
-                electricity,
-                calculationData.priceLimit,
-                calculationData.time,
-                calculationData.start,
-                calculationData.end
-            )
-        }
+            calculationData.priceLimit != null -> {
+                priceLimitedChargeTime(
+                    electricity,
+                    calculationData.priceLimit,
+                    calculationData.time,
+                    calculationData.start,
+                    calculationData.end
+                )
+            }
 
-        else -> {
-            weightsCalc.chargeTime(
-                electricity,
-                calculationData.weights!!,
-                calculationData.time,
-                calculationData.start,
-                calculationData.end
-            )
+            else -> {
+                weightsCalc.chargeTime(
+                    electricity,
+                    calculationData.weights!!,
+                    calculationData.time,
+                    calculationData.start,
+                    calculationData.end
+                )
+            }
         }
     }
 
@@ -123,10 +135,16 @@ class Calculator(
         time: Long,
         start: ZonedDateTime,
         end: ZonedDateTime
-    ) = limitCalc.intensityLimit(electricity, intensityLimit, time)
-        .flatMapFailure {
+    ): Result<ChargeTime, Failed> {
+        val span = Span.current()
+        return limitCalc.intensityLimit(electricity, intensityLimit, time).peek {
+            span.addEvent("calculated using intensity limit")
+        }.flatMapFailure {
             weightsCalc.chargeTime(electricity, Weights(0.0, 1.0), time, start, end)
+        }.also {
+            span.end()
         }
+    }
 
     private fun priceLimitedChargeTime(
         electricity: Electricity,
