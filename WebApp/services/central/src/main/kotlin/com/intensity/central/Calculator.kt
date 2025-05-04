@@ -31,6 +31,9 @@ class Calculator(
     private val openTelemetry: OpenTelemetry = OpenTelemetry.noop()
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
+        val parentSpan = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("charge time calculation")
+            .startSpan()
+        parentSpan.makeCurrent()
         val span =
             openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("fetch electricity data")
                 .startSpan()
@@ -50,6 +53,8 @@ class Calculator(
             }
         }.flatMap { electricity ->
             getChargeTime(calculationData, electricity)
+        }.also {
+            parentSpan.end()
         }
     }
 
@@ -70,9 +75,7 @@ class Calculator(
         electricity: Electricity
     ): Result<ChargeTime, Failed> {
         val span =
-            openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculate charge time")
-                .startSpan()
-        span.makeCurrent()
+            openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculate charge time").startSpan()
         return when {
             calculationData.intensityLimit != null -> {
                 intensityLimitedChargeTime(
@@ -80,7 +83,8 @@ class Calculator(
                     calculationData.intensityLimit,
                     calculationData.time,
                     calculationData.start,
-                    calculationData.end
+                    calculationData.end,
+                    span
                 )
             }
 
@@ -134,16 +138,14 @@ class Calculator(
         intensityLimit: BigDecimal,
         time: Long,
         start: ZonedDateTime,
-        end: ZonedDateTime
-    ): Result<ChargeTime, Failed> {
-        val span = Span.current()
-        return limitCalc.intensityLimit(electricity, intensityLimit, time).peek {
-            span.addEvent("calculated using intensity limit")
-        }.flatMapFailure {
-            weightsCalc.chargeTime(electricity, Weights(0.0, 1.0), time, start, end)
-        }.also {
-            span.end()
-        }
+        end: ZonedDateTime,
+        span: Span
+    ) = limitCalc.intensityLimit(electricity, intensityLimit, time).peek {
+        span.addEvent("calculated using intensity limit")
+    }.flatMapFailure {
+        weightsCalc.chargeTime(electricity, Weights(0.0, 1.0), time, start, end)
+    }.also {
+        span.end()
     }
 
     private fun priceLimitedChargeTime(

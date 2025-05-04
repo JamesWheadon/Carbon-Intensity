@@ -311,8 +311,13 @@ class CalculatorTest {
         )
 
         val spans = openTelemetry.spans()
-        assertThat(spans.first { it.name == "fetch electricity data" }.events.map { it.name }, equalTo(listOf("prices retrieved", "intensity retrieved", "electricity data created")))
-        assertThat(spans.first { it.name == "calculate charge time" }.events.map { it.name }, equalTo(listOf("calculated using intensity limit")))
+        val parentSpan = spans.first { it.name == "charge time calculation" }
+        val gettingElectricityDataSpan = spans.first { it.name == "fetch electricity data" }
+        val calculatingChargeTimeSpan = spans.first { it.name == "calculate charge time" }
+        assertThat(gettingElectricityDataSpan.events.map { it.name }, equalTo(listOf("prices retrieved", "intensity retrieved", "electricity data created")))
+        assertThat(gettingElectricityDataSpan.parentSpanId, equalTo(parentSpan.spanId))
+        assertThat(calculatingChargeTimeSpan.events.map { it.name }, equalTo(listOf("calculated using intensity limit")))
+        assertThat(calculatingChargeTimeSpan.parentSpanId, equalTo(parentSpan.spanId))
     }
 }
 
