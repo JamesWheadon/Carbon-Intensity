@@ -30,13 +30,16 @@ class Calculator(
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
         val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculation").startSpan()
-        val prices =
-            octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
-        span.addEvent("pricesRetrieved")
-        val intensity = nationalGrid.intensity(calculationData.start, calculationData.end)
-        span.addEvent("intensityRetrieved")
+        val prices = octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end).also {
+            span.addEvent("pricesRetrieved")
+        }
+        val intensity = nationalGrid.intensity(calculationData.start, calculationData.end).also {
+            span.addEvent("intensityRetrieved")
+        }
         return flatZip(prices, intensity) { priceData, intensityData ->
-            Success(createElectricityFrom(priceData, intensityData))
+            Success(createElectricityFrom(priceData, intensityData)).also {
+                span.addEvent("electricityDataCreated")
+            }
         }.flatMap { electricity ->
             getChargeTime(calculationData, electricity)
         }.also {

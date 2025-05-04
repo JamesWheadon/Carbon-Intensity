@@ -311,7 +311,7 @@ class CalculatorTest {
         )
 
         val spans = openTelemetry.spans()
-        assertThat(spans.first { it.name == "calculation" }.events.map { it.name }, equalTo(listOf("pricesRetrieved", "intensityRetrieved")))
+        assertThat(spans.first { it.name == "calculation" }.events.map { it.name }, equalTo(listOf("pricesRetrieved", "intensityRetrieved", "electricityDataCreated")))
     }
 }
 
