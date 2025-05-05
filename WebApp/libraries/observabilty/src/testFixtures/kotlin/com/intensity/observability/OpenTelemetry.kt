@@ -1,6 +1,6 @@
-package com.intensity.central
+package com.intensity.observability
 
-import com.intensity.central.TestOpenTelemetry.Companion.TestProfile.Jaeger
+import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Jaeger
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.TracerProvider

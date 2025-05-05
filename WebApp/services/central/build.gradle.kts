@@ -22,12 +22,12 @@ dependencies {
     testImplementation(projects.libraries.coreTest)
     testImplementation(testFixtures(projects.clients.nationalGrid))
     testImplementation(testFixtures(projects.clients.octopus))
+    testImplementation(testFixtures(projects.libraries.observabilty))
 
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)
     testImplementation(libs.http4k.approval)
     testImplementation(libs.http4k.tracerbullet)
-    testImplementation(libs.openTelemetry.testing)
 }
 
 jib {
