@@ -44,6 +44,8 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     fun spans(): List<SpanData> = inMemorySpanExporter.finishedSpanItems
 
+    fun spanNames(): List<String> = inMemorySpanExporter.finishedSpanItems.map { it.name }
+
     fun shutdown() {
         openTelemetry.shutdown()
     }
