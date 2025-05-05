@@ -22,4 +22,13 @@ class ManagedOpenTelemetryTest {
 
         assertThat(testOpenTelemetry.spanNames(), equalTo(listOf("testSpan")))
     }
+
+    @Test
+    fun `a span can be ended independently`() {
+        openTelemetry.startSpan("testSpan")
+        openTelemetry.startSpan("spanToNotEnd")
+        openTelemetry.endSpan("testSpan")
+
+        assertThat(testOpenTelemetry.spanNames(), equalTo(listOf("testSpan")))
+    }
 }
