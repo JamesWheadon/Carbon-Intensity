@@ -6,6 +6,7 @@ import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.natpryce.hamkrest.and
 import com.natpryce.hamkrest.assertion.assertThat
+import io.opentelemetry.api.OpenTelemetry
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
@@ -31,7 +32,8 @@ class OpenApiTest {
             FakeOctopus()
         ),
         LimitCalculatorCloud(
-            FakeLimitCalculator()
+            FakeLimitCalculator(),
+            OpenTelemetry.noop()
         ),
         WeightsCalculatorCloud(
             FakeWeightsCalculator()

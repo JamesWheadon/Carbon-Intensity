@@ -9,6 +9,7 @@ import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.octopus.octopusClient
 import com.intensity.openapi.openApi3
+import io.opentelemetry.api.OpenTelemetry
 import org.http4k.client.JavaHttpClient
 import org.http4k.contract.PreFlightExtraction.Companion.None
 import org.http4k.contract.contract
@@ -51,14 +52,16 @@ fun carbonIntensityServer(
     nationalGrid: NationalGrid,
     octopus: Octopus,
     limitCalculator: LimitCalculator,
-    weightsCalculator: WeightsCalculator
-) = carbonIntensity(nationalGrid, octopus, limitCalculator, weightsCalculator).asServer(SunHttp(port))
+    weightsCalculator: WeightsCalculator,
+    openTelemetry: OpenTelemetry = OpenTelemetry.noop()
+) = carbonIntensity(nationalGrid, octopus, limitCalculator, weightsCalculator, openTelemetry).asServer(SunHttp(port))
 
 fun carbonIntensity(
     nationalGrid: NationalGrid,
     octopus: Octopus,
     limitCalculator: LimitCalculator,
-    weightsCalculator: WeightsCalculator
+    weightsCalculator: WeightsCalculator,
+    openTelemetry: OpenTelemetry = OpenTelemetry.noop()
 ) = corsMiddleware
     .then(CatchLensFailure { _: LensFailure ->
         Response(BAD_REQUEST).with(errorResponseLens of InvalidRequestFailed.toErrorResponse())
@@ -69,7 +72,7 @@ fun carbonIntensity(
             intensityChargeTime(nationalGrid, weightsCalculator),
             octopusProducts(octopus),
             octopusPrices(octopus),
-            octopusChargeTimes(Calculator(octopus, nationalGrid, limitCalculator, weightsCalculator))
+            octopusChargeTimes(Calculator(octopus, nationalGrid, limitCalculator, weightsCalculator, openTelemetry))
         )
     )
 
