@@ -52,7 +52,7 @@ class Observability {
 
         app(request)
 
-        val observedSpans = listOf("fetch electricity data", "charge time calculated", "calculate charge time", "charge time calculation")
+        val observedSpans = listOf("fetch electricity data", "charge time calculated", "POST calculate/intensity/{limit}", "calculate charge time", "charge time calculation")
         assertThat(openTelemetry.spanNames(), equalTo(observedSpans))
     }
 }

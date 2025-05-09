@@ -7,15 +7,15 @@ import com.intensity.core.chargeTimeLens
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
-import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.context.Context
-import io.opentelemetry.context.propagation.TextMapSetter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Status
+import org.http4k.core.then
 import org.http4k.core.with
+import org.http4k.filter.ClientFilters
+import org.http4k.filter.OpenTelemetryTracing
 import java.math.BigDecimal
 
 interface LimitCalculator {
@@ -25,19 +25,11 @@ interface LimitCalculator {
 
 class LimitCalculatorCloud(val httpHandler: HttpHandler, private val openTelemetry: OpenTelemetry = OpenTelemetry.noop()) : LimitCalculator {
     override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
-        val headers = mutableMapOf<String, String>()
-
-        val setter = TextMapSetter<MutableMap<String, String>> { carrier, key, value ->
-            carrier?.set(key, value)
-        }
-
-        val propagator = GlobalOpenTelemetry.getPropagators().textMapPropagator
-        propagator.inject(Context.current(), headers, setter)
-        val response = httpHandler(
+        val response = ClientFilters.OpenTelemetryTracing(openTelemetry).then(httpHandler)(
             Request(
                 Method.POST,
                 "/calculate/intensity/$limit"
-            ).headers(headers.map { it.key to it.value }).with(
+            ).with(
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
                     electricity,
