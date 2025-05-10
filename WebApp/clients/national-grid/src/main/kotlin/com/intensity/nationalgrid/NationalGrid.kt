@@ -34,7 +34,7 @@ class NationalGridCloud(private val httpHandler: HttpHandler, private val openTe
     }
 }
 
-fun spanName(): (Request) -> String = {
+private fun spanName(): (Request) -> String = {
     "Fetch Carbon Intensity"
 }
 
