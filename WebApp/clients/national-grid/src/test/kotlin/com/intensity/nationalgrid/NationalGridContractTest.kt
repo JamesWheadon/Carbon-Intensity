@@ -1,6 +1,8 @@
 package com.intensity.nationalgrid
 
 import com.intensity.coretest.isFailure
+import com.intensity.observability.TestOpenTelemetry
+import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.valueOrNull
@@ -35,7 +37,8 @@ abstract class NationalGridContractTest {
 
 class FakeNationalGridTest : NationalGridContractTest() {
     private val fakeNationalGrid = FakeNationalGrid()
-    override val nationalGrid = NationalGridCloud(fakeNationalGrid)
+    private val testOpenTelemetry = TestOpenTelemetry(Local)
+    override val nationalGrid = NationalGridCloud(fakeNationalGrid, testOpenTelemetry)
 
     @Test
     fun `responds with correct failure if error getting intensity data for time period`() {
@@ -43,6 +46,13 @@ class FakeNationalGridTest : NationalGridContractTest() {
         val response = nationalGrid.intensity(time, time.plusHours(6))
 
         assertThat(response, isFailure(NationalGridFailed))
+    }
+
+    @Test
+    fun `creates a span with data about the call`() {
+        nationalGrid.intensity(time, time.plusHours(6))
+
+        assertThat(testOpenTelemetry.spanNames(), equalTo(listOf("Fetch Carbon Intensity")))
     }
 }
 

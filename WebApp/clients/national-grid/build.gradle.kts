@@ -9,7 +9,14 @@ dependencies {
     implementation(libs.http4k.jackson)
     implementation(libs.result4k)
 
+    implementation(libs.http4k.openTelemetry)
+    implementation(libs.openTelemetry.api)
+    implementation(libs.openTelemetry.sdk)
+    implementation(libs.openTelemetry.exporter)
+    implementation(libs.openTelemetry.semconv)
+
     testImplementation(projects.libraries.coreTest)
+    testImplementation(testFixtures(projects.libraries.observabilty))
 
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)
