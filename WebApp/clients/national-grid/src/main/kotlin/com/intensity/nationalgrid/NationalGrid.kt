@@ -26,7 +26,12 @@ class NationalGridCloud(private val httpHandler: HttpHandler, private val openTe
     override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
         val start = from.plusMinutes(30 - from.minute % 30L)
         val end = to.plusMinutes((30 - (to.minute % 30L)) % 30L)
-        val response = ClientFilters.OpenTelemetryTracing(openTelemetry, spanName()).then(httpHandler)(Request(GET, "/intensity/$start/$end"))
+        val tracingFilter = ClientFilters.OpenTelemetryTracing(
+            openTelemetry,
+            spanName(),
+            spanCreationMutator = { spanBuilder -> spanBuilder.setAttribute("target.name", "National Grid") }
+        )
+        val response = tracingFilter.then(httpHandler)(Request(GET, "/intensity/$start/$end"))
         return when (response.status) {
             OK -> Success(nationalGridDataLens(response))
             else -> Failure(NationalGridFailed)

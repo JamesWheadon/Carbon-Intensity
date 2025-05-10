@@ -67,7 +67,8 @@ class FakeNationalGridTest : NationalGridContractTest() {
                 listOf(
                     create<String>("http.status_code", STRING) to "200",
                     create<String>("http.url", STRING) to "/intensity/${time.toLocalDate()}T00:30Z/${time.toLocalDate()}T06:00Z",
-                    create<String>("http.method", STRING) to "GET"
+                    create<String>("http.method", STRING) to "GET",
+                    create<String>("target.name", STRING) to "National Grid"
                 )
             )
         )
@@ -89,6 +90,6 @@ private fun <T, E> containsEntries(expected: List<Pair<T, E>>) = object : Matche
         }
     }
 
-    override val description: String get() = "is equal to ${describe(expected)}"
-    override val negatedDescription: String get() = "is not equal to ${describe(expected)}"
+    override val description: String get() = "contains entries ${describe(expected)}"
+    override val negatedDescription: String get() = "does not contain entries ${describe(expected)}"
 }
