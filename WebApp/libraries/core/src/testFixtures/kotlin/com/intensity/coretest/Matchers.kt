@@ -5,24 +5,12 @@ import com.natpryce.hamkrest.MatchResult
 import com.natpryce.hamkrest.MatchResult.Match
 import com.natpryce.hamkrest.MatchResult.Mismatch
 import com.natpryce.hamkrest.Matcher
-import com.natpryce.hamkrest.and
 import com.natpryce.hamkrest.describe
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import dev.forkhandles.result4k.get
 import org.http4k.core.Response
-import java.time.ZonedDateTime
-
-const val TIME_DIFFERENCE_TOLERANCE = 5L
-
-fun inTimeRange(expectedStart: ZonedDateTime, expectedEnd: ZonedDateTime): Matcher<ZonedDateTime> {
-    return Matcher(
-        ZonedDateTime::isAfter, expectedStart.minusSeconds(TIME_DIFFERENCE_TOLERANCE)
-    ) and Matcher(
-        ZonedDateTime::isBefore, expectedEnd.plusSeconds(TIME_DIFFERENCE_TOLERANCE)
-    )
-}
 
 fun <T, E> isSuccess() = object : Matcher<Result<T, E>> {
     override fun invoke(actual: Result<T, E>) =
@@ -83,4 +71,18 @@ fun hasBody(expected: String) = object : Matcher<Response> {
 
     override val description: String get() = "is equal to ${describe(expected)}"
     override val negatedDescription: String get() = "is not equal to ${describe(expected)}"
+}
+
+fun <T, E> containsEntries(expected: List<Pair<T, E>>) = object : Matcher<Map<T, E>> {
+    override fun invoke(actual: Map<T, E>): MatchResult {
+        val entries = actual.entries.map { it.key to it.value }
+        return if (expected.all { entries.contains(it) }) {
+            Match
+        } else {
+            Mismatch("was: ${describe(actual)}")
+        }
+    }
+
+    override val description: String get() = "contains entries ${describe(expected)}"
+    override val negatedDescription: String get() = "does not contain entries ${describe(expected)}"
 }
