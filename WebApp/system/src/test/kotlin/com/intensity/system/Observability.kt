@@ -7,12 +7,13 @@ import com.intensity.limitcalculator.limitCalculatorApp
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.observability.TestOpenTelemetry
-import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Jaeger
+import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
+import org.http4k.contract.openapi.OpenAPIJackson.asJsonObject
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.junit.jupiter.api.Test
@@ -21,11 +22,11 @@ import java.time.ZonedDateTime
 class Observability {
     private val nationalGridFake = FakeNationalGrid()
     private val octopusFake = FakeOctopus()
-    private val openTelemetry = TestOpenTelemetry(Jaeger)
+    private val openTelemetry = TestOpenTelemetry(Local)
     private val app = carbonIntensity(
-        NationalGridCloud(nationalGridFake),
+        NationalGridCloud(nationalGridFake, openTelemetry),
         OctopusCloud(octopusFake),
-        LimitCalculatorCloud(limitCalculatorApp(openTelemetry)),
+        LimitCalculatorCloud(limitCalculatorApp(openTelemetry), openTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
         openTelemetry
     )
@@ -52,7 +53,8 @@ class Observability {
 
         app(request)
 
-        val observedSpans = listOf("fetch electricity data", "charge time calculated", "POST calculate/intensity/{limit}", "calculate charge time", "charge time calculation")
+        val observedSpans = listOf("Fetch Carbon Intensity", "fetch electricity data", "charge time calculated", "POST calculate/intensity/{limit}", "POST", "calculate charge time", "charge time calculation")
+        println(openTelemetry.spans().asJsonObject())
         assertThat(openTelemetry.spanNames(), equalTo(observedSpans))
     }
 }

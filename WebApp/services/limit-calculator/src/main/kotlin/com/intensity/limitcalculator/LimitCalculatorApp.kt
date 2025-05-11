@@ -25,10 +25,10 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import java.time.ZonedDateTime
 
-fun limitCalculatorApp(openTelemetry: OpenTelemetry = OpenTelemetry.noop()) = handleLensFailures()
+fun limitCalculatorApp(openTelemetry: OpenTelemetry) = handleLensFailures()
     .then(limitRoutes(openTelemetry))
 
-private fun limitRoutes(openTelemetry: OpenTelemetry = OpenTelemetry.noop()) = routes(
+private fun limitRoutes(openTelemetry: OpenTelemetry) = routes(
     "/calculate/intensity/{limit}" bind POST to ClientFilters.OpenTelemetryTracing(openTelemetry).then { request ->
         val span =
             openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("charge time calculated").startSpan()

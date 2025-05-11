@@ -23,21 +23,24 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(JsonApprovalTest::class)
 class OpenApiTest {
     private val client = JavaHttpClient()
+    private val openTelemetry = OpenTelemetry.noop()
     private val server = carbonIntensityServer(
         1000,
         NationalGridCloud(
-            FakeNationalGrid()
+            FakeNationalGrid(),
+            openTelemetry
         ),
         OctopusCloud(
             FakeOctopus()
         ),
         LimitCalculatorCloud(
             FakeLimitCalculator(),
-            OpenTelemetry.noop()
+            openTelemetry
         ),
         WeightsCalculatorCloud(
             FakeWeightsCalculator()
-        )
+        ),
+        openTelemetry
     )
 
     @BeforeEach

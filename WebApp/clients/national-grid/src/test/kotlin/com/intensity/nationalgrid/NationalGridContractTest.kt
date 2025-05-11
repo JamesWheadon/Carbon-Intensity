@@ -7,6 +7,7 @@ import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.valueOrNull
+import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.AttributeType.STRING
 import io.opentelemetry.api.internal.InternalAttributeKeyImpl.create
 import org.junit.jupiter.api.Disabled
@@ -73,5 +74,5 @@ class FakeNationalGridTest : NationalGridContractTest() {
 
 @Disabled
 class NationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGridCloud(nationalGridClient())
+    override val nationalGrid = NationalGridCloud(nationalGridClient(), OpenTelemetry.noop())
 }

@@ -38,7 +38,7 @@ class CalculatorTest {
     private val calculator = Calculator(
         OctopusFake(),
         NationalGridFake(),
-        LimitCalculatorCloud(fakeLimit),
+        LimitCalculatorCloud(fakeLimit, openTelemetry),
         WeightsCalculatorCloud(fakeWeights),
         openTelemetry
     )

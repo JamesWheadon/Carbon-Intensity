@@ -31,12 +31,14 @@ fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 9000
     val limitCalculatorUrl = "http://localhost:9001"
     val weightsCalculatorUrl = "http://localhost:9002"
+    val openTelemetry = OpenTelemetry.noop()
     val server = carbonIntensityServer(
         port,
-        NationalGridCloud(nationalGridClient()),
+        NationalGridCloud(nationalGridClient(), openTelemetry),
         OctopusCloud(octopusClient()),
-        LimitCalculatorCloud(calculatorClient(limitCalculatorUrl)),
-        WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl))
+        LimitCalculatorCloud(calculatorClient(limitCalculatorUrl), openTelemetry),
+        WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl)),
+        openTelemetry
     ).start()
     println("Server started on " + server.port())
 }
@@ -53,7 +55,7 @@ fun carbonIntensityServer(
     octopus: Octopus,
     limitCalculator: LimitCalculator,
     weightsCalculator: WeightsCalculator,
-    openTelemetry: OpenTelemetry = OpenTelemetry.noop()
+    openTelemetry: OpenTelemetry
 ) = carbonIntensity(nationalGrid, octopus, limitCalculator, weightsCalculator, openTelemetry).asServer(SunHttp(port))
 
 fun carbonIntensity(
@@ -61,7 +63,7 @@ fun carbonIntensity(
     octopus: Octopus,
     limitCalculator: LimitCalculator,
     weightsCalculator: WeightsCalculator,
-    openTelemetry: OpenTelemetry = OpenTelemetry.noop()
+    openTelemetry: OpenTelemetry
 ) = corsMiddleware
     .then(CatchLensFailure { _: LensFailure ->
         Response(BAD_REQUEST).with(errorResponseLens of InvalidRequestFailed.toErrorResponse())

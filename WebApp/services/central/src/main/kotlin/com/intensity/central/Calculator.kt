@@ -28,7 +28,7 @@ class Calculator(
     private val nationalGrid: NationalGrid,
     private val limitCalc: LimitCalculator,
     private val weightsCalc: WeightsCalculator,
-    private val openTelemetry: OpenTelemetry = OpenTelemetry.noop()
+    private val openTelemetry: OpenTelemetry
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
         val parentSpan = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("charge time calculation")
