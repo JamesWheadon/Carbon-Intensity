@@ -9,7 +9,7 @@ dependencies {
     implementation(libs.http4k.jackson)
     implementation(libs.result4k)
 
-    testImplementation(projects.libraries.coreTest)
+    testImplementation(testFixtures(projects.libraries.core))
 
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)

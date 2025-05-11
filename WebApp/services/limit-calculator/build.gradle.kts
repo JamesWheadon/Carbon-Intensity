@@ -15,7 +15,7 @@ dependencies {
     implementation(libs.openTelemetry.exporter)
     implementation(libs.openTelemetry.semconv)
 
-    testImplementation(projects.libraries.coreTest)
+    testImplementation(testFixtures(projects.libraries.core))
 
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)

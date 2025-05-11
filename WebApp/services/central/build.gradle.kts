@@ -19,7 +19,7 @@ dependencies {
     implementation(libs.openTelemetry.exporter)
     implementation(libs.openTelemetry.semconv)
 
-    testImplementation(projects.libraries.coreTest)
+    testImplementation(testFixtures(projects.libraries.core))
     testImplementation(testFixtures(projects.clients.nationalGrid))
     testImplementation(testFixtures(projects.clients.octopus))
     testImplementation(testFixtures(projects.libraries.observabilty))

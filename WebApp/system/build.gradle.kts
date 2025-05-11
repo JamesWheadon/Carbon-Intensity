@@ -7,7 +7,7 @@ dependencies {
     testImplementation(projects.services.limitCalculator)
     testImplementation(projects.services.weightedCalculator)
     testImplementation(projects.libraries.core)
-    testImplementation(projects.libraries.coreTest)
+    testImplementation(testFixtures(projects.libraries.core))
     testImplementation(testFixtures(projects.clients.nationalGrid))
     testImplementation(testFixtures(projects.clients.octopus))
     testImplementation(testFixtures(projects.libraries.observabilty))
