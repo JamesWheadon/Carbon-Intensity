@@ -13,10 +13,10 @@ import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.http4k.contract.openapi.OpenAPIJackson.asJsonObject
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.time.ZonedDateTime
 
 class Observability {
@@ -32,7 +32,7 @@ class Observability {
     )
 
     @Test
-    fun `can observe a customer journey retrieving an intensity limited charge time`() {
+    fun `can observe a customer journey retrieving an intensity limited charge time`(testInfo: TestInfo) {
         nationalGridFake.setDateData(
             ZonedDateTime.parse("2025-04-10T09:00:00Z"),
             listOf(101, 101, 101, 101, 101, 101, 100, 99, 100, 100, 100, 100, 100, 100, 90, 90)
@@ -54,7 +54,7 @@ class Observability {
         app(request)
 
         val observedSpans = listOf("Fetch Carbon Intensity", "fetch electricity data", "charge time calculated", "POST calculate/intensity/{limit}", "POST", "calculate charge time", "charge time calculation")
-        println(openTelemetry.spans().asJsonObject())
         assertThat(openTelemetry.spanNames(), equalTo(observedSpans))
+        openTelemetry.spanDiagram(testInfo.displayName)
     }
 }

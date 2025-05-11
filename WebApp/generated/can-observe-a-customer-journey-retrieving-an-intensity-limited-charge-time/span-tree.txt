@@ -1,0 +1,7 @@
+charge time calculation
+├── Fetch Carbon Intensity
+├── fetch electricity data
+├── POST
+│   └── POST calculate/intensity/{limit}
+│       └── charge time calculated
+└── calculate charge time

@@ -13,7 +13,7 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry) {
     }
 
     fun endSpan(spanName: String) {
-        spans.removeFirst { it.name == spanName }.span.end()
+        spans.removeAt(spans.indexOfFirst { it: ManagedSpan -> it.name == spanName }).span.end()
     }
 
     fun endAllSpans() {
@@ -23,9 +23,3 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry) {
 
 data class ManagedSpan(val name: String, val span: Span)
 
-fun <T> MutableList<T>.removeFirst(predicate: (T) -> Boolean): T =
-    if (isEmpty()) {
-        throw NoSuchElementException("List is empty.")
-    } else {
-        removeAt(this.indexOfFirst(predicate))
-    }
