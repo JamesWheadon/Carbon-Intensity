@@ -11,8 +11,6 @@ import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.junit.jupiter.api.Test
@@ -23,10 +21,11 @@ class Observability {
     private val nationalGridFake = FakeNationalGrid()
     private val octopusFake = FakeOctopus()
     private val openTelemetry = TestOpenTelemetry(Local)
+    private val secondOpenTelemetry = TestOpenTelemetry(Local)
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, openTelemetry),
         OctopusCloud(octopusFake),
-        LimitCalculatorCloud(limitCalculatorApp(openTelemetry), openTelemetry),
+        LimitCalculatorCloud(limitCalculatorApp(secondOpenTelemetry), openTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
         openTelemetry
     )
@@ -53,8 +52,6 @@ class Observability {
 
         app(request)
 
-        val observedSpans = listOf("Fetch Carbon Intensity", "fetch electricity data", "charge time calculated", "POST calculate/intensity/{limit}", "POST", "calculate charge time", "charge time calculation")
-        assertThat(openTelemetry.spanNames(), equalTo(observedSpans))
-        openTelemetry.approveSpanDiagram(testInfo.displayName)
+        openTelemetry.approveSpanDiagram(testInfo.displayName, secondOpenTelemetry)
     }
 }

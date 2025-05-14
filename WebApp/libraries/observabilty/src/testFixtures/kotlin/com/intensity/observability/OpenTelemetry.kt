@@ -16,6 +16,7 @@ import io.opentelemetry.semconv.ServiceAttributes
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+@Suppress("unused")
 class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
     private val serviceNameResource =
         Resource.create(Attributes.of(ServiceAttributes.SERVICE_NAME, "otel-jaeger-example-kotlin"))
@@ -43,15 +44,28 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     fun spans(): List<SpanData> = inMemorySpanExporter.finishedSpanItems
 
-    fun spanNames(): List<String> = inMemorySpanExporter.finishedSpanItems.map { it.name }
+    fun spans(vararg telemetry: TestOpenTelemetry): List<SpanData> = inMemorySpanExporter.finishedSpanItems.plus(telemetry.flatMap { it.spans() } )
+
+    fun spanNames(): List<String> = spans().map { it.name }
+
+    fun spanNames(vararg telemetry: TestOpenTelemetry): List<String> = spans(*telemetry).map { it.name }
 
     fun shutdown() {
         openTelemetry.shutdown()
     }
 
     fun approveSpanDiagram(testName: String) {
-        val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val spans = spans().toMutableList()
+        approveSpanDiagram(spans, testName)
+    }
+
+    fun approveSpanDiagram(testName: String, vararg telemetry: TestOpenTelemetry) {
+        val spans = spans(*telemetry).toMutableList()
+        approveSpanDiagram(spans, testName)
+    }
+
+    private fun approveSpanDiagram(spans: MutableList<SpanData>, testName: String) {
+        val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val roots = mutableListOf<SpanData>()
         spans.filter { it.parentSpanId == "0000000000000000" }.forEach {
             spanTree[it] = mutableListOf()
