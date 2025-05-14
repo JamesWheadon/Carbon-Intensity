@@ -35,8 +35,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             .addSpanProcessor(SimpleSpanProcessor.create(inMemorySpanExporter))
             .build()
     }
-    private val openTelemetry =
-        OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build()
+    private val openTelemetry = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build()
 
     override fun getTracerProvider(): TracerProvider = openTelemetry.tracerProvider
 
@@ -50,7 +49,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         openTelemetry.shutdown()
     }
 
-    fun spanDiagram(testName: String) {
+    fun approveSpanDiagram(testName: String) {
         val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val spans = spans().toMutableList()
         val roots = mutableListOf<SpanData>()
@@ -67,10 +66,24 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
                     spans.remove(span)
                 }
         }
-        File("../generated").mkdir()
-        val directory = "../generated/${testName.removeSuffix("(TestInfo)").replace(" ", "-")}"
-        File(directory).mkdir()
-        File("$directory/span-tree.txt").writeText(roots.joinToString("\n") { it.toTreeNode(spanTree).toString() })
+        val spanDiagram = roots.joinToString("\n") { it.toTreeNode(spanTree).toString() }
+        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
+        val directory = "../generated/$fileName"
+        val approvedOutput = File("$directory/span-tree.txt")
+
+        if (approvedOutput.exists()) {
+            val approvedText = approvedOutput.readText()
+            if (approvedText == spanDiagram) {
+                return
+            } else {
+                File("$directory/span-tree-actual.txt").writeText(spanDiagram)
+            }
+        } else {
+            File("../generated").mkdir()
+            File(directory).mkdir()
+            File("$directory/span-tree-actual.txt").writeText(spanDiagram)
+        }
+        throw AssertionError("Span diagram is not approved")
     }
 
     @Suppress("unused")

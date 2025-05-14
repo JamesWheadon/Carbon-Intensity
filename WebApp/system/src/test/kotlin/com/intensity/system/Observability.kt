@@ -55,6 +55,6 @@ class Observability {
 
         val observedSpans = listOf("Fetch Carbon Intensity", "fetch electricity data", "charge time calculated", "POST calculate/intensity/{limit}", "POST", "calculate charge time", "charge time calculation")
         assertThat(openTelemetry.spanNames(), equalTo(observedSpans))
-        openTelemetry.spanDiagram(testInfo.displayName)
+        openTelemetry.approveSpanDiagram(testInfo.displayName)
     }
 }
