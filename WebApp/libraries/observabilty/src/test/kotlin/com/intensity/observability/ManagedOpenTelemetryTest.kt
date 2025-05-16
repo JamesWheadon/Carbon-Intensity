@@ -35,4 +35,17 @@ class ManagedOpenTelemetryTest {
         val spanData = testOpenTelemetry.spans().first()
         assertThat(spanData.events, equalTo(listOf(SpanEvent("test-event"))))
     }
+
+    @Test
+    fun `sets a span as the current active span`() {
+        val span = openTelemetry.span("testSpan")
+        span.makeCurrent()
+        val childSpan = openTelemetry.span("childSpan")
+        childSpan.end()
+        span.end()
+
+        val parentSpanData = testOpenTelemetry.spans().first { it.name == "testSpan" }
+        val childSpanData = testOpenTelemetry.spans().first { it.name == "childSpan" }
+        assertThat(childSpanData.parentSpanId, equalTo(parentSpanData.spanId))
+    }
 }
