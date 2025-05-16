@@ -2,6 +2,9 @@ package com.intensity.observability
 
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
+import io.opentelemetry.context.Context
+import io.opentelemetry.context.propagation.TextMapSetter
 import org.http4k.core.Filter
 import org.http4k.metrics.Http4kOpenTelemetry
 
@@ -29,6 +32,20 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
                 }
             }
         }
+    }
+
+    fun propagateTrace(): Filter {
+        return Filter { next ->
+            { request ->
+                val headers = request.headers.toMutableList()
+                W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, setter)
+                next(request.headers(headers))
+            }
+        }
+    }
+
+    private val setter = TextMapSetter<MutableList<Pair<String, String?>>> { headers, key, value ->
+        headers?.add(key to value)
     }
 }
 
