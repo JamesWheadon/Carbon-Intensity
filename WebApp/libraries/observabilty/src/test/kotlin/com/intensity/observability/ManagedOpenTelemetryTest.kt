@@ -25,4 +25,14 @@ class ManagedOpenTelemetryTest {
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.instrumentationName, equalTo("http4k"))
     }
+
+    @Test
+    fun `can add an event to a span`() {
+        val span = openTelemetry.span("testSpan")
+        span.addEvent("test-event")
+        span.end()
+
+        val spanData = testOpenTelemetry.spans().first()
+        assertThat(spanData.events, equalTo(listOf(SpanEvent("test-event"))))
+    }
 }

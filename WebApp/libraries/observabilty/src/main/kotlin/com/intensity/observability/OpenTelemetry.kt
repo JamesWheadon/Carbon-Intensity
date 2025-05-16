@@ -18,4 +18,8 @@ class ManagedSpan(private val span: Span) {
     fun end() {
         span.end()
     }
+
+    fun addEvent(eventName: String) {
+        span.addEvent(eventName)
+    }
 }
