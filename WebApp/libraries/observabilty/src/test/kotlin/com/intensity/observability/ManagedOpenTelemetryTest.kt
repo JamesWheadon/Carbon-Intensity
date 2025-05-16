@@ -3,12 +3,14 @@ package com.intensity.observability
 import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
+import com.natpryce.hamkrest.hasSize
+import io.opentelemetry.api.common.AttributeKey
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class ManagedOpenTelemetryTest {
     private val testOpenTelemetry = TestOpenTelemetry(Local)
-    private val openTelemetry = ManagedOpenTelemetry(testOpenTelemetry)
+    private val openTelemetry = ManagedOpenTelemetry(testOpenTelemetry, "test-service")
 
     @AfterEach
     fun tearDown() {
@@ -17,18 +19,11 @@ class ManagedOpenTelemetryTest {
 
     @Test
     fun `creates a span with the provided name`() {
-        openTelemetry.startSpan("testSpan")
-        openTelemetry.endAllSpans()
+        openTelemetry.span("testSpan").end()
 
-        assertThat(testOpenTelemetry.spanNames(), equalTo(listOf("testSpan")))
-    }
-
-    @Test
-    fun `a span can be ended independently`() {
-        openTelemetry.startSpan("testSpan")
-        openTelemetry.startSpan("spanToNotEnd")
-        openTelemetry.endSpan("testSpan")
-
-        assertThat(testOpenTelemetry.spanNames(), equalTo(listOf("testSpan")))
+        assertThat(testOpenTelemetry.spans(), hasSize(equalTo(1)))
+        val spanData = testOpenTelemetry.spans().first()
+        assertThat(spanData.attributes.get(AttributeKey.stringKey("service.name")), equalTo("test-service"))
+        assertThat(spanData.instrumentationScopeInfo.name, equalTo("http4k"))
     }
 }
