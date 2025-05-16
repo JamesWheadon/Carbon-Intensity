@@ -4,7 +4,6 @@ import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.hasSize
-import io.opentelemetry.api.common.AttributeKey
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -23,7 +22,7 @@ class ManagedOpenTelemetryTest {
 
         assertThat(testOpenTelemetry.spans(), hasSize(equalTo(1)))
         val spanData = testOpenTelemetry.spans().first()
-        assertThat(spanData.attributes.get(AttributeKey.stringKey("service.name")), equalTo("test-service"))
-        assertThat(spanData.instrumentationScopeInfo.name, equalTo("http4k"))
+        assertThat(spanData.attributes["service.name"], equalTo("test-service"))
+        assertThat(spanData.instrumentationName, equalTo("http4k"))
     }
 }

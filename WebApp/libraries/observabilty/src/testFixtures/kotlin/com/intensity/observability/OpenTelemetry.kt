@@ -10,7 +10,6 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import io.opentelemetry.semconv.ServiceAttributes
 import java.io.File
@@ -42,9 +41,18 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     override fun getPropagators(): ContextPropagators = openTelemetry.propagators
 
-    fun spans(): List<SpanData> = inMemorySpanExporter.finishedSpanItems
+    fun spans(): List<SpanData> = inMemorySpanExporter.finishedSpanItems.map { span ->
+        SpanData(
+            span.name,
+            span.spanId,
+            span.parentSpanId,
+            span.attributes.asMap().mapKeys { key -> key.key.key },
+            span.events.map { SpanEvent(it.name) },
+            span.instrumentationScopeInfo.name
+        )
+    }
 
-    fun spans(vararg telemetry: TestOpenTelemetry): List<SpanData> = inMemorySpanExporter.finishedSpanItems.plus(telemetry.flatMap { it.spans() } )
+    fun spans(vararg telemetry: TestOpenTelemetry): List<SpanData> = spans().plus(telemetry.flatMap { it.spans() } )
 
     fun spanNames(): List<String> = spans().map { it.name }
 
@@ -135,3 +143,6 @@ class TreeNode(private val name: String, private val children: List<TreeNode>) {
         }
     }
 }
+
+data class SpanData(val name: String, val spanId: String, val parentSpanId: String, val attributes: Map<String, Any>, val events: List<SpanEvent>, val instrumentationName: String)
+data class SpanEvent(val name: String)

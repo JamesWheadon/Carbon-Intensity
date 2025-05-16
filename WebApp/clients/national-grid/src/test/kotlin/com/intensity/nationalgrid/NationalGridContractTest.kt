@@ -8,8 +8,6 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.valueOrNull
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.common.AttributeType.STRING
-import io.opentelemetry.api.internal.InternalAttributeKeyImpl.create
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -59,13 +57,13 @@ class FakeNationalGridTest : NationalGridContractTest() {
         assertThat(testOpenTelemetry.spanNames(), equalTo(listOf("Fetch Carbon Intensity")))
         val fetchSpan = testOpenTelemetry.spans().first { it.name == "Fetch Carbon Intensity" }
         assertThat(
-            fetchSpan.attributes.asMap(),
+            fetchSpan.attributes,
             containsEntries(
                 listOf(
-                    create<String>("http.status_code", STRING) to "200",
-                    create<String>("http.url", STRING) to "/intensity/${time.toLocalDate()}T00:30Z/${time.toLocalDate()}T06:00Z",
-                    create<String>("http.method", STRING) to "GET",
-                    create<String>("target.name", STRING) to "National Grid"
+                    "http.status_code" to "200",
+                    "http.url" to "/intensity/${time.toLocalDate()}T00:30Z/${time.toLocalDate()}T06:00Z",
+                    "http.method" to "GET",
+                    "target.name" to "National Grid"
                 )
             )
         )
