@@ -1,6 +1,5 @@
 package com.intensity.observability
 
-import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Jaeger
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.TracerProvider
@@ -24,7 +23,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         .setEndpoint("http://localhost:4317")
         .setTimeout(30, TimeUnit.SECONDS)
         .build()
-    private val tracerProvider = if (profile == Jaeger) {
+    private val tracerProvider = if (profile == TestProfile.Jaeger) {
         SdkTracerProvider.builder()
             .addSpanProcessor(SimpleSpanProcessor.create(inMemorySpanExporter))
             .addSpanProcessor(SimpleSpanProcessor.create(jaegerOtlpExporter))
@@ -107,14 +106,11 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         }
         throw AssertionError("Span diagram is not approved")
     }
+}
 
-    @Suppress("unused")
-    companion object {
-        enum class TestProfile {
-            Local,
-            Jaeger
-        }
-    }
+enum class TestProfile {
+    Local,
+    Jaeger
 }
 
 private fun SpanData.toTreeNode(spanTree: MutableMap<SpanData, MutableList<SpanData>>): TreeNode {

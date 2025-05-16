@@ -3,7 +3,7 @@ package com.intensity.nationalgrid
 import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isFailure
 import com.intensity.observability.TestOpenTelemetry
-import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
+import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.valueOrNull

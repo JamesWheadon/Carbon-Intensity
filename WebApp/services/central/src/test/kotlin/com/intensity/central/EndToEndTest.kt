@@ -3,7 +3,7 @@ package com.intensity.central
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.observability.TestOpenTelemetry
-import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
+import com.intensity.observability.TestProfile.Local
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import org.http4k.core.Filter

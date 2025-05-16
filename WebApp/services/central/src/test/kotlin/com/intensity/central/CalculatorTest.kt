@@ -11,7 +11,7 @@ import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
 import com.intensity.observability.TestOpenTelemetry
-import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
+import com.intensity.observability.TestProfile.Local
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusProduct
 import com.intensity.octopus.OctopusTariff

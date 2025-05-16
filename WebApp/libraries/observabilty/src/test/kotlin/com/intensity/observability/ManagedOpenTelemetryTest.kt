@@ -1,6 +1,6 @@
 package com.intensity.observability
 
-import com.intensity.observability.TestOpenTelemetry.Companion.TestProfile.Local
+import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.hasSize
