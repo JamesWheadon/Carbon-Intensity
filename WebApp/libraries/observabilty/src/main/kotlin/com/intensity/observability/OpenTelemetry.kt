@@ -37,15 +37,15 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     fun propagateTrace(): Filter {
         return Filter { next ->
             { request ->
-                val headers = request.headers.toMutableList()
+                val headers = request.headers.toMap().toMutableMap()
                 W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, setter)
-                next(request.headers(headers))
+                next(request.headers(headers.toList()))
             }
         }
     }
 
-    private val setter = TextMapSetter<MutableList<Pair<String, String?>>> { headers, key, value ->
-        headers?.add(key to value)
+    private val setter = TextMapSetter<MutableMap<String, String?>> { headers, key, value ->
+        headers?.put(key, value)
     }
 }
 
