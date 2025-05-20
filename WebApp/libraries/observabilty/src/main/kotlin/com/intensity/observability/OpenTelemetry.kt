@@ -4,6 +4,7 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
+import io.opentelemetry.context.propagation.TextMapGetter
 import io.opentelemetry.context.propagation.TextMapSetter
 import org.http4k.core.Filter
 import org.http4k.metrics.Http4kOpenTelemetry
@@ -38,14 +39,32 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         return Filter { next ->
             { request ->
                 val headers = request.headers.toMap().toMutableMap()
-                W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, setter)
+                W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, Setter)
                 next(request.headers(headers.toList()))
             }
         }
     }
 
-    private val setter = TextMapSetter<MutableMap<String, String?>> { headers, key, value ->
-        headers?.put(key, value)
+    fun receiveTrace(): Filter {
+        return Filter { next ->
+            { request ->
+                val headers = request.headers.toMap().toMutableMap()
+                W3CTraceContextPropagator.getInstance().extract(Context.current(), headers, Getter).makeCurrent()
+                next(request)
+            }
+        }
+    }
+
+    private object Setter : TextMapSetter<MutableMap<String, String?>> {
+        override fun set(carrier: MutableMap<String, String?>?, key: String, value: String) {
+            carrier?.put(key, value)
+        }
+    }
+
+    private object Getter : TextMapGetter<MutableMap<String, String?>> {
+        override fun keys(carrier: MutableMap<String, String?>) = carrier.keys
+
+        override fun get(carrier: MutableMap<String, String?>?, key: String) = carrier?.get(key)
     }
 }
 

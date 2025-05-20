@@ -4,6 +4,7 @@ import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.hasSize
+import org.http4k.core.Filter
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -12,6 +13,7 @@ import org.http4k.core.then
 import org.http4k.hamkrest.hasHeader
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
 class ManagedOpenTelemetryTest {
     private val testOpenTelemetry = TestOpenTelemetry(Local)
@@ -79,5 +81,33 @@ class ManagedOpenTelemetryTest {
         span.end()
 
         assertThat(sentRequest!!, hasHeader("traceparent"))
+    }
+
+    @Test
+    fun `receives trace context over http`(testInfo: TestInfo) {
+        val callerOpenTelemetry = TestOpenTelemetry(Local)
+        val startSpan = callerOpenTelemetry.tracerProvider.get("test-scope").spanBuilder("starting span").startSpan()
+        startSpan.makeCurrent()
+        openTelemetry.propagateTrace().then(changeContext()).then(openTelemetry.receiveTrace()).then { request ->
+            openTelemetry.span("received span").end()
+            Response(OK)
+        }(Request(GET, "/test/path/propagated"))
+        startSpan.end()
+
+        val receivedSpanData = testOpenTelemetry.spans().first { it.name == "received span" }
+        val sentSpanData = callerOpenTelemetry.spans().first { it.name == "starting span" }
+        assertThat(receivedSpanData.parentSpanId, equalTo(sentSpanData.spanId))
+    }
+
+    private fun changeContext() : Filter {
+        return Filter { next ->
+            { request ->
+                val span = openTelemetry.span("change")
+                span.makeCurrent()
+                next(request).also {
+                    span.end()
+                }
+            }
+        }
     }
 }
