@@ -9,8 +9,15 @@ import io.opentelemetry.context.propagation.TextMapSetter
 import org.http4k.core.Filter
 import org.http4k.metrics.Http4kOpenTelemetry
 
-class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry, private val serviceName: String) {
-    fun span(spanName: String): ManagedSpan {
+interface ManagedOpenTelemetry{
+    fun span(spanName: String): ManagedSpan
+    fun trace(spanName: String, targetName: String): Filter
+    fun propagateTrace(): Filter
+    fun receiveTrace(): Filter
+}
+
+class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val serviceName: String): ManagedOpenTelemetry {
+    override fun span(spanName: String): ManagedSpan {
         val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME)
             .spanBuilder(spanName)
             .setAttribute("service.name", serviceName)
@@ -18,7 +25,7 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         return ManagedSpan(span)
     }
 
-    fun trace(spanName: String, targetName: String): Filter {
+    override fun trace(spanName: String, targetName: String): Filter {
         return Filter { next ->
             { request ->
                 val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME)
@@ -35,7 +42,7 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         }
     }
 
-    fun propagateTrace(): Filter {
+    override fun propagateTrace(): Filter {
         return Filter { next ->
             { request ->
                 val headers = request.headers.toMap().toMutableMap()
@@ -45,7 +52,7 @@ class ManagedOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         }
     }
 
-    fun receiveTrace(): Filter {
+    override fun receiveTrace(): Filter {
         return Filter { next ->
             { request ->
                 val headers = request.headers.toMap().toMutableMap()

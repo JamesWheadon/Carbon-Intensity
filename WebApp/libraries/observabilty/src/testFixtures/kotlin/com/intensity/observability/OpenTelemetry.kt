@@ -15,6 +15,42 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
+class TestTracingOpenTelemetry(profile: TestProfile, serviceName: String): ManagedOpenTelemetry {
+    private val testOpenTelemetry = TestOpenTelemetry(profile)
+    private val openTelemetry = TracingOpenTelemetry(testOpenTelemetry, serviceName)
+
+    override fun span(spanName: String) = openTelemetry.span(spanName)
+
+    override fun trace(spanName: String, targetName: String) = openTelemetry.trace(spanName, targetName)
+
+    override fun propagateTrace() = openTelemetry.propagateTrace()
+
+    override fun receiveTrace() = openTelemetry.receiveTrace()
+
+    fun spans() = testOpenTelemetry.spans()
+
+    fun spans(vararg telemetry: TestTracingOpenTelemetry): List<SpanData> = testOpenTelemetry.spans().plus(telemetry.flatMap { it.spans() } )
+
+    fun spanNames(): List<String> = spans().map { it.name }
+
+    fun spanNames(vararg telemetry: TestTracingOpenTelemetry): List<String> = spans(*telemetry).map { it.name }
+
+    fun approveSpanDiagram(testName: String) {
+        val spans = spans().toMutableList()
+        testOpenTelemetry.approveSpanDiagram(spans, testName)
+    }
+
+    fun approveSpanDiagram(testName: String, vararg telemetry: TestTracingOpenTelemetry) {
+        val spans = spans(*telemetry).toMutableList()
+        testOpenTelemetry.approveSpanDiagram(spans, testName)
+    }
+
+    fun shutdown() {
+        testOpenTelemetry.shutdown()
+    }
+}
+
+@Suppress("unused")
 class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
     private val serviceNameResource =
         Resource.create(Attributes.of(ServiceAttributes.SERVICE_NAME, "otel-jaeger-example-kotlin"))
@@ -71,7 +107,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         approveSpanDiagram(spans, testName)
     }
 
-    private fun approveSpanDiagram(spans: MutableList<SpanData>, testName: String) {
+    fun approveSpanDiagram(spans: MutableList<SpanData>, testName: String) {
         val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val roots = mutableListOf<SpanData>()
         spans.filter { it.parentSpanId == "0000000000000000" }.forEach {

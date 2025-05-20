@@ -15,21 +15,20 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 
-class ManagedOpenTelemetryTest {
-    private val testOpenTelemetry = TestOpenTelemetry(Local)
-    private val openTelemetry = ManagedOpenTelemetry(testOpenTelemetry, "test-service")
+class TracingOpenTelemetryTest {
+    private val openTelemetry = TestTracingOpenTelemetry(Local, "test-service")
 
     @AfterEach
     fun tearDown() {
-        testOpenTelemetry.shutdown()
+        openTelemetry.shutdown()
     }
 
     @Test
     fun `creates a span with the provided name`() {
         openTelemetry.span("testSpan").end()
 
-        assertThat(testOpenTelemetry.spans(), hasSize(equalTo(1)))
-        val spanData = testOpenTelemetry.spans().first()
+        assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
+        val spanData = openTelemetry.spans().first()
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.instrumentationName, equalTo("http4k"))
     }
@@ -40,7 +39,7 @@ class ManagedOpenTelemetryTest {
         span.addEvent("test-event")
         span.end()
 
-        val spanData = testOpenTelemetry.spans().first()
+        val spanData = openTelemetry.spans().first()
         assertThat(spanData.events, equalTo(listOf(SpanEvent("test-event"))))
     }
 
@@ -52,8 +51,8 @@ class ManagedOpenTelemetryTest {
         childSpan.end()
         span.end()
 
-        val parentSpanData = testOpenTelemetry.spans().first { it.name == "testSpan" }
-        val childSpanData = testOpenTelemetry.spans().first { it.name == "childSpan" }
+        val parentSpanData = openTelemetry.spans().first { it.name == "testSpan" }
+        val childSpanData = openTelemetry.spans().first { it.name == "childSpan" }
         assertThat(childSpanData.parentSpanId, equalTo(parentSpanData.spanId))
     }
 
@@ -61,8 +60,8 @@ class ManagedOpenTelemetryTest {
     fun `traces an http request`() {
         openTelemetry.trace("http-request", "other-service").then { Response(OK) }(Request(GET, "/test/path"))
 
-        assertThat(testOpenTelemetry.spans(), hasSize(equalTo(1)))
-        val spanData = testOpenTelemetry.spans().first()
+        assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
+        val spanData = openTelemetry.spans().first()
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.attributes["http.target"], equalTo("other-service"))
         assertThat(spanData.attributes["http.path"], equalTo("/test/path"))
@@ -85,8 +84,8 @@ class ManagedOpenTelemetryTest {
 
     @Test
     fun `receives trace context over http`(testInfo: TestInfo) {
-        val callerOpenTelemetry = TestOpenTelemetry(Local)
-        val startSpan = callerOpenTelemetry.tracerProvider.get("test-scope").spanBuilder("starting span").startSpan()
+        val callerOpenTelemetry = TestTracingOpenTelemetry(Local, "other-service")
+        val startSpan = callerOpenTelemetry.span("starting span")
         startSpan.makeCurrent()
         openTelemetry.propagateTrace().then(changeContext()).then(openTelemetry.receiveTrace()).then { request ->
             openTelemetry.span("received span").end()
@@ -94,7 +93,7 @@ class ManagedOpenTelemetryTest {
         }(Request(GET, "/test/path/propagated"))
         startSpan.end()
 
-        val receivedSpanData = testOpenTelemetry.spans().first { it.name == "received span" }
+        val receivedSpanData = openTelemetry.spans().first { it.name == "received span" }
         val sentSpanData = callerOpenTelemetry.spans().first { it.name == "starting span" }
         assertThat(receivedSpanData.parentSpanId, equalTo(sentSpanData.spanId))
     }
