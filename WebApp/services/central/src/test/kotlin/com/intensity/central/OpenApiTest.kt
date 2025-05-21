@@ -2,6 +2,7 @@ package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
+import com.intensity.observability.TracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.natpryce.hamkrest.and
@@ -24,11 +25,12 @@ import org.junit.jupiter.api.extension.ExtendWith
 class OpenApiTest {
     private val client = JavaHttpClient()
     private val openTelemetry = OpenTelemetry.noop()
+    private val nationalGridOpenTelemetry = TracingOpenTelemetry.noOp()
     private val server = carbonIntensityServer(
         1000,
         NationalGridCloud(
             FakeNationalGrid(),
-            openTelemetry
+            nationalGridOpenTelemetry
         ),
         OctopusCloud(
             FakeOctopus()

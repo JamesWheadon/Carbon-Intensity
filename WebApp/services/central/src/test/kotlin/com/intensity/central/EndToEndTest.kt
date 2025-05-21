@@ -4,6 +4,7 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.observability.TestOpenTelemetry
 import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import org.http4k.core.Filter
@@ -49,11 +50,12 @@ abstract class EndToEndTest {
     val nationalGrid = FakeNationalGrid()
     val limitCalculator = FakeLimitCalculator()
     val weightsCalculator = FakeWeightsCalculator()
+    private val nationalGridOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
     val server = serverStack("App", events).then(
         carbonIntensity(
             NationalGridCloud(
                 appClientStack.then(nationalGrid.traced(serverStack("National Grid", events))),
-                openTelemetry
+                nationalGridOpenTelemetry
             ),
             OctopusCloud(
                 appClientStack.then(octopus.traced(serverStack("Octopus", events)))

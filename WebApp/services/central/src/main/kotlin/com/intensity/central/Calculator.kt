@@ -76,6 +76,7 @@ class Calculator(
     ): Result<ChargeTime, Failed> {
         val span =
             openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculate charge time").startSpan()
+        span.makeCurrent()
         return when {
             calculationData.intensityLimit != null -> {
                 intensityLimitedChargeTime(

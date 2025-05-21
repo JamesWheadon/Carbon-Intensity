@@ -9,6 +9,7 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.observability.TestOpenTelemetry
 import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
@@ -88,8 +89,9 @@ class Customer {
         )
     }
     private val openTelemetry = TestOpenTelemetry(Local)
+    private val nationalGridOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
     private val app = carbonIntensity(
-        NationalGridCloud(nationalGridFake, openTelemetry),
+        NationalGridCloud(nationalGridFake, nationalGridOpenTelemetry),
         OctopusCloud(octopusFake),
         LimitCalculatorCloud(limitCalculatorApp(openTelemetry), openTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),

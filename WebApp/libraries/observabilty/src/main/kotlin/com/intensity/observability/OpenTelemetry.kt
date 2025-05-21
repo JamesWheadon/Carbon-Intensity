@@ -17,6 +17,10 @@ interface ManagedOpenTelemetry{
 }
 
 class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val serviceName: String): ManagedOpenTelemetry {
+    companion object {
+        fun noOp() = TracingOpenTelemetry(OpenTelemetry.noop(), "")
+    }
+
     override fun span(spanName: String): ManagedSpan {
         val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME)
             .spanBuilder(spanName)

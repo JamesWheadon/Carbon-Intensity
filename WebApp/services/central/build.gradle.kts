@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(projects.libraries.core)
+    implementation(projects.libraries.observabilty)
     implementation(projects.libraries.openApi)
     implementation(projects.clients.nationalGrid)
     implementation(projects.clients.octopus)

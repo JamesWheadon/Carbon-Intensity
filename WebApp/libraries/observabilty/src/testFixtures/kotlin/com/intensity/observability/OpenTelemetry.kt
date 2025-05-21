@@ -83,7 +83,8 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             span.parentSpanId,
             span.attributes.asMap().mapKeys { key -> key.key.key },
             span.events.map { SpanEvent(it.name) },
-            span.instrumentationScopeInfo.name
+            span.instrumentationScopeInfo.name,
+            span.startEpochNanos
         )
     }
 
@@ -108,6 +109,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
     }
 
     fun approveSpanDiagram(spans: MutableList<SpanData>, testName: String) {
+        spans.sortBy { it.startEpochNanos }
         val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val roots = mutableListOf<SpanData>()
         spans.filter { it.parentSpanId == "0000000000000000" }.forEach {
@@ -176,5 +178,13 @@ class TreeNode(private val name: String, private val children: List<TreeNode>) {
     }
 }
 
-data class SpanData(val name: String, val spanId: String, val parentSpanId: String, val attributes: Map<String, Any>, val events: List<SpanEvent>, val instrumentationName: String)
+data class SpanData(
+    val name: String,
+    val spanId: String,
+    val parentSpanId: String,
+    val attributes: Map<String, Any>,
+    val events: List<SpanEvent>,
+    val instrumentationName: String,
+    val startEpochNanos: Long
+)
 data class SpanEvent(val name: String)

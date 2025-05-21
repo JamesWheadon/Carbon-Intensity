@@ -2,12 +2,12 @@ package com.intensity.nationalgrid
 
 import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isFailure
-import com.intensity.observability.TestOpenTelemetry
 import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestTracingOpenTelemetry
+import com.intensity.observability.TracingOpenTelemetry
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.valueOrNull
-import io.opentelemetry.api.OpenTelemetry
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -39,7 +39,7 @@ abstract class NationalGridContractTest {
 
 class FakeNationalGridTest : NationalGridContractTest() {
     private val fakeNationalGrid = FakeNationalGrid()
-    private val testOpenTelemetry = TestOpenTelemetry(Local)
+    private val testOpenTelemetry = TestTracingOpenTelemetry(Local, "national-grid-test")
     override val nationalGrid = NationalGridCloud(fakeNationalGrid, testOpenTelemetry)
 
     @Test
@@ -60,10 +60,10 @@ class FakeNationalGridTest : NationalGridContractTest() {
             fetchSpan.attributes,
             containsEntries(
                 listOf(
-                    "http.status_code" to "200",
-                    "http.url" to "/intensity/${time.toLocalDate()}T00:30Z/${time.toLocalDate()}T06:00Z",
-                    "http.method" to "GET",
-                    "target.name" to "National Grid"
+                    "service.name" to "national-grid-test",
+                    "http.status" to 200L,
+                    "http.path" to "/intensity/${time.toLocalDate()}T00:30Z/${time.toLocalDate()}T06:00Z",
+                    "http.target" to "National Grid"
                 )
             )
         )
@@ -72,5 +72,5 @@ class FakeNationalGridTest : NationalGridContractTest() {
 
 @Disabled
 class NationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGridCloud(nationalGridClient(), OpenTelemetry.noop())
+    override val nationalGrid = NationalGridCloud(nationalGridClient(), TracingOpenTelemetry.noOp())
 }

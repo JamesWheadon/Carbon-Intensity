@@ -8,6 +8,7 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.observability.TestOpenTelemetry
 import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
@@ -22,8 +23,9 @@ class Observability {
     private val octopusFake = FakeOctopus()
     private val openTelemetry = TestOpenTelemetry(Local)
     private val secondOpenTelemetry = TestOpenTelemetry(Local)
+    private val nationalGridOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
     private val app = carbonIntensity(
-        NationalGridCloud(nationalGridFake, openTelemetry),
+        NationalGridCloud(nationalGridFake, nationalGridOpenTelemetry),
         OctopusCloud(octopusFake),
         LimitCalculatorCloud(limitCalculatorApp(secondOpenTelemetry), openTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
@@ -52,6 +54,11 @@ class Observability {
 
         app(request)
 
-        openTelemetry.approveSpanDiagram(testInfo.displayName, secondOpenTelemetry)
+        nationalGridOpenTelemetry.approveSpanDiagram(testInfo.displayName, openTelemetry, secondOpenTelemetry)
     }
+}
+
+fun TestTracingOpenTelemetry.approveSpanDiagram(testName: String, first: TestOpenTelemetry, vararg telemetry: TestOpenTelemetry) {
+    val spanData = first.spans(*telemetry).plus(this.spans()).toMutableList()
+    first.approveSpanDiagram(spanData, testName)
 }

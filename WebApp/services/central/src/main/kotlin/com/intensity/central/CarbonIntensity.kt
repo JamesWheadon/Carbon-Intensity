@@ -4,6 +4,7 @@ import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
+import com.intensity.observability.TracingOpenTelemetry
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCloud
@@ -34,7 +35,7 @@ fun main() {
     val openTelemetry = OpenTelemetry.noop()
     val server = carbonIntensityServer(
         port,
-        NationalGridCloud(nationalGridClient(), openTelemetry),
+        NationalGridCloud(nationalGridClient(), TracingOpenTelemetry.noOp()),
         OctopusCloud(octopusClient()),
         LimitCalculatorCloud(calculatorClient(limitCalculatorUrl), openTelemetry),
         WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl)),
