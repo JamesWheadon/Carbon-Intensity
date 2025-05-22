@@ -24,10 +24,11 @@ class Observability {
     private val openTelemetry = TestOpenTelemetry(Local)
     private val secondOpenTelemetry = TestOpenTelemetry(Local)
     private val nationalGridOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
+    private val limitCalculatorOpenTelemetry = TestTracingOpenTelemetry(Local, "limit")
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, nationalGridOpenTelemetry),
         OctopusCloud(octopusFake),
-        LimitCalculatorCloud(limitCalculatorApp(secondOpenTelemetry), openTelemetry),
+        LimitCalculatorCloud(limitCalculatorApp(limitCalculatorOpenTelemetry), openTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
         openTelemetry
     )
@@ -54,11 +55,11 @@ class Observability {
 
         app(request)
 
-        nationalGridOpenTelemetry.approveSpanDiagram(testInfo.displayName, openTelemetry, secondOpenTelemetry)
+        nationalGridOpenTelemetry.approveSpanDiagram(testInfo.displayName, limitCalculatorOpenTelemetry, openTelemetry, secondOpenTelemetry)
     }
 }
 
-fun TestTracingOpenTelemetry.approveSpanDiagram(testName: String, first: TestOpenTelemetry, vararg telemetry: TestOpenTelemetry) {
-    val spanData = first.spans(*telemetry).plus(this.spans()).toMutableList()
+fun TestTracingOpenTelemetry.approveSpanDiagram(testName: String, other: TestTracingOpenTelemetry, first: TestOpenTelemetry, vararg telemetry: TestOpenTelemetry) {
+    val spanData = first.spans(*telemetry).plus(this.spans()).plus(other.spans()).toMutableList()
     first.approveSpanDiagram(spanData, testName)
 }

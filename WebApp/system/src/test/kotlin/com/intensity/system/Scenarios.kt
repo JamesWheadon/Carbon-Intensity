@@ -90,10 +90,11 @@ class Customer {
     }
     private val openTelemetry = TestOpenTelemetry(Local)
     private val nationalGridOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
+    private val limitCalcOpenTelemetry = TestTracingOpenTelemetry(Local, "limit")
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, nationalGridOpenTelemetry),
         OctopusCloud(octopusFake),
-        LimitCalculatorCloud(limitCalculatorApp(openTelemetry), openTelemetry),
+        LimitCalculatorCloud(limitCalculatorApp(limitCalcOpenTelemetry), openTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
         openTelemetry
     )

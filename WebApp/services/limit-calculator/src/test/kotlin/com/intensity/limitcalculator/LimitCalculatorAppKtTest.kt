@@ -1,7 +1,7 @@
 package com.intensity.limitcalculator
 
-import com.intensity.observability.TestOpenTelemetry
 import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestTracingOpenTelemetry
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
 
 class LimitCalculatorAppKtTest {
-    private val openTelemetry = TestOpenTelemetry(Local)
+    private val openTelemetry = TestTracingOpenTelemetry(Local, "limit-test")
     private val app = limitCalculatorApp(openTelemetry)
 
     @Test
