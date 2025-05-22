@@ -6,7 +6,6 @@ import com.intensity.central.carbonIntensity
 import com.intensity.limitcalculator.limitCalculatorApp
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
-import com.intensity.observability.TestOpenTelemetry
 import com.intensity.observability.TestProfile.Local
 import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
@@ -21,16 +20,14 @@ import java.time.ZonedDateTime
 class Observability {
     private val nationalGridFake = FakeNationalGrid()
     private val octopusFake = FakeOctopus()
-    private val openTelemetry = TestOpenTelemetry(Local)
-    private val secondOpenTelemetry = TestOpenTelemetry(Local)
-    private val nationalGridOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
+    private val centralOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
     private val limitCalculatorOpenTelemetry = TestTracingOpenTelemetry(Local, "limit")
     private val app = carbonIntensity(
-        NationalGridCloud(nationalGridFake, nationalGridOpenTelemetry),
+        NationalGridCloud(nationalGridFake, centralOpenTelemetry),
         OctopusCloud(octopusFake),
-        LimitCalculatorCloud(limitCalculatorApp(limitCalculatorOpenTelemetry), openTelemetry),
+        LimitCalculatorCloud(limitCalculatorApp(limitCalculatorOpenTelemetry), centralOpenTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
-        openTelemetry
+        centralOpenTelemetry
     )
 
     @Test
@@ -55,11 +52,6 @@ class Observability {
 
         app(request)
 
-        nationalGridOpenTelemetry.approveSpanDiagram(testInfo.displayName, limitCalculatorOpenTelemetry, openTelemetry, secondOpenTelemetry)
+        centralOpenTelemetry.approveSpanDiagram(testInfo.displayName, limitCalculatorOpenTelemetry)
     }
-}
-
-fun TestTracingOpenTelemetry.approveSpanDiagram(testName: String, other: TestTracingOpenTelemetry, first: TestOpenTelemetry, vararg telemetry: TestOpenTelemetry) {
-    val spanData = first.spans(*telemetry).plus(this.spans()).plus(other.spans()).toMutableList()
-    first.approveSpanDiagram(spanData, testName)
 }

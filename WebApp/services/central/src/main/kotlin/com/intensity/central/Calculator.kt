@@ -8,6 +8,8 @@ import com.intensity.core.Failed
 import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
+import com.intensity.observability.ManagedOpenTelemetry
+import com.intensity.observability.ManagedSpan
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.PriceData
 import com.intensity.octopus.Prices
@@ -17,9 +19,6 @@ import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.flatMapFailure
 import dev.forkhandles.result4k.flatZip
 import dev.forkhandles.result4k.peek
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.trace.Span
-import org.http4k.metrics.Http4kOpenTelemetry
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 
@@ -28,16 +27,12 @@ class Calculator(
     private val nationalGrid: NationalGrid,
     private val limitCalc: LimitCalculator,
     private val weightsCalc: WeightsCalculator,
-    private val openTelemetry: OpenTelemetry
+    private val openTelemetry: ManagedOpenTelemetry
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
-        val parentSpan = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("charge time calculation")
-            .startSpan()
+        val parentSpan = openTelemetry.span("charge time calculation")
         parentSpan.makeCurrent()
-        val span =
-            openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("fetch electricity data")
-                .startSpan()
-
+        val span = openTelemetry.span("fetch electricity data")
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
                 .also {
@@ -74,8 +69,7 @@ class Calculator(
         calculationData: CalculationData,
         electricity: Electricity
     ): Result<ChargeTime, Failed> {
-        val span =
-            openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME).spanBuilder("calculate charge time").startSpan()
+        val span = openTelemetry.span("calculate charge time")
         span.makeCurrent()
         return when {
             calculationData.intensityLimit != null -> {
@@ -140,7 +134,7 @@ class Calculator(
         time: Long,
         start: ZonedDateTime,
         end: ZonedDateTime,
-        span: Span
+        span: ManagedSpan
     ) = limitCalc.intensityLimit(electricity, intensityLimit, time).peek {
         span.addEvent("calculated using intensity limit")
     }.flatMapFailure {

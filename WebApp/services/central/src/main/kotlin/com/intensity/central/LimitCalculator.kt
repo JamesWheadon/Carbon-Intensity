@@ -4,18 +4,16 @@ import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.Failed
 import com.intensity.core.chargeTimeLens
+import com.intensity.observability.ManagedOpenTelemetry
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
-import io.opentelemetry.api.OpenTelemetry
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Status
 import org.http4k.core.then
 import org.http4k.core.with
-import org.http4k.filter.ClientFilters
-import org.http4k.filter.OpenTelemetryTracing
 import java.math.BigDecimal
 
 interface LimitCalculator {
@@ -23,9 +21,10 @@ interface LimitCalculator {
     fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed>
 }
 
-class LimitCalculatorCloud(val httpHandler: HttpHandler, private val openTelemetry: OpenTelemetry) : LimitCalculator {
+class LimitCalculatorCloud(val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : LimitCalculator {
     override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
-        val response = ClientFilters.OpenTelemetryTracing(openTelemetry).then(httpHandler)(
+        val span = openTelemetry.span("POST").also { it.makeCurrent() }
+        val response = openTelemetry.propagateTrace().then(httpHandler)(
             Request(
                 Method.POST,
                 "/calculate/intensity/$limit"
@@ -38,6 +37,7 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler, private val openTelemet
                 )
             )
         )
+        span.end()
         return if (response.status == Status.OK) {
             Success(chargeTimeLens(response))
         } else {

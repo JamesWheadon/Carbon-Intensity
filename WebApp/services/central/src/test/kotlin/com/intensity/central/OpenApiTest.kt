@@ -7,7 +7,6 @@ import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.natpryce.hamkrest.and
 import com.natpryce.hamkrest.assertion.assertThat
-import io.opentelemetry.api.OpenTelemetry
 import org.http4k.client.JavaHttpClient
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
@@ -24,13 +23,12 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(JsonApprovalTest::class)
 class OpenApiTest {
     private val client = JavaHttpClient()
-    private val openTelemetry = OpenTelemetry.noop()
-    private val nationalGridOpenTelemetry = TracingOpenTelemetry.noOp()
+    private val openTelemetry = TracingOpenTelemetry.noOp()
     private val server = carbonIntensityServer(
         1000,
         NationalGridCloud(
             FakeNationalGrid(),
-            nationalGridOpenTelemetry
+            openTelemetry
         ),
         OctopusCloud(
             FakeOctopus()

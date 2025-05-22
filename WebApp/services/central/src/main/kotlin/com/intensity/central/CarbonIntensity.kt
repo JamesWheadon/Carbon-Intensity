@@ -4,13 +4,13 @@ import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
+import com.intensity.observability.ManagedOpenTelemetry
 import com.intensity.observability.TracingOpenTelemetry
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.octopus.octopusClient
 import com.intensity.openapi.openApi3
-import io.opentelemetry.api.OpenTelemetry
 import org.http4k.client.JavaHttpClient
 import org.http4k.contract.PreFlightExtraction.Companion.None
 import org.http4k.contract.contract
@@ -32,7 +32,7 @@ fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 9000
     val limitCalculatorUrl = "http://localhost:9001"
     val weightsCalculatorUrl = "http://localhost:9002"
-    val openTelemetry = OpenTelemetry.noop()
+    val openTelemetry = TracingOpenTelemetry.noOp()
     val server = carbonIntensityServer(
         port,
         NationalGridCloud(nationalGridClient(), TracingOpenTelemetry.noOp()),
@@ -56,7 +56,7 @@ fun carbonIntensityServer(
     octopus: Octopus,
     limitCalculator: LimitCalculator,
     weightsCalculator: WeightsCalculator,
-    openTelemetry: OpenTelemetry
+    openTelemetry: ManagedOpenTelemetry
 ) = carbonIntensity(nationalGrid, octopus, limitCalculator, weightsCalculator, openTelemetry).asServer(SunHttp(port))
 
 fun carbonIntensity(
@@ -64,7 +64,7 @@ fun carbonIntensity(
     octopus: Octopus,
     limitCalculator: LimitCalculator,
     weightsCalculator: WeightsCalculator,
-    openTelemetry: OpenTelemetry
+    openTelemetry: ManagedOpenTelemetry
 ) = corsMiddleware
     .then(CatchLensFailure { _: LensFailure ->
         Response(BAD_REQUEST).with(errorResponseLens of InvalidRequestFailed.toErrorResponse())

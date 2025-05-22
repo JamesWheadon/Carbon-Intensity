@@ -7,7 +7,6 @@ import com.intensity.core.chargeTimeLens
 import com.intensity.limitcalculator.limitCalculatorApp
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
-import com.intensity.observability.TestOpenTelemetry
 import com.intensity.observability.TestProfile.Local
 import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
@@ -88,15 +87,14 @@ class Customer {
             listOf(9.8, 9.8, 10.0, 10.0, 9.5, 9.5, 10.0, 10.0, 10.0, 10.0, 10.0, 9.0, 9.0, 10.0, 9.8, 9.8)
         )
     }
-    private val openTelemetry = TestOpenTelemetry(Local)
-    private val nationalGridOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
+    private val centralOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
     private val limitCalcOpenTelemetry = TestTracingOpenTelemetry(Local, "limit")
     private val app = carbonIntensity(
-        NationalGridCloud(nationalGridFake, nationalGridOpenTelemetry),
+        NationalGridCloud(nationalGridFake, centralOpenTelemetry),
         OctopusCloud(octopusFake),
-        LimitCalculatorCloud(limitCalculatorApp(limitCalcOpenTelemetry), openTelemetry),
+        LimitCalculatorCloud(limitCalculatorApp(limitCalcOpenTelemetry), centralOpenTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
-        openTelemetry
+        centralOpenTelemetry
     )
     private var startTime = ""
     private var endTime = ""
