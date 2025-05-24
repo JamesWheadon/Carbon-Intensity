@@ -61,7 +61,7 @@ class OctopusCloud(val httpHandler: HttpHandler, private val openTelemetry: Mana
     ): Result<Prices, Failed> {
         val periodFrom = start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         val periodTo = end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
-        val response = httpHandler(
+        val response = openTelemetry.trace("Fetch Octopus Tariff Prices", "Octopus").then(httpHandler)(
             Request(
                 GET,
                 "/${product.code}/electricity-tariffs/${tariff.code}/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"

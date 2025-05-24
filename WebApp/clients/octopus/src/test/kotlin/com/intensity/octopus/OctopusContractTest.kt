@@ -223,6 +223,30 @@ class FakeOctopusTest : OctopusContractTest() {
             )
         )
     }
+
+    @Test
+    fun `creates a span with data about the request to get an octopus tariff prices`() {
+        octopus.prices(
+            OctopusProduct("AGILE-FLEX-22-11-25"),
+            OctopusTariff("E-1R-AGILE-FLEX-22-11-25-C"),
+            ZonedDateTime.of(2023, 3, 26, 0, 0, 0, 0, ZoneId.of("UTC")),
+            ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
+        )
+
+        assertThat(openTelemetry.spanNames(), equalTo(listOf("Fetch Octopus Tariff Prices")))
+        val fetchSpan = openTelemetry.spans().first { it.name == "Fetch Octopus Tariff Prices" }
+        assertThat(
+            fetchSpan.attributes,
+            containsEntries(
+                listOf(
+                    "service.name" to "octopus-test",
+                    "http.status" to 200L,
+                    "http.path" to "/AGILE-FLEX-22-11-25/electricity-tariffs/E-1R-AGILE-FLEX-22-11-25-C/standard-unit-rates/",
+                    "http.target" to "Octopus"
+                )
+            )
+        )
+    }
 }
 
 @Disabled
