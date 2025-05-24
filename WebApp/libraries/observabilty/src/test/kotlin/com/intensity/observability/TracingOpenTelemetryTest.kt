@@ -64,6 +64,7 @@ class TracingOpenTelemetryTest {
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.attributes["http.target"], equalTo("other-service"))
+        assertThat(spanData.attributes["http.method"], equalTo("GET"))
         assertThat(spanData.attributes["http.path"], equalTo("/test/path"))
         assertThat(spanData.attributes["http.status"], equalTo(200L))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
