@@ -1,18 +1,18 @@
 @startuml
 title can observe a customer journey retrieving an intensity limited charge time(TestInfo)
-participant "test"
+participant "Central"
 participant "Octopus"
 participant "National Grid"
-"test" -> "Octopus": GET /AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-A/standard-unit-rates/
-activate "test"
+"Central" -> "Octopus": GET /AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-A/standard-unit-rates/
+activate "Central"
 activate "Octopus"
-"Octopus" -> "test": 200 OK
+"Octopus" -> "Central": 200 OK
 
 deactivate "Octopus"
-"test" -> "National Grid": GET /intensity/2025-04-10T09:30Z/2025-04-10T17:00Z
+"Central" -> "National Grid": GET /intensity/2025-04-10T09:30Z/2025-04-10T17:00Z
 
 activate "National Grid"
-"National Grid" -> "test": 200 OK
-deactivate "test"
+"National Grid" -> "Central": 200 OK
+deactivate "Central"
 deactivate "National Grid"
 @enduml

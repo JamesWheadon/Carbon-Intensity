@@ -20,8 +20,8 @@ import java.time.ZonedDateTime
 class Observability {
     private val nationalGridFake = FakeNationalGrid()
     private val octopusFake = FakeOctopus()
-    private val centralOpenTelemetry = TestTracingOpenTelemetry(Local, "test")
-    private val limitCalculatorOpenTelemetry = TestTracingOpenTelemetry(Local, "limit")
+    private val centralOpenTelemetry = TestTracingOpenTelemetry(Local, "Central")
+    private val limitCalculatorOpenTelemetry = TestTracingOpenTelemetry(Local, "Limit Calculator")
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, centralOpenTelemetry),
         OctopusCloud(octopusFake, centralOpenTelemetry),
