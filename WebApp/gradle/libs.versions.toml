@@ -8,7 +8,6 @@ openTelemetry = "1.32.0"
 http4k-core = { group = "org.http4k", name = "http4k-core", version.ref = "http4k" }
 http4k-jackson = { group = "org.http4k", name = "http4k-format-jackson", version.ref = "http4k" }
 http4k-contract = { group = "org.http4k", name = "http4k-contract", version.ref = "http4k" }
-http4k-openTelemetry = { group = "org.http4k", name = "http4k-opentelemetry", version.ref = "http4k" }
 
 result4k = { group = "dev.forkhandles", name = "result4k", version.ref = "forkhandles" }
 

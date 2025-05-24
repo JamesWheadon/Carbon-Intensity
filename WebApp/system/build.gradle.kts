@@ -21,8 +21,4 @@ dependencies {
     testImplementation(libs.http4k.hamkrest)
     testImplementation(libs.http4k.approval)
     testImplementation(libs.http4k.tracerbullet)
-    testImplementation(libs.openTelemetry.api)
-    testImplementation(libs.openTelemetry.sdk)
-    testImplementation(libs.openTelemetry.exporter)
-    testImplementation(libs.openTelemetry.semconv)
 }

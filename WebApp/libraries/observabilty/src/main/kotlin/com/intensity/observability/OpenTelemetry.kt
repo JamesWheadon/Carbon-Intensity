@@ -2,12 +2,12 @@ package com.intensity.observability
 
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.TextMapGetter
 import io.opentelemetry.context.propagation.TextMapSetter
 import org.http4k.core.Filter
-import org.http4k.metrics.Http4kOpenTelemetry
 
 interface ManagedOpenTelemetry{
     fun span(spanName: String): ManagedSpan
@@ -22,8 +22,7 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     }
 
     override fun span(spanName: String): ManagedSpan {
-        val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME)
-            .spanBuilder(spanName)
+        val span = spanBuilder(spanName)
             .setAttribute("service.name", serviceName)
             .startSpan()
         return ManagedSpan(span)
@@ -32,8 +31,7 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     override fun trace(spanName: String, targetName: String): Filter {
         return Filter { next ->
             { request ->
-                val span = openTelemetry.getTracer(Http4kOpenTelemetry.INSTRUMENTATION_NAME)
-                    .spanBuilder(spanName)
+                val span = spanBuilder(spanName)
                     .setAttribute("service.name", serviceName)
                     .setAttribute("http.target", targetName)
                     .setAttribute("http.path", request.uri.path)
@@ -65,6 +63,10 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
             }
         }
     }
+
+    private fun spanBuilder(spanName: String): SpanBuilder =
+        openTelemetry.getTracer("com.intensity.observability")
+            .spanBuilder(spanName)
 
     private object Setter : TextMapSetter<MutableMap<String, String?>> {
         override fun set(carrier: MutableMap<String, String?>?, key: String, value: String) {
