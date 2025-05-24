@@ -3,6 +3,8 @@ package com.intensity.octopus
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
+import com.intensity.observability.ManagedOpenTelemetry
+import com.intensity.observability.TracingOpenTelemetry
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -31,9 +33,9 @@ interface Octopus {
     ): Result<Prices, Failed>
 }
 
-class OctopusCloud(val httpHandler: HttpHandler) : Octopus {
+class OctopusCloud(val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry = TracingOpenTelemetry.noOp()) : Octopus {
     override fun products(): Result<Products, Failed> {
-        val response = httpHandler(Request(GET, "/"))
+        val response = openTelemetry.trace("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "/"))
         return when (response.status) {
             OK -> Success(productsLens(response))
             else -> Failure(OctopusCommunicationFailed)

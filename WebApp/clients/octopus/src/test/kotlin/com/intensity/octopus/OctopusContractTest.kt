@@ -1,6 +1,9 @@
 package com.intensity.octopus
 
+import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isSuccess
+import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestTracingOpenTelemetry
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Failure
@@ -150,11 +153,9 @@ class FakeOctopusTest : OctopusContractTest() {
             listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2)
         )
     }
+    private val openTelemetry = TestTracingOpenTelemetry(Local, "octopus-test")
 
-    override val octopus =
-        OctopusCloud(
-            fakeOctopus
-        )
+    override val octopus = OctopusCloud(fakeOctopus, openTelemetry)
 
     @Test
     fun `handles failure getting products`() {
@@ -183,6 +184,25 @@ class FakeOctopusTest : OctopusContractTest() {
         )
 
         assertThat(prices, equalTo(Failure(OctopusCommunicationFailed)))
+    }
+
+    @Test
+    fun `creates a span with data about the request to get octopus products`() {
+        octopus.products()
+
+        assertThat(openTelemetry.spanNames(), equalTo(listOf("Fetch Octopus Products")))
+        val fetchSpan = openTelemetry.spans().first { it.name == "Fetch Octopus Products" }
+        assertThat(
+            fetchSpan.attributes,
+            containsEntries(
+                listOf(
+                    "service.name" to "octopus-test",
+                    "http.status" to 200L,
+                    "http.path" to "/",
+                    "http.target" to "Octopus"
+                )
+            )
+        )
     }
 }
 
