@@ -35,8 +35,8 @@ fun main() {
     val openTelemetry = TracingOpenTelemetry.noOp()
     val server = carbonIntensityServer(
         port,
-        NationalGridCloud(nationalGridClient(), TracingOpenTelemetry.noOp()),
-        OctopusCloud(octopusClient()),
+        NationalGridCloud(nationalGridClient(), openTelemetry),
+        OctopusCloud(octopusClient(), openTelemetry),
         LimitCalculatorCloud(calculatorClient(limitCalculatorUrl), openTelemetry),
         WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl)),
         openTelemetry

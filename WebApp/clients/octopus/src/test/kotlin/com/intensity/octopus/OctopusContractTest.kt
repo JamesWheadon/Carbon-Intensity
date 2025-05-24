@@ -4,6 +4,7 @@ import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isSuccess
 import com.intensity.observability.TestProfile.Local
 import com.intensity.observability.TestTracingOpenTelemetry
+import com.intensity.observability.TracingOpenTelemetry
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Failure
@@ -251,5 +252,5 @@ class FakeOctopusTest : OctopusContractTest() {
 
 @Disabled
 class OctopusTest : OctopusContractTest() {
-    override val octopus = OctopusCloud(octopusClient())
+    override val octopus = OctopusCloud(octopusClient(), TracingOpenTelemetry.noOp())
 }

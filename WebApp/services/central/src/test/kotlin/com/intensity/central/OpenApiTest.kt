@@ -31,7 +31,8 @@ class OpenApiTest {
             openTelemetry
         ),
         OctopusCloud(
-            FakeOctopus()
+            FakeOctopus(),
+            openTelemetry
         ),
         LimitCalculatorCloud(
             FakeLimitCalculator(),

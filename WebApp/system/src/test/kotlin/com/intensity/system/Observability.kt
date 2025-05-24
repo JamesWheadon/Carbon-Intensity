@@ -24,7 +24,7 @@ class Observability {
     private val limitCalculatorOpenTelemetry = TestTracingOpenTelemetry(Local, "limit")
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, centralOpenTelemetry),
-        OctopusCloud(octopusFake),
+        OctopusCloud(octopusFake, centralOpenTelemetry),
         LimitCalculatorCloud(limitCalculatorApp(limitCalculatorOpenTelemetry), centralOpenTelemetry),
         WeightsCalculatorCloud(weightedCalculatorApp()),
         centralOpenTelemetry

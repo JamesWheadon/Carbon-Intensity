@@ -112,6 +112,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     fun approveSpanDiagram(spans: MutableList<SpanData>, testName: String) {
         spans.sortBy { it.startEpochNanos }
+        createSequenceDiagram(spans, testName)
         val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val roots = mutableListOf<SpanData>()
         spans.filter { it.parentSpanId == "0000000000000000" }.forEach {
@@ -144,7 +145,6 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             File(directory).mkdir()
             File("$directory/span-tree-actual.txt").writeText(spanDiagram)
         }
-        createSequenceDiagram(spans, testName)
         throw AssertionError("Span diagram is not approved")
     }
 

@@ -56,7 +56,8 @@ abstract class EndToEndTest {
                 centralOpenTelemetry
             ),
             OctopusCloud(
-                appClientStack.then(octopus.traced(serverStack("Octopus", events)))
+                appClientStack.then(octopus.traced(serverStack("Octopus", events))),
+                centralOpenTelemetry
             ),
             LimitCalculatorCloud(
                 appClientStack.then(limitCalculator.traced(serverStack("Limit Calculator", events))),
