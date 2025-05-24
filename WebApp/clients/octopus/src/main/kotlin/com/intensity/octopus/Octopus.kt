@@ -43,7 +43,7 @@ class OctopusCloud(val httpHandler: HttpHandler, private val openTelemetry: Mana
     }
 
     override fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
-        val response = httpHandler(
+        val response = openTelemetry.trace("Fetch Octopus Product", "Octopus").then(httpHandler)(
             Request(GET, "/${product.code}/")
         )
         return when (response.status) {

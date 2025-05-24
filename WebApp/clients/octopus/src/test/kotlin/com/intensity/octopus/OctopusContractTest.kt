@@ -204,6 +204,25 @@ class FakeOctopusTest : OctopusContractTest() {
             )
         )
     }
+
+    @Test
+    fun `creates a span with data about the request to get an octopus product`() {
+        octopus.product(OctopusProduct("AGILE-FLEX-22-11-25"))
+
+        assertThat(openTelemetry.spanNames(), equalTo(listOf("Fetch Octopus Product")))
+        val fetchSpan = openTelemetry.spans().first { it.name == "Fetch Octopus Product" }
+        assertThat(
+            fetchSpan.attributes,
+            containsEntries(
+                listOf(
+                    "service.name" to "octopus-test",
+                    "http.status" to 200L,
+                    "http.path" to "/AGILE-FLEX-22-11-25/",
+                    "http.target" to "Octopus"
+                )
+            )
+        )
+    }
 }
 
 @Disabled
