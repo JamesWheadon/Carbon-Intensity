@@ -11,11 +11,12 @@ import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import io.opentelemetry.semconv.ServiceAttributes
+import org.http4k.core.Status
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
-class TestTracingOpenTelemetry(profile: TestProfile, serviceName: String): ManagedOpenTelemetry {
+class TestTracingOpenTelemetry(profile: TestProfile, serviceName: String) : ManagedOpenTelemetry {
     private val testOpenTelemetry = TestOpenTelemetry(profile)
     private val openTelemetry = TracingOpenTelemetry(testOpenTelemetry, serviceName)
 
@@ -29,7 +30,8 @@ class TestTracingOpenTelemetry(profile: TestProfile, serviceName: String): Manag
 
     fun spans() = testOpenTelemetry.spans()
 
-    fun spans(vararg telemetry: TestTracingOpenTelemetry): List<SpanData> = testOpenTelemetry.spans().plus(telemetry.flatMap { it.spans() } )
+    fun spans(vararg telemetry: TestTracingOpenTelemetry): List<SpanData> =
+        testOpenTelemetry.spans().plus(telemetry.flatMap { it.spans() })
 
     fun spanNames(): List<String> = spans().map { it.name }
 
@@ -88,7 +90,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         )
     }
 
-    fun spans(vararg telemetry: TestOpenTelemetry): List<SpanData> = spans().plus(telemetry.flatMap { it.spans() } )
+    fun spans(vararg telemetry: TestOpenTelemetry): List<SpanData> = spans().plus(telemetry.flatMap { it.spans() })
 
     fun spanNames(): List<String> = spans().map { it.name }
 
@@ -142,7 +144,41 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             File(directory).mkdir()
             File("$directory/span-tree-actual.txt").writeText(spanDiagram)
         }
+        createSequenceDiagram(spans, testName)
         throw AssertionError("Span diagram is not approved")
+    }
+
+    private fun createSequenceDiagram(spans: MutableList<SpanData>, testName: String) {
+        val calls = spans.filter { it.attributes.containsKey("http.target") }.map { it.toHttpSpan() }
+        val participants = calls.flatMap { listOf(it.caller, it.target) }.toSet()
+        val puml = """
+            @startuml
+            title $testName
+            ${participants.joinToString("\n") { """participant "$it"""" }}
+            ${
+            calls.mapIndexed { index, span ->
+                val callerFirst = calls.indexOfFirst { it.caller == span.caller || it.target == span.caller } == index
+                val callerLast = calls.indexOfLast { it.caller == span.caller || it.target == span.caller } == index
+                val targetFirst = calls.indexOfFirst { it.caller == span.target || it.target == span.target } == index
+                val targetLast = calls.indexOfLast { it.caller == span.target || it.target == span.target } == index
+                val request = """"${span.caller}" -> "${span.target}": ${span.method} ${span.path}"""
+                val response = """"${span.target}" -> "${span.caller}": ${span.status.code} ${span.status.description}"""
+                """
+                $request
+                    ${if (callerFirst) "activate \"${span.caller}\"" else "" }
+                    ${if (targetFirst) "activate \"${span.target}\"" else "" }
+                $response
+                    ${if (callerLast) "deactivate \"${span.caller}\"" else "" }
+                    ${if (targetLast) "deactivate \"${span.target}\"" else "" }
+                """.trimIndent()
+            }.joinToString("\n")
+        }
+            @enduml
+        """.trimIndent().lines().map { it.trimIndent() }
+        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
+        val directory = "../generated/$fileName"
+
+        File("$directory/sequence.puml").writeText(puml.joinToString("\n"))
     }
 }
 
@@ -187,4 +223,21 @@ data class SpanData(
     val instrumentationName: String,
     val startEpochNanos: Long
 )
+
 data class SpanEvent(val name: String)
+
+private data class HttpSpan(
+    val caller: String,
+    val target: String,
+    val method: String,
+    val path: String,
+    val status: Status
+)
+
+private fun SpanData.toHttpSpan() = HttpSpan(
+    this.attributes["service.name"]!! as String,
+    this.attributes["http.target"]!! as String,
+    this.attributes["http.method"]!! as String,
+    this.attributes["http.path"]!! as String,
+    Status.fromCode((this.attributes["http.status"] as Long).toInt())!!
+)
