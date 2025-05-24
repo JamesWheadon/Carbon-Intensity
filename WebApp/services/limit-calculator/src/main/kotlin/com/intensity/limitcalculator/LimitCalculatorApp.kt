@@ -27,7 +27,7 @@ fun limitCalculatorApp(openTelemetry: ManagedOpenTelemetry) = handleLensFailures
 
 private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
     "/calculate/intensity/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
-        val outerSpan = openTelemetry.span("POST calculate/intensity/{limit}").also { it.makeCurrent() }
+        val outerSpan = openTelemetry.span("POST calculate/intensity/{limit}")
         val span = openTelemetry.span("charge time calculated")
         val scheduleRequest = scheduleRequestLens(request)
         val intensityLimit = limitLens(request)

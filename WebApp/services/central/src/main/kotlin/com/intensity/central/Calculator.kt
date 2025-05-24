@@ -30,8 +30,8 @@ class Calculator(
     private val openTelemetry: ManagedOpenTelemetry
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
-        val parentSpan = openTelemetry.span("charge time calculation").also { it.makeCurrent() }
-        val span = openTelemetry.span("fetch electricity data").also { it.makeCurrent() }
+        val parentSpan = openTelemetry.span("charge time calculation")
+        val span = openTelemetry.span("fetch electricity data")
         val prices =
             octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
                 .also {
@@ -44,7 +44,6 @@ class Calculator(
             Success(createElectricityFrom(priceData, intensityData)).also {
                 span.addEvent("electricity data created")
                 span.end()
-                parentSpan.makeCurrent()
             }
         }.flatMap { electricity ->
             getChargeTime(calculationData, electricity)
@@ -70,7 +69,6 @@ class Calculator(
         electricity: Electricity
     ): Result<ChargeTime, Failed> {
         val span = openTelemetry.span("calculate charge time")
-        span.makeCurrent()
         return when {
             calculationData.intensityLimit != null -> {
                 intensityLimitedChargeTime(

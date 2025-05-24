@@ -44,16 +44,19 @@ class TracingOpenTelemetryTest {
     }
 
     @Test
-    fun `sets a span as the current active span`() {
+    fun `sets a span as the current active span and removes it when ended`() {
         val span = openTelemetry.span("testSpan")
-        span.makeCurrent()
-        val childSpan = openTelemetry.span("childSpan")
-        childSpan.end()
+        val firstChildSpan = openTelemetry.span("firstChildSpan")
+        firstChildSpan.end()
+        val secondChildSpan = openTelemetry.span("secondChildSpan")
+        secondChildSpan.end()
         span.end()
 
         val parentSpanData = openTelemetry.spans().first { it.name == "testSpan" }
-        val childSpanData = openTelemetry.spans().first { it.name == "childSpan" }
-        assertThat(childSpanData.parentSpanId, equalTo(parentSpanData.spanId))
+        val firstChildSpanData = openTelemetry.spans().first { it.name == "firstChildSpan" }
+        val secondChildSpanData = openTelemetry.spans().first { it.name == "secondChildSpan" }
+        assertThat(firstChildSpanData.parentSpanId, equalTo(parentSpanData.spanId))
+        assertThat(secondChildSpanData.parentSpanId, equalTo(parentSpanData.spanId))
     }
 
     @Test
@@ -72,7 +75,7 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `propagates trace context over http`() {
-        val span = openTelemetry.span("to be propagated").also { it.makeCurrent() }
+        val span = openTelemetry.span("to be propagated")
         var sentRequest: Request? = null
         openTelemetry.propagateTrace().then { request ->
             sentRequest = request
@@ -87,7 +90,6 @@ class TracingOpenTelemetryTest {
     fun `receives trace context over http`(testInfo: TestInfo) {
         val callerOpenTelemetry = TestTracingOpenTelemetry(Local, "other-service")
         val startSpan = callerOpenTelemetry.span("starting span")
-        startSpan.makeCurrent()
         openTelemetry.propagateTrace().then(changeContext()).then(openTelemetry.receiveTrace()).then { request ->
             openTelemetry.span("received span").end()
             Response(OK)
@@ -103,7 +105,6 @@ class TracingOpenTelemetryTest {
         return Filter { next ->
             { request ->
                 val span = openTelemetry.span("change")
-                span.makeCurrent()
                 next(request).also {
                     span.end()
                 }

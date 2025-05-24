@@ -5,6 +5,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
+import io.opentelemetry.context.Scope
 import io.opentelemetry.context.propagation.TextMapGetter
 import io.opentelemetry.context.propagation.TextMapSetter
 import org.http4k.core.Filter
@@ -83,15 +84,14 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
 }
 
 class ManagedSpan(private val span: Span) {
+    private val scope: Scope = span.makeCurrent()
+
     fun end() {
         span.end()
+        scope.close()
     }
 
     fun addEvent(eventName: String) {
         span.addEvent(eventName)
-    }
-
-    fun makeCurrent() {
-        span.makeCurrent()
     }
 }
