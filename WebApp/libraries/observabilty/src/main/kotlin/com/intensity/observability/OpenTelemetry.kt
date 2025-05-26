@@ -41,8 +41,8 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
                 val scope = span.makeCurrent()
                 next(request).also { response ->
                     span.setAttribute("http.status", response.status.code.toLong())
-                    span.end()
                     scope.close()
+                    span.end()
                 }
             }
         }
@@ -89,8 +89,8 @@ class ManagedSpan(private val span: Span) {
     private val scope: Scope = span.makeCurrent()
 
     fun end() {
-        span.end()
         scope.close()
+        span.end()
     }
 
     fun addEvent(eventName: String) {
