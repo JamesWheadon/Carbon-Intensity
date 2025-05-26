@@ -168,8 +168,8 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
                     ${if (callerFirst) "activate \"${span.caller}\"" else "" }
                     ${if (targetFirst) "activate \"${span.target}\"" else "" }
                 $response
-                    ${if (callerLast) "deactivate \"${span.caller}\"" else "" }
                     ${if (targetLast) "deactivate \"${span.target}\"" else "" }
+                    ${if (callerLast) "deactivate \"${span.caller}\"" else "" }
                 """.trimIndent()
             }.joinToString("\n")
         }

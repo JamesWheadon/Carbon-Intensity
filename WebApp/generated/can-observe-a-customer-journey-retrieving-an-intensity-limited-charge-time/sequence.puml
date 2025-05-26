@@ -8,18 +8,18 @@ participant "Limit"
 activate "Central"
 activate "Octopus"
 "Octopus" -> "Central": 200 OK
-
 deactivate "Octopus"
+
 "Central" -> "National Grid": GET /intensity/2025-04-10T09:30Z/2025-04-10T17:00Z
 
 activate "National Grid"
 "National Grid" -> "Central": 200 OK
-
 deactivate "National Grid"
+
 "Central" -> "Limit": POST /calculate/intensity/100
 
 activate "Limit"
 "Limit" -> "Central": 200 OK
-deactivate "Central"
 deactivate "Limit"
+deactivate "Central"
 @enduml
