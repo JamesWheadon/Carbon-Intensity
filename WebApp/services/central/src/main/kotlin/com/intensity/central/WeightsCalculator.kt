@@ -4,6 +4,7 @@ import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.Failed
 import com.intensity.core.chargeTimeLens
+import com.intensity.observability.ManagedOpenTelemetry
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -11,6 +12,7 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.then
 import org.http4k.core.with
 import java.time.ZonedDateTime
 
@@ -24,7 +26,7 @@ interface WeightsCalculator {
     ): Result<ChargeTime, Failed>
 }
 
-class WeightsCalculatorCloud(val httpHandler: HttpHandler) : WeightsCalculator {
+class WeightsCalculatorCloud(private val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : WeightsCalculator {
     override fun chargeTime(
         electricity: Electricity,
         weights: Weights,
@@ -32,7 +34,9 @@ class WeightsCalculatorCloud(val httpHandler: HttpHandler) : WeightsCalculator {
         start: ZonedDateTime,
         end: ZonedDateTime
     ): Result<ChargeTime, Failed> {
-        val response = httpHandler(
+        val response = openTelemetry.trace("Weighted calculation", "Weights")
+            .then(openTelemetry.propagateTrace())
+            .then(httpHandler)(
             Request(
                 Method.POST,
                 "/calculate"

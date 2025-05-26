@@ -112,6 +112,10 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     fun approveSpanDiagram(spans: MutableList<SpanData>, testName: String) {
         spans.sortBy { it.startEpochNanos }
+        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
+        val directory = "../generated/$fileName"
+        File("../generated").mkdir()
+        File(directory).mkdir()
         createSequenceDiagram(spans, testName)
         val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val roots = mutableListOf<SpanData>()
@@ -129,8 +133,6 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
                 }
         }
         val spanDiagram = roots.joinToString("\n") { it.toTreeNode(spanTree).toString() }
-        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
-        val directory = "../generated/$fileName"
         val approvedOutput = File("$directory/span-tree.txt")
 
         if (approvedOutput.exists()) {
@@ -141,8 +143,6 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
                 File("$directory/span-tree-actual.txt").writeText(spanDiagram)
             }
         } else {
-            File("../generated").mkdir()
-            File(directory).mkdir()
             File("$directory/span-tree-actual.txt").writeText(spanDiagram)
         }
         throw AssertionError("Span diagram is not approved")

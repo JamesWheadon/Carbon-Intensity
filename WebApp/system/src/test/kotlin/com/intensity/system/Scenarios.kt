@@ -93,7 +93,7 @@ class Customer {
         NationalGridCloud(nationalGridFake, centralOpenTelemetry),
         OctopusCloud(octopusFake, centralOpenTelemetry),
         LimitCalculatorCloud(limitCalculatorApp(limitCalcOpenTelemetry), centralOpenTelemetry),
-        WeightsCalculatorCloud(weightedCalculatorApp()),
+        WeightsCalculatorCloud(weightedCalculatorApp(), centralOpenTelemetry),
         centralOpenTelemetry
     )
     private var startTime = ""

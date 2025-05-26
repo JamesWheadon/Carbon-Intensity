@@ -39,7 +39,7 @@ class CalculatorTest {
         OctopusFake(),
         NationalGridFake(),
         LimitCalculatorCloud(fakeLimit, openTelemetry),
-        WeightsCalculatorCloud(fakeWeights),
+        WeightsCalculatorCloud(fakeWeights, openTelemetry),
         openTelemetry
     )
     private val startTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized()).truncatedTo(ChronoUnit.MINUTES)

@@ -62,8 +62,10 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         return Filter { next ->
             { request ->
                 val headers = request.headers.toMap().toMutableMap()
-                W3CTraceContextPropagator.getInstance().extract(Context.current(), headers, Getter).makeCurrent()
-                next(request)
+                val scope = W3CTraceContextPropagator.getInstance().extract(Context.current(), headers, Getter).makeCurrent()
+                next(request).also {
+                    scope.close()
+                }
             }
         }
     }

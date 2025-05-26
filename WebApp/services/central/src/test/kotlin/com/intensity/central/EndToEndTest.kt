@@ -64,7 +64,8 @@ abstract class EndToEndTest {
                 centralOpenTelemetry
             ),
             WeightsCalculatorCloud(
-                appClientStack.then(weightsCalculator.traced(serverStack("Weights Calculator", events)))
+                appClientStack.then(weightsCalculator.traced(serverStack("Weights Calculator", events))),
+                centralOpenTelemetry
             ),
             centralOpenTelemetry
         )

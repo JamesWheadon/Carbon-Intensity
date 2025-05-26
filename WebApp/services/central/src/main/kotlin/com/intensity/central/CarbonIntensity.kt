@@ -38,7 +38,7 @@ fun main() {
         NationalGridCloud(nationalGridClient(), openTelemetry),
         OctopusCloud(octopusClient(), openTelemetry),
         LimitCalculatorCloud(calculatorClient(limitCalculatorUrl), openTelemetry),
-        WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl)),
+        WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl), openTelemetry),
         openTelemetry
     ).start()
     println("Server started on " + server.port())

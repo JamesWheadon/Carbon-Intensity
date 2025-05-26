@@ -39,7 +39,8 @@ class OpenApiTest {
             openTelemetry
         ),
         WeightsCalculatorCloud(
-            FakeWeightsCalculator()
+            FakeWeightsCalculator(),
+            openTelemetry
         ),
         openTelemetry
     )
