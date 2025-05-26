@@ -3,6 +3,7 @@ title can observe a customer journey retrieving an intensity limited charge time
 participant "Central"
 participant "Octopus"
 participant "National Grid"
+participant "Limit"
 "Central" -> "Octopus": GET /AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-A/standard-unit-rates/
 activate "Central"
 activate "Octopus"
@@ -13,6 +14,12 @@ deactivate "Octopus"
 
 activate "National Grid"
 "National Grid" -> "Central": 200 OK
-deactivate "Central"
+
 deactivate "National Grid"
+"Central" -> "Limit": POST /calculate/intensity/100
+
+activate "Limit"
+"Limit" -> "Central": 200 OK
+deactivate "Central"
+deactivate "Limit"
 @enduml

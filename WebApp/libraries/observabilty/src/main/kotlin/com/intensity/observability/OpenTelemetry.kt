@@ -38,9 +38,11 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
                     .setAttribute("http.method", request.method.name)
                     .setAttribute("http.path", request.uri.path)
                     .startSpan()
+                val scope = span.makeCurrent()
                 next(request).also { response ->
                     span.setAttribute("http.status", response.status.code.toLong())
                     span.end()
+                    scope.close()
                 }
             }
         }
