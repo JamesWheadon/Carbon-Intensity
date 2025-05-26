@@ -3,6 +3,6 @@ charge time calculation
 │   ├── Fetch Octopus Tariff Prices
 │   └── Fetch Carbon Intensity
 └── calculate charge time
-    └── POST
+    └── Intensity limit
         └── POST calculate/intensity/{limit}
             └── charge time calculated

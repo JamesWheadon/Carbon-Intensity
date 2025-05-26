@@ -23,13 +23,10 @@ interface LimitCalculator {
 
 class LimitCalculatorCloud(val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : LimitCalculator {
     override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
-        val response = openTelemetry.trace("POST", "Limit")
+        val response = openTelemetry.trace("Intensity limit", "Limit")
             .then(openTelemetry.propagateTrace())
             .then(httpHandler)(
-            Request(
-                Method.POST,
-                "/calculate/intensity/$limit"
-            ).with(
+            Request(Method.POST, "/calculate/intensity/$limit").with(
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
                     electricity,
