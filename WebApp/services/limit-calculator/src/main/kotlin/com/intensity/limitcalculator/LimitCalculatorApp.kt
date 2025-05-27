@@ -46,7 +46,8 @@ private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
                 outerSpan.end()
             }
     },
-    "/calculate/price/{limit}" bind POST to { request ->
+    "/calculate/price/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
+        val span = openTelemetry.span("charge time calculated")
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
         underPriceLimit(
@@ -59,7 +60,9 @@ private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
             .fold(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> handleFailure(failed) }
-            )
+            ).also {
+                span.end()
+            }
     }
 )
 

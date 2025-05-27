@@ -1,0 +1,8 @@
+charge time calculation
+├── fetch electricity data
+│   ├── Fetch Octopus Tariff Prices
+│   └── Fetch Carbon Intensity
+└── calculate charge time
+    ├── Price limit
+    │   └── charge time calculated
+    └── Weighted calculation

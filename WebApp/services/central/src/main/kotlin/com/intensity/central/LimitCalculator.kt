@@ -21,7 +21,7 @@ interface LimitCalculator {
     fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed>
 }
 
-class LimitCalculatorCloud(val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : LimitCalculator {
+class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : LimitCalculator {
     override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
         val response = openTelemetry.trace("Intensity limit", "Limit")
             .then(openTelemetry.propagateTrace())
@@ -43,7 +43,9 @@ class LimitCalculatorCloud(val httpHandler: HttpHandler, private val openTelemet
     }
 
     override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
-        val response = httpHandler(
+        val response = openTelemetry.trace("Price limit", "Limit")
+            .then(openTelemetry.propagateTrace())
+            .then(httpHandler)(
             Request(
                 Method.POST,
                 "/calculate/price/$limit"

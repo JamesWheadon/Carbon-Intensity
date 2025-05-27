@@ -87,7 +87,8 @@ class Calculator(
                     calculationData.priceLimit,
                     calculationData.time,
                     calculationData.start,
-                    calculationData.end
+                    calculationData.end,
+                    span
                 )
             }
 
@@ -100,6 +101,8 @@ class Calculator(
                     calculationData.end
                 )
             }
+        }.also {
+            span.end()
         }
     }
 
@@ -137,8 +140,6 @@ class Calculator(
         span.addEvent("calculated using intensity limit")
     }.flatMapFailure {
         weightsCalc.chargeTime(electricity, Weights(0.0, 1.0), time, start, end)
-    }.also {
-        span.end()
     }
 
     private fun priceLimitedChargeTime(
@@ -146,11 +147,13 @@ class Calculator(
         priceLimit: BigDecimal,
         time: Long,
         start: ZonedDateTime,
-        end: ZonedDateTime
-    ) = limitCalc.priceLimit(electricity, priceLimit, time)
-        .flatMapFailure {
-            weightsCalc.chargeTime(electricity, Weights(1.0, 0.0), time, start, end)
-        }
+        end: ZonedDateTime,
+        span: ManagedSpan
+    ) = limitCalc.priceLimit(electricity, priceLimit, time).peek {
+        span.addEvent("calculated using intensity limit")
+    }.flatMapFailure {
+        weightsCalc.chargeTime(electricity, Weights(1.0, 0.0), time, start, end)
+    }
 }
 
 private fun IntensityData.overlaps(from: ZonedDateTime, to: ZonedDateTime) =
