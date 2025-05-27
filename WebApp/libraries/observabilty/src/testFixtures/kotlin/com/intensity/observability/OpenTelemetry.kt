@@ -118,7 +118,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             spanTree[it] = mutableListOf()
         }
         children.forEach { span ->
-            spanTree[spanTree.keys.firstOrNull { it.spanId == span.parentSpanId }]?.add(span) ?: throw AssertionError("A Span was not ended")
+            spanTree[spanTree.keys.firstOrNull { it.spanId == span.parentSpanId }]?.add(span) ?: throw AssertionError("A Span was not ended, parent of ${span.name}")
             spanTree[span] = mutableListOf()
         }
         val spanDiagram = roots.joinToString("\n") { it.toTreeNode(spanTree).toString() }
