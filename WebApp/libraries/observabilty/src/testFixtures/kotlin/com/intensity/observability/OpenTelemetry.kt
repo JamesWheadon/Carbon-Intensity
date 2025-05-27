@@ -110,32 +110,24 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         approveSpanDiagram(spans, testName)
     }
 
-    fun approveSpanDiagram(spans: MutableList<SpanData>, testName: String) {
-        spans.sortBy { it.startEpochNanos }
-        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
-        val directory = "../generated/$fileName"
-        File("../generated").mkdir()
-        File(directory).mkdir()
-        createSequenceDiagram(spans, testName)
+    fun approveSpanDiagram(spans: List<SpanData>, testName: String) {
+        val sortedSpans = spans.sortedBy { it.startEpochNanos }
         val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
-        val roots = mutableListOf<SpanData>()
-        spans.filter { it.parentSpanId == "0000000000000000" }.forEach {
+        val (roots, children) = sortedSpans.partition { it.parentSpanId == "0000000000000000" }
+        roots.forEach {
             spanTree[it] = mutableListOf()
-            spans.remove(it)
-            roots.add(it)
         }
-        while (spans.isNotEmpty()) {
-            spans.filter { span -> span.parentSpanId in spanTree.keys.map { it.spanId } }
-                .forEach { span ->
-                    spanTree[spanTree.keys.first { it.spanId == span.parentSpanId }]!!.add(span)
-                    spanTree[span] = mutableListOf()
-                    spans.remove(span)
-                }
+        children.forEach { span ->
+            spanTree[spanTree.keys.first { it.spanId == span.parentSpanId }]?.add(span) ?: throw AssertionError("A Span was not ended")
+            spanTree[span] = mutableListOf()
         }
         val spanDiagram = roots.joinToString("\n") { it.toTreeNode(spanTree).toString() }
+        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
+        val directory = "../generated/$fileName"
         val approvedOutput = File("$directory/span-tree.txt")
 
         if (approvedOutput.exists()) {
+            createSequenceDiagram(sortedSpans, testName)
             val approvedText = approvedOutput.readText()
             if (approvedText == spanDiagram) {
                 return
@@ -143,12 +135,15 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
                 File("$directory/span-tree-actual.txt").writeText(spanDiagram)
             }
         } else {
+            File("../generated").mkdir()
+            File(directory).mkdir()
             File("$directory/span-tree-actual.txt").writeText(spanDiagram)
+            createSequenceDiagram(sortedSpans, testName)
         }
         throw AssertionError("Span diagram is not approved")
     }
 
-    private fun createSequenceDiagram(spans: MutableList<SpanData>, testName: String) {
+    private fun createSequenceDiagram(spans: List<SpanData>, testName: String) {
         val calls = spans.filter { it.attributes.containsKey("http.target") }.map { it.toHttpSpan() }
         val participants = calls.flatMap { listOf(it.caller, it.target) }.toSet()
         val puml = """
@@ -165,11 +160,11 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
                 val response = """"${span.target}" -> "${span.caller}": ${span.status.code} ${span.status.description}"""
                 """
                 $request
-                    ${if (callerFirst) "activate \"${span.caller}\"" else "" }
-                    ${if (targetFirst) "activate \"${span.target}\"" else "" }
+                    ${if (callerFirst) "activate \"${span.caller}\"" else ""}
+                    ${if (targetFirst) "activate \"${span.target}\"" else ""}
                 $response
-                    ${if (targetLast) "deactivate \"${span.target}\"" else "" }
-                    ${if (callerLast) "deactivate \"${span.caller}\"" else "" }
+                    ${if (targetLast) "deactivate \"${span.target}\"" else ""}
+                    ${if (callerLast) "deactivate \"${span.caller}\"" else ""}
                 """.trimIndent()
             }.joinToString("\n")
         }
