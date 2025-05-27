@@ -118,16 +118,15 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             spanTree[it] = mutableListOf()
         }
         children.forEach { span ->
-            spanTree[spanTree.keys.first { it.spanId == span.parentSpanId }]?.add(span) ?: throw AssertionError("A Span was not ended")
+            spanTree[spanTree.keys.firstOrNull { it.spanId == span.parentSpanId }]?.add(span) ?: throw AssertionError("A Span was not ended")
             spanTree[span] = mutableListOf()
         }
         val spanDiagram = roots.joinToString("\n") { it.toTreeNode(spanTree).toString() }
-        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
-        val directory = "../generated/$fileName"
+        val directory = "../generated/${testName.removeSuffix("()").removeSuffix("(TestInfo)").replace(" ", "-")}"
         val approvedOutput = File("$directory/span-tree.txt")
 
         if (approvedOutput.exists()) {
-            createSequenceDiagram(sortedSpans, testName)
+            createSequenceDiagram(sortedSpans, testName, directory)
             val approvedText = approvedOutput.readText()
             if (approvedText == spanDiagram) {
                 return
@@ -138,12 +137,12 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             File("../generated").mkdir()
             File(directory).mkdir()
             File("$directory/span-tree-actual.txt").writeText(spanDiagram)
-            createSequenceDiagram(sortedSpans, testName)
+            createSequenceDiagram(sortedSpans, testName, directory)
         }
         throw AssertionError("Span diagram is not approved")
     }
 
-    private fun createSequenceDiagram(spans: List<SpanData>, testName: String) {
+    private fun createSequenceDiagram(spans: List<SpanData>, testName: String, directory: String) {
         val calls = spans.filter { it.attributes.containsKey("http.target") }.map { it.toHttpSpan() }
         val participants = calls.flatMap { listOf(it.caller, it.target) }.toSet()
         val puml = """
@@ -170,8 +169,6 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         }
             @enduml
         """.trimIndent().lines().map { it.trimIndent() }
-        val fileName = testName.substring(0, testName.indexOf("(TestInfo")).replace(" ", "-")
-        val directory = "../generated/$fileName"
 
         File("$directory/sequence.puml").writeText(puml.joinToString("\n"))
     }

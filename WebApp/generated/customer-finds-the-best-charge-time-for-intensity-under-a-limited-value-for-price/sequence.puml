@@ -1,0 +1,25 @@
+@startuml
+title customer finds the best charge time for intensity under a limited value for price()
+participant "test"
+participant "Octopus"
+participant "National Grid"
+participant "Limit"
+"test" -> "Octopus": GET /AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-A/standard-unit-rates/
+activate "test"
+activate "Octopus"
+"Octopus" -> "test": 200 OK
+deactivate "Octopus"
+
+"test" -> "National Grid": GET /intensity/2025-04-10T09:30Z/2025-04-10T17:00Z
+
+activate "National Grid"
+"National Grid" -> "test": 200 OK
+deactivate "National Grid"
+
+"test" -> "Limit": POST /calculate/price/10.0
+
+activate "Limit"
+"Limit" -> "test": 200 OK
+deactivate "Limit"
+deactivate "test"
+@enduml

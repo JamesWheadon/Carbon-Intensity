@@ -17,11 +17,18 @@ import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.time.ZonedDateTime
 
 class Scenarios {
     private val customer = Customer()
+
+    @AfterEach
+    fun tearDown(testInfo: TestInfo) {
+        customer.approveTracing(testInfo.displayName)
+    }
 
     @Test
     fun `customer finds the best charge time for intensity`() {
@@ -209,4 +216,8 @@ class Customer {
     }
 
     private fun String.toISO8601() = replace(" ", "T") + "Z"
+
+    fun approveTracing(testName: String) {
+        centralOpenTelemetry.approveSpanDiagram(testName, limitCalcOpenTelemetry)
+    }
 }
