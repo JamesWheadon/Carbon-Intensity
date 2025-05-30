@@ -22,6 +22,8 @@ class TestTracingOpenTelemetry(profile: TestProfile, serviceName: String) : Mana
 
     override fun span(spanName: String) = openTelemetry.span(spanName)
 
+    override fun end(span: ManagedSpan) = openTelemetry.end(span)
+
     override fun trace(spanName: String, targetName: String) = openTelemetry.trace(spanName, targetName)
 
     override fun propagateTrace() = openTelemetry.propagateTrace()
@@ -112,6 +114,9 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     fun approveSpanDiagram(spans: List<SpanData>, testName: String) {
         val sortedSpans = spans.sortedBy { it.startEpochNanos }
+        sortedSpans.forEach {
+            println("${it.name} spanId: ${it.spanId} parentId: ${it.parentSpanId} start ${it.startEpochNanos}")
+        }
         val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
         val (roots, children) = sortedSpans.partition { it.parentSpanId == "0000000000000000" }
         roots.forEach {

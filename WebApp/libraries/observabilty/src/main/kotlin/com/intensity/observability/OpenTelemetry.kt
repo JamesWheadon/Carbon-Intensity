@@ -5,19 +5,21 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
-import io.opentelemetry.context.Scope
 import io.opentelemetry.context.propagation.TextMapGetter
 import io.opentelemetry.context.propagation.TextMapSetter
 import org.http4k.core.Filter
 
 interface ManagedOpenTelemetry{
     fun span(spanName: String): ManagedSpan
+    fun end(span: ManagedSpan)
     fun trace(spanName: String, targetName: String): Filter
     fun propagateTrace(): Filter
     fun receiveTrace(): Filter
 }
 
 class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val serviceName: String): ManagedOpenTelemetry {
+    private val context = ArrayDeque<Context>()
+
     companion object {
         fun noOp() = TracingOpenTelemetry(OpenTelemetry.noop(), "")
     }
@@ -26,7 +28,13 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         val span = spanBuilder(spanName)
             .setAttribute("service.name", serviceName)
             .startSpan()
+        context.addLast(currentContext().with(span))
         return ManagedSpan(span)
+    }
+
+    override fun end(span: ManagedSpan) {
+        context.removeLast()
+        span.end()
     }
 
     override fun trace(spanName: String, targetName: String): Filter {
@@ -38,10 +46,10 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
                     .setAttribute("http.method", request.method.name)
                     .setAttribute("http.path", request.uri.path)
                     .startSpan()
-                val scope = span.makeCurrent()
+                context.addLast(currentContext().with(span))
                 next(request).also { response ->
                     span.setAttribute("http.status", response.status.code.toLong())
-                    scope.close()
+                    context.removeLast()
                     span.end()
                 }
             }
@@ -52,7 +60,7 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         return Filter { next ->
             { request ->
                 val headers = request.headers.toMap().toMutableMap()
-                W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, Setter)
+                W3CTraceContextPropagator.getInstance().inject(currentContext(), headers, Setter)
                 next(request.headers(headers.toList()))
             }
         }
@@ -62,10 +70,8 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         return Filter { next ->
             { request ->
                 val headers = request.headers.toMap().toMutableMap()
-                val scope = W3CTraceContextPropagator.getInstance().extract(Context.current(), headers, Getter).makeCurrent()
-                next(request).also {
-                    scope.close()
-                }
+                context.addLast(W3CTraceContextPropagator.getInstance().extract(currentContext(), headers, Getter))
+                next(request)
             }
         }
     }
@@ -73,6 +79,9 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     private fun spanBuilder(spanName: String): SpanBuilder =
         openTelemetry.getTracer("com.intensity.observability")
             .spanBuilder(spanName)
+            .setParent(currentContext())
+
+    private fun currentContext() = context.lastOrNull() ?: Context.root()
 
     private object Setter : TextMapSetter<MutableMap<String, String?>> {
         override fun set(carrier: MutableMap<String, String?>?, key: String, value: String) {
@@ -88,10 +97,7 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
 }
 
 class ManagedSpan(private val span: Span) {
-    private val scope: Scope = span.makeCurrent()
-
     fun end() {
-        scope.close()
         span.end()
     }
 

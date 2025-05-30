@@ -43,12 +43,12 @@ class Calculator(
         return flatZip(prices, intensity) { priceData, intensityData ->
             Success(createElectricityFrom(priceData, intensityData)).also {
                 span.addEvent("electricity data created")
-                span.end()
+                openTelemetry.end(span)
             }
         }.flatMap { electricity ->
             getChargeTime(calculationData, electricity)
         }.also {
-            parentSpan.end()
+            openTelemetry.end(parentSpan)
         }
     }
 
@@ -102,7 +102,7 @@ class Calculator(
                 )
             }
         }.also {
-            span.end()
+            openTelemetry.end(span)
         }
     }
 

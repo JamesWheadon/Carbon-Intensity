@@ -4,7 +4,6 @@ import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.hasSize
-import org.http4k.core.Filter
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -37,7 +36,7 @@ class TracingOpenTelemetryTest {
     fun `can add an event to a span`() {
         val span = openTelemetry.span("testSpan")
         span.addEvent("test-event")
-        span.end()
+        openTelemetry.end(span)
 
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.events, equalTo(listOf(SpanEvent("test-event"))))
@@ -47,10 +46,10 @@ class TracingOpenTelemetryTest {
     fun `sets a span as the current active span and removes it when ended`() {
         val span = openTelemetry.span("testSpan")
         val firstChildSpan = openTelemetry.span("firstChildSpan")
-        firstChildSpan.end()
+        openTelemetry.end(firstChildSpan)
         val secondChildSpan = openTelemetry.span("secondChildSpan")
-        secondChildSpan.end()
-        span.end()
+        openTelemetry.end(secondChildSpan)
+        openTelemetry.end(span)
 
         val parentSpanData = openTelemetry.spans().first { it.name == "testSpan" }
         val firstChildSpanData = openTelemetry.spans().first { it.name == "firstChildSpan" }
@@ -81,7 +80,7 @@ class TracingOpenTelemetryTest {
             sentRequest = request
             Response(OK)
         }(Request(GET, "/test/path/propagated"))
-        span.end()
+        openTelemetry.end(span)
 
         assertThat(sentRequest!!, hasHeader("traceparent"))
     }
@@ -90,25 +89,15 @@ class TracingOpenTelemetryTest {
     fun `receives trace context over http`(testInfo: TestInfo) {
         val callerOpenTelemetry = TestTracingOpenTelemetry(Local, "other-service")
         val startSpan = callerOpenTelemetry.span("starting span")
-        openTelemetry.propagateTrace().then(changeContext()).then(openTelemetry.receiveTrace()).then { request ->
-            openTelemetry.span("received span").end()
+        callerOpenTelemetry.propagateTrace().then(openTelemetry.receiveTrace()).then {
+            val span = openTelemetry.span("received span")
+            openTelemetry.end(span)
             Response(OK)
         }(Request(GET, "/test/path/propagated"))
-        startSpan.end()
+        openTelemetry.end(startSpan)
 
         val receivedSpanData = openTelemetry.spans().first { it.name == "received span" }
         val sentSpanData = callerOpenTelemetry.spans().first { it.name == "starting span" }
         assertThat(receivedSpanData.parentSpanId, equalTo(sentSpanData.spanId))
-    }
-
-    private fun changeContext() : Filter {
-        return Filter { next ->
-            { request ->
-                val span = openTelemetry.span("change")
-                next(request).also {
-                    span.end()
-                }
-            }
-        }
     }
 }

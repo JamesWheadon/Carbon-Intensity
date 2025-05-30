@@ -42,8 +42,8 @@ private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> handleFailure(failed) }
             ).also {
-                span.end()
-                outerSpan.end()
+                openTelemetry.end(span)
+                openTelemetry.end(outerSpan)
             }
     },
     "/calculate/price/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
@@ -61,7 +61,7 @@ private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                 { failed -> handleFailure(failed) }
             ).also {
-                span.end()
+                openTelemetry.end(span)
             }
     }
 )
