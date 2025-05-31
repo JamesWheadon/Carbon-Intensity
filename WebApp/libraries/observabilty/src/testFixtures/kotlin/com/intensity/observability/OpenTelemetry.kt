@@ -16,19 +16,13 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
-class TestTracingOpenTelemetry(profile: TestProfile, serviceName: String) : ManagedOpenTelemetry {
-    private val testOpenTelemetry = TestOpenTelemetry(profile)
-    private val openTelemetry = TracingOpenTelemetry(testOpenTelemetry, serviceName)
-
-    override fun span(spanName: String) = openTelemetry.span(spanName)
-
-    override fun end(span: ManagedSpan) = openTelemetry.end(span)
-
-    override fun trace(spanName: String, targetName: String) = openTelemetry.trace(spanName, targetName)
-
-    override fun propagateTrace() = openTelemetry.propagateTrace()
-
-    override fun receiveTrace() = openTelemetry.receiveTrace()
+class TestTracingOpenTelemetry private constructor(
+    private val testOpenTelemetry: TestOpenTelemetry,
+    openTelemetry: ManagedOpenTelemetry
+) : ManagedOpenTelemetry by openTelemetry {
+    constructor(profile: TestProfile, serviceName: String) : this(TestOpenTelemetry(profile), serviceName)
+    private constructor(testOpenTelemetry: TestOpenTelemetry, serviceName: String) :
+            this(testOpenTelemetry, TracingOpenTelemetry(testOpenTelemetry, serviceName))
 
     fun spans() = testOpenTelemetry.spans()
 
@@ -157,7 +151,8 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
                 val targetFirst = calls.indexOfFirst { it.caller == span.target || it.target == span.target } == index
                 val targetLast = calls.indexOfLast { it.caller == span.target || it.target == span.target } == index
                 val request = """"${span.caller}" -> "${span.target}": ${span.method} ${span.path}"""
-                val response = """"${span.target}" -> "${span.caller}": ${span.status.code} ${span.status.description}"""
+                val response =
+                    """"${span.target}" -> "${span.caller}": ${span.status.code} ${span.status.description}"""
                 """
                 $request
                     ${if (callerFirst) "activate \"${span.caller}\"" else ""}
