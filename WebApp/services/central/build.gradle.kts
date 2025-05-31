@@ -22,7 +22,6 @@ dependencies {
     testImplementation(libs.junit.engine)
     testImplementation(libs.http4k.hamkrest)
     testImplementation(libs.http4k.approval)
-    testImplementation(libs.http4k.tracerbullet)
 }
 
 jib {

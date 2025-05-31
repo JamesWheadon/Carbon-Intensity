@@ -26,9 +26,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "time":30,
                 "intensityLimit":100
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -51,9 +49,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "time":30,
                 "intensityLimit":99
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -76,9 +72,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "time":30,
                 "priceLimit":14.0
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -101,9 +95,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "time":30,
                 "priceLimit":13
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -129,9 +121,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                     "intensityWeight":0.7
                 }
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -153,9 +143,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "time":30,
                 "priceLimit":13
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
     }
@@ -173,9 +161,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "time":30,
                 "priceLimit":13
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
     }
@@ -194,9 +180,7 @@ class CalculatorEndToEndTest : EndToEndTest() {
                 "time":30,
                 "intensityLimit":100
             }""".trimMargin()
-        val response = User(events, server).call(
-            Request(POST, "/octopus/charge-time").body(requestBody)
-        )
+        val response = app(Request(POST, "/octopus/charge-time").body(requestBody))
 
         assertThat(response.status, equalTo(NOT_FOUND))
         assertThat(

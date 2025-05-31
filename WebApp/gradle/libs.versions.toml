@@ -21,4 +21,3 @@ junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", ver
 
 http4k-hamkrest = { group = "org.http4k", name = "http4k-testing-hamkrest", version.ref = "http4k" }
 http4k-approval = { group = "org.http4k", name = "http4k-testing-approval", version.ref = "http4k" }
-http4k-tracerbullet = { group = "org.http4k", name = "http4k-testing-tracerbullet", version.ref = "http4k" }

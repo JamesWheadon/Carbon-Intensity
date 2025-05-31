@@ -6,88 +6,23 @@ import com.intensity.observability.TestProfile.Local
 import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
-import org.http4k.core.Filter
-import org.http4k.core.HttpHandler
-import org.http4k.core.Request
-import org.http4k.core.then
-import org.http4k.events.EventFilters.AddServiceName
-import org.http4k.events.EventFilters.AddZipkinTraces
-import org.http4k.events.Events
-import org.http4k.events.HttpEvent.Incoming
-import org.http4k.events.HttpEvent.Outgoing
-import org.http4k.events.then
-import org.http4k.filter.ClientFilters
-import org.http4k.filter.ClientFilters.ResetRequestTracing
-import org.http4k.filter.ResponseFilters.ReportHttpTransaction
-import org.http4k.filter.ServerFilters
-import org.http4k.tracing.Actor
-import org.http4k.tracing.ActorType
-import org.http4k.tracing.TraceRenderPersistence
-import org.http4k.tracing.junit.TracerBulletEvents
-import org.http4k.tracing.persistence.FileSystem
-import org.http4k.tracing.renderer.PumlSequenceDiagram
-import org.http4k.tracing.tracer.HttpTracer
-import org.junit.jupiter.api.extension.RegisterExtension
-import java.io.File
 import java.time.ZonedDateTime
 
 abstract class EndToEndTest {
-    @RegisterExtension
-    val events = TracerBulletEvents(
-        listOf(HttpTracer {
-            Actor(it.metadata["service"].toString(), ActorType.System)
-        }),
-        listOf(PumlSequenceDiagram),
-        TraceRenderPersistence.FileSystem(File("../../sequences"))
-    )
-
-    private val appClientStack = clientStack("App", events)
     val time: ZonedDateTime = ZonedDateTime.parse("2025-03-25T12:00:00Z")
-
     val octopus = FakeOctopus()
     val nationalGrid = FakeNationalGrid()
     val limitCalculator = FakeLimitCalculator()
     val weightsCalculator = FakeWeightsCalculator()
     private val centralOpenTelemetry = TestTracingOpenTelemetry(Local, "central")
-    val server = serverStack("App", events).then(
+    val app =
         carbonIntensity(
-            NationalGridCloud(
-                appClientStack.then(nationalGrid.traced(serverStack("National Grid", events))),
-                centralOpenTelemetry
-            ),
-            OctopusCloud(
-                appClientStack.then(octopus.traced(serverStack("Octopus", events))),
-                centralOpenTelemetry
-            ),
-            LimitCalculatorCloud(
-                appClientStack.then(limitCalculator.traced(serverStack("Limit Calculator", events))),
-                centralOpenTelemetry
-            ),
-            WeightsCalculatorCloud(
-                appClientStack.then(weightsCalculator.traced(serverStack("Weights Calculator", events))),
-                centralOpenTelemetry
-            ),
+            NationalGridCloud(nationalGrid, centralOpenTelemetry),
+            OctopusCloud(octopus, centralOpenTelemetry),
+            LimitCalculatorCloud(limitCalculator, centralOpenTelemetry),
+            WeightsCalculatorCloud(weightsCalculator, centralOpenTelemetry),
             centralOpenTelemetry
         )
-    )
 
     fun getErrorResponse(message: String) = """{"error":"$message"}"""
 }
-
-class User(events: Events, rawHttp: HttpHandler) {
-    private val http = ResetRequestTracing().then(clientStack("User", events)).then(rawHttp)
-
-    fun call(request: Request) = http(request)
-}
-
-private fun traceEvents(actorName: String) = AddZipkinTraces().then(AddServiceName(actorName))
-
-private fun clientStack(actorName: String, events: Events) =
-    ClientFilters.RequestTracing()
-        .then(ReportHttpTransaction { traceEvents(actorName).then(events)(Outgoing(it)) })
-
-private fun serverStack(actorName: String, events: Events) =
-    ServerFilters.RequestTracing()
-        .then(ReportHttpTransaction { traceEvents(actorName).then(events)(Incoming(it)) })
-
-private fun HttpHandler.traced(events: Filter) = events.then(this)

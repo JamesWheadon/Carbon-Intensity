@@ -27,9 +27,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             listOf(23.4, 26.0, 24.3)
         )
 
-        val response = User(events, server).call(
-            Request(GET, "/tariffs")
-        )
+        val response = app(Request(GET, "/tariffs"))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -49,9 +47,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
         )
         octopus.incorrectOctopusProductCode("error-product")
 
-        val response = User(events, server).call(
-            Request(GET, "/tariffs")
-        )
+        val response = app(Request(GET, "/tariffs"))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -66,9 +62,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     fun `handles failure case when unable to retrieve products`() {
         octopus.fail()
 
-        val response = User(events, server).call(
-            Request(GET, "/tariffs")
-        )
+        val response = app(Request(GET, "/tariffs"))
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
         assertThat(
@@ -83,9 +77,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     fun `handles failure case when no correct products are found`() {
         octopus.incorrectOctopusProductCode("error-product")
 
-        val response = User(events, server).call(
-            Request(GET, "/tariffs")
-        )
+        val response = app(Request(GET, "/tariffs"))
 
         assertThat(response.status, equalTo(NOT_FOUND))
         assertThat(
@@ -105,9 +97,7 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             mutableListOf(23.4, 26.0, 24.3)
         )
 
-        val response = User(events, server).call(
-            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A")
-        )
+        val response = app(Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A"))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -148,11 +138,8 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             mutableListOf(23.4, 26.0, 24.3)
         )
 
-        val response = User(events, server).call(
-            Request(
-                GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?end=${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30)).formatted()}"
-            )
+        val response = app(
+            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?end=${zonedDateTimeAtHalfHour(currentTime.plusMinutes(30)).formatted()}")
         )
 
         assertThat(response.status, equalTo(OK))
@@ -187,11 +174,8 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             mutableListOf(23.4, 26.0, 24.3)
         )
 
-        val response = User(events, server).call(
-            Request(
-                GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26T00:00:00Z"
-            )
+        val response = app(
+            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26T00:00:00Z")
         )
 
         assertThat(response.status, equalTo(OK))
@@ -232,11 +216,8 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             mutableListOf(23.4, 26.0, 24.3)
         )
 
-        val response = User(events, server).call(
-            Request(
-                GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-D"
-            )
+        val response = app(
+            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-D")
         )
 
         assertThat(response.status, equalTo(NOT_FOUND))
@@ -247,11 +228,8 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
     fun `handles octopus not responding`() {
         octopus.fail()
 
-        val response = User(events, server).call(
-            Request(
-                GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-D"
-            )
+        val response = app(
+            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-D")
         )
 
         assertThat(response.status, equalTo(INTERNAL_SERVER_ERROR))
@@ -266,11 +244,8 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
             mutableListOf(23.4, 26.0, 24.3)
         )
 
-        val response = User(events, server).call(
-            Request(
-                GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26T00:00:00Z&end=2023-03-25T23:59:59Z"
-            )
+        val response = app(
+            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26T00:00:00Z&end=2023-03-25T23:59:59Z")
         )
 
         assertThat(response.status, equalTo(BAD_REQUEST))
@@ -279,21 +254,15 @@ class OctopusTariffsEndToEndTest : EndToEndTest() {
 
     @Test
     fun `handles invalid timestamps for start and end times`() {
-        val invalidStart = User(events, server).call(
-            Request(
-                GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26.00:00:00Z"
-            )
+        val invalidStart = app(
+            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?start=2023-03-26.00:00:00Z")
         )
 
         assertThat(invalidStart.status, equalTo(BAD_REQUEST))
         assertThat(invalidStart, hasBody("""{"error":"Invalid request"}"""))
 
-        val invalidEnd = User(events, server).call(
-            Request(
-                GET,
-                "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?end=23-03-25T23:59:59Z"
-            )
+        val invalidEnd = app(
+            Request(GET, "/tariffs/AGILE-24-10-01/E-1R-AGILE-24-10-01-A?end=23-03-25T23:59:59Z")
         )
 
         assertThat(invalidEnd.status, equalTo(BAD_REQUEST))

@@ -20,9 +20,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     fun `calls national grid and returns intensities`() {
         nationalGrid.setDateData(date, List(96) { 212 }, List(96) { null })
 
-        val response = User(events, server).call(
-            Request(POST, "/intensities")
-        )
+        val response = app(Request(POST, "/intensities"))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -39,9 +37,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     fun `accepts start time without end time and returns 48 hour of intensities`() {
         nationalGrid.setDateData(date.plusDays(5), List(96) { 134 })
 
-        val response = User(events, server).call(
-            Request(POST, "/intensities?start=${date.plusDays(5).formatted()}")
-        )
+        val response = app(Request(POST, "/intensities?start=${date.plusDays(5).formatted()}"))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -58,9 +54,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     fun `accepts end time without start time and returns intensities between now and end`() {
         nationalGrid.setDateData(date, List(96) { 134 })
 
-        val response = User(events, server).call(
-            Request(POST, "/intensities?end=${date.plusHours(7).formatted()}")
-        )
+        val response = app(Request(POST, "/intensities?end=${date.plusHours(7).formatted()}"))
 
         assertThat(response.status, equalTo(OK))
         assertThat(
@@ -77,9 +71,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
     fun `handles error from national grid with the correct response`() {
         nationalGrid.shouldFail()
 
-        val response = User(events, server).call(
-            Request(POST, "/intensities")
-        )
+        val response = app(Request(POST, "/intensities"))
 
         assertThat(response.status, equalTo(NOT_FOUND))
         assertThat(response.body.toString(), equalTo(getErrorResponse("Failed to get intensity data")))
@@ -90,7 +82,7 @@ class IntensitiesEndToEndTest : EndToEndTest() {
         nationalGrid.setDateData(time, listOf(100, 100, 101, 101, 100), listOf(null, null, null, null, null))
         weightsCalculator.setChargeTime(FakeWeights(0.0, 1.0), time.formatted() to time.plusMinutes(45).formatted())
 
-        val response = User(events, server).call(
+        val response = app(
             Request(POST, "/intensities/charge-time").body(
                 """{
                     "start":"${time.formatted()}",
