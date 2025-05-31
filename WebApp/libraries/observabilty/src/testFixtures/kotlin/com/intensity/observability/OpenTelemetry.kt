@@ -114,19 +114,15 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     fun approveSpanDiagram(spans: List<SpanData>, testName: String) {
         val sortedSpans = spans.sortedBy { it.startEpochNanos }
-        sortedSpans.forEach {
-            println("${it.name} spanId: ${it.spanId} parentId: ${it.parentSpanId} start ${it.startEpochNanos}")
+        val (roots, children) = spans.partition { it.parentSpanId == "0000000000000000" }
+
+        children.firstOrNull { span -> spans.none { it.spanId == span.parentSpanId } }?.let { span ->
+            throw AssertionError("A Span was not ended, parent of ${span.name}")
         }
-        val spanTree = mutableMapOf<SpanData, MutableList<SpanData>>()
-        val (roots, children) = sortedSpans.partition { it.parentSpanId == "0000000000000000" }
-        roots.forEach {
-            spanTree[it] = mutableListOf()
-        }
-        children.forEach { span ->
-            spanTree[spanTree.keys.firstOrNull { it.spanId == span.parentSpanId }]?.add(span) ?: throw AssertionError("A Span was not ended, parent of ${span.name}")
-            spanTree[span] = mutableListOf()
-        }
-        val spanDiagram = roots.joinToString("\n") { it.toTreeNode(spanTree).toString() }
+
+        val spanDiagram = roots.map {
+            it.toTreeNode(spans)
+        }.joinToString("\n")
         val directory = "../generated/${testName.removeSuffix("()").removeSuffix("(TestInfo)").replace(" ", "-")}"
         val approvedOutput = File("$directory/span-tree.txt")
 
@@ -184,11 +180,11 @@ enum class TestProfile {
     Jaeger
 }
 
-private fun SpanData.toTreeNode(spanTree: MutableMap<SpanData, MutableList<SpanData>>): TreeNode {
-    return TreeNode(this.name, spanTree[this]?.map { it.toTreeNode(spanTree) } ?: emptyList())
+private fun SpanData.toTreeNode(spans: List<SpanData>): TreeNode {
+    return TreeNode(this, spans.filter { it.parentSpanId == spanId }.map { it.toTreeNode(spans) })
 }
 
-class TreeNode(private val name: String, private val children: List<TreeNode>) {
+class TreeNode(private val span: SpanData, private val children: List<TreeNode>) {
     override fun toString(): String {
         val buffer = StringBuilder(50)
         print(buffer, "", "")
@@ -197,7 +193,7 @@ class TreeNode(private val name: String, private val children: List<TreeNode>) {
 
     private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
         buffer.append(prefix)
-        buffer.append(name)
+        buffer.append(span.name)
         buffer.append('\n')
         val it = children.iterator()
         while (it.hasNext()) {
