@@ -119,6 +119,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
         }.joinToString("\n")
         val directory = "../generated/${testName.removeSuffix("()").removeSuffix("(TestInfo)").replace(" ", "-")}"
         val approvedOutput = File("$directory/span-tree.txt")
+        val actualOutput = File("$directory/span-tree-actual.txt").also { it.delete() }
 
         if (approvedOutput.exists()) {
             createSequenceDiagram(sortedSpans, testName, directory)
@@ -126,12 +127,12 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             if (approvedText == spanDiagram) {
                 return
             } else {
-                File("$directory/span-tree-actual.txt").writeText(spanDiagram)
+                actualOutput.writeText(spanDiagram)
             }
         } else {
             File("../generated").mkdir()
             File(directory).mkdir()
-            File("$directory/span-tree-actual.txt").writeText(spanDiagram)
+            actualOutput.writeText(spanDiagram)
             createSequenceDiagram(sortedSpans, testName, directory)
         }
         throw AssertionError("Span diagram is not approved")
