@@ -104,4 +104,8 @@ class ManagedSpan(private val span: Span) {
     fun addEvent(eventName: String) {
         span.addEvent(eventName)
     }
+
+    fun updateName(newName: String) {
+        span.updateName(newName)
+    }
 }

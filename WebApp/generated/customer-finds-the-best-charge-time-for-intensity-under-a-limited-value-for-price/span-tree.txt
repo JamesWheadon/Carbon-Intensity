@@ -4,4 +4,4 @@ charge time calculation
 │   └── Fetch Carbon Intensity
 └── calculate charge time
     └── Price limit
-        └── charge time calculated
+        └── price limit calculation

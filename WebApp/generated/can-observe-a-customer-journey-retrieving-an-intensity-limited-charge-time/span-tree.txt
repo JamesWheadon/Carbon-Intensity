@@ -4,5 +4,4 @@ charge time calculation
 │   └── Fetch Carbon Intensity
 └── calculate charge time
     └── Intensity limit
-        └── POST calculate/intensity/{limit}
-            └── charge time calculated
+        └── intensity limit calculation

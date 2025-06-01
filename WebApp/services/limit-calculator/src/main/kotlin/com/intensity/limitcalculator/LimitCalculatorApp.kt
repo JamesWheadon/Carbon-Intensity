@@ -27,8 +27,7 @@ fun limitCalculatorApp(openTelemetry: ManagedOpenTelemetry) = handleLensFailures
 
 private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
     "/calculate/intensity/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
-        val outerSpan = openTelemetry.span("POST calculate/intensity/{limit}")
-        val span = openTelemetry.span("charge time calculated")
+        val span = openTelemetry.span("intensity limit calculation")
         val scheduleRequest = scheduleRequestLens(request)
         val intensityLimit = limitLens(request)
         underIntensityLimit(
@@ -40,14 +39,18 @@ private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
         )
             .fold(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-                { failed -> handleFailure(failed) }
+                { failed ->
+                    if (failed is NoChargeTimePossible) {
+                        span.updateName("intensity limit not possible")
+                    }
+                    handleFailure(failed)
+                }
             ).also {
                 openTelemetry.end(span)
-                openTelemetry.end(outerSpan)
             }
     },
     "/calculate/price/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
-        val span = openTelemetry.span("charge time calculated")
+        val span = openTelemetry.span("price limit calculation")
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
         underPriceLimit(
@@ -59,7 +62,12 @@ private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
         )
             .fold(
                 { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-                { failed -> handleFailure(failed) }
+                { failed ->
+                    if (failed is NoChargeTimePossible) {
+                        span.updateName("price limit not possible")
+                    }
+                    handleFailure(failed)
+                }
             ).also {
                 openTelemetry.end(span)
             }
