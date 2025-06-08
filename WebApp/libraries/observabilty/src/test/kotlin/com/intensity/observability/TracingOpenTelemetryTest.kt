@@ -13,9 +13,24 @@ import org.http4k.hamkrest.hasHeader
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
 class TracingOpenTelemetryTest {
     private val openTelemetry = TestTracingOpenTelemetry(Local, "test-service")
+
+    companion object {
+        @JvmStatic
+        private fun basePaths(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of("https://fake-base-path", 443L),
+                Arguments.of("http://fake-base-path", 80L),
+                Arguments.of("http://localhost:8080/fake-base-path", 8080L)
+            )
+        }
+    }
 
     @AfterEach
     fun tearDown() {
@@ -73,6 +88,16 @@ class TracingOpenTelemetryTest {
         assertThat(spanData.attributes["server.port"], equalTo(443L))
         assertThat(spanData.attributes["http.response.status_code"], equalTo(200L))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
+    }
+
+    @ParameterizedTest
+    @MethodSource("basePaths")
+    fun `adds the correct port attribute value for a trace`(basePath: String, port: Long) {
+        openTelemetry.trace("http-request", "other-service").then { Response(OK) }(Request(GET, "$basePath/test/path"))
+
+        assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
+        val spanData = openTelemetry.spans().first()
+        assertThat(spanData.attributes["server.port"], equalTo(port))
     }
 
     @Test

@@ -18,6 +18,7 @@ openTelemetry-semconv = { group = "io.opentelemetry.semconv", name = "openteleme
 openTelemetry-testing = { group = "io.opentelemetry", name = "opentelemetry-sdk-testing", version.ref = "openTelemetry" }
 
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
 
 http4k-hamkrest = { group = "org.http4k", name = "http4k-testing-hamkrest", version.ref = "http4k" }
 http4k-approval = { group = "org.http4k", name = "http4k-testing-approval", version.ref = "http4k" }

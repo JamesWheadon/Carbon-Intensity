@@ -15,5 +15,6 @@ dependencies {
     testFixturesImplementation(libs.openTelemetry.testing)
 
     testImplementation(libs.junit.engine)
+    testImplementation(libs.junit.params)
     testImplementation(libs.http4k.hamkrest)
 }

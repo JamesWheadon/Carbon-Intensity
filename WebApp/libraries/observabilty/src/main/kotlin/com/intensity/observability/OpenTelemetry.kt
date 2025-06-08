@@ -15,6 +15,7 @@ import io.opentelemetry.semconv.ServerAttributes.SERVER_PORT
 import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
 import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.http4k.core.Filter
+import org.http4k.core.Uri
 
 interface ManagedOpenTelemetry {
     fun span(spanName: String): ManagedSpan
@@ -53,7 +54,7 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
                     .setAttribute(HTTP_REQUEST_METHOD, request.method.name)
                     .setAttribute(URL_FULL, request.uri.toString())
                     .setAttribute(SERVER_ADDRESS, request.uri.host)
-                    .setAttribute(SERVER_PORT, request.uri.port?.toLong() ?: pathFrom(request.uri.scheme))
+                    .setAttribute(SERVER_PORT, request.uri.port?.toLong() ?: pathFrom(request.uri))
                     .startSpan()
                 context.addLast(currentContext().with(span))
                 next(request).also { response ->
@@ -65,8 +66,8 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         }
     }
 
-    private fun pathFrom(scheme: String): Long {
-        return when (scheme) {
+    private fun pathFrom(scheme: Uri): Long {
+        return when (scheme.scheme) {
             "http" -> 80L
             "https" -> 443L
             else -> 0L
