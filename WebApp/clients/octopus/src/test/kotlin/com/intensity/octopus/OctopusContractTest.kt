@@ -198,7 +198,7 @@ class FakeOctopusTest : OctopusContractTest() {
             containsEntries(
                 listOf(
                     "service.name" to "octopus-test",
-                    "http.status" to 200L,
+                    "http.response.status_code" to 200L,
                     "http.path" to "/",
                     "http.target" to "Octopus"
                 )
@@ -217,7 +217,7 @@ class FakeOctopusTest : OctopusContractTest() {
             containsEntries(
                 listOf(
                     "service.name" to "octopus-test",
-                    "http.status" to 200L,
+                    "http.response.status_code" to 200L,
                     "http.path" to "/AGILE-FLEX-22-11-25/",
                     "http.target" to "Octopus"
                 )
@@ -241,7 +241,7 @@ class FakeOctopusTest : OctopusContractTest() {
             containsEntries(
                 listOf(
                     "service.name" to "octopus-test",
-                    "http.status" to 200L,
+                    "http.response.status_code" to 200L,
                     "http.path" to "/AGILE-FLEX-22-11-25/electricity-tariffs/E-1R-AGILE-FLEX-22-11-25-C/standard-unit-rates/",
                     "http.target" to "Octopus"
                 )

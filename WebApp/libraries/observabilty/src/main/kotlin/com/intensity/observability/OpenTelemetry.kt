@@ -3,13 +3,20 @@ package com.intensity.observability
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.TextMapGetter
 import io.opentelemetry.context.propagation.TextMapSetter
+import io.opentelemetry.semconv.HttpAttributes.HTTP_REQUEST_METHOD
+import io.opentelemetry.semconv.HttpAttributes.HTTP_RESPONSE_STATUS_CODE
+import io.opentelemetry.semconv.ServerAttributes.SERVER_ADDRESS
+import io.opentelemetry.semconv.ServerAttributes.SERVER_PORT
+import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
+import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.http4k.core.Filter
 
-interface ManagedOpenTelemetry{
+interface ManagedOpenTelemetry {
     fun span(spanName: String): ManagedSpan
     fun end(span: ManagedSpan)
     fun trace(spanName: String, targetName: String): Filter
@@ -26,7 +33,6 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
 
     override fun span(spanName: String): ManagedSpan {
         val span = spanBuilder(spanName)
-            .setAttribute("service.name", serviceName)
             .startSpan()
         context.addLast(currentContext().with(span))
         return ManagedSpan(span)
@@ -41,18 +47,29 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
         return Filter { next ->
             { request ->
                 val span = spanBuilder(spanName)
-                    .setAttribute("service.name", serviceName)
+                    .setSpanKind(SpanKind.CLIENT)
                     .setAttribute("http.target", targetName)
-                    .setAttribute("http.method", request.method.name)
                     .setAttribute("http.path", request.uri.path)
+                    .setAttribute(HTTP_REQUEST_METHOD, request.method.name)
+                    .setAttribute(URL_FULL, request.uri.toString())
+                    .setAttribute(SERVER_ADDRESS, request.uri.host)
+                    .setAttribute(SERVER_PORT, request.uri.port?.toLong() ?: pathFrom(request.uri.scheme))
                     .startSpan()
                 context.addLast(currentContext().with(span))
                 next(request).also { response ->
-                    span.setAttribute("http.status", response.status.code.toLong())
+                    span.setAttribute(HTTP_RESPONSE_STATUS_CODE, response.status.code.toLong())
                     context.removeLast()
                     span.end()
                 }
             }
+        }
+    }
+
+    private fun pathFrom(scheme: String): Long {
+        return when (scheme) {
+            "http" -> 80L
+            "https" -> 443L
+            else -> 0L
         }
     }
 
@@ -79,6 +96,7 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     private fun spanBuilder(spanName: String): SpanBuilder =
         openTelemetry.getTracer("com.intensity.observability")
             .spanBuilder(spanName)
+            .setAttribute(SERVICE_NAME, serviceName)
             .setParent(currentContext())
 
     private fun currentContext() = context.lastOrNull() ?: Context.root()

@@ -10,7 +10,10 @@ import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
+import io.opentelemetry.semconv.HttpAttributes.HTTP_REQUEST_METHOD
+import io.opentelemetry.semconv.HttpAttributes.HTTP_RESPONSE_STATUS_CODE
 import io.opentelemetry.semconv.ServiceAttributes
+import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
 import org.http4k.core.Status
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -224,9 +227,9 @@ private data class HttpSpan(
 )
 
 private fun SpanData.toHttpSpan() = HttpSpan(
-    this.attributes["service.name"]!! as String,
+    this.attributes[SERVICE_NAME.key]!! as String,
     this.attributes["http.target"]!! as String,
-    this.attributes["http.method"]!! as String,
+    this.attributes[HTTP_REQUEST_METHOD.key]!! as String,
     this.attributes["http.path"]!! as String,
-    Status.fromCode((this.attributes["http.status"] as Long).toInt())!!
+    Status.fromCode((this.attributes[HTTP_RESPONSE_STATUS_CODE.key] as Long).toInt())!!
 )

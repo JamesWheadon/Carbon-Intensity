@@ -60,15 +60,18 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `traces an http request`() {
-        openTelemetry.trace("http-request", "other-service").then { Response(OK) }(Request(GET, "/test/path"))
+        openTelemetry.trace("http-request", "other-service").then { Response(OK) }(Request(GET, "https://fake-base-path/test/path"))
 
         assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.attributes["http.target"], equalTo("other-service"))
-        assertThat(spanData.attributes["http.method"], equalTo("GET"))
         assertThat(spanData.attributes["http.path"], equalTo("/test/path"))
-        assertThat(spanData.attributes["http.status"], equalTo(200L))
+        assertThat(spanData.attributes["http.request.method"], equalTo("GET"))
+        assertThat(spanData.attributes["url.full"], equalTo("https://fake-base-path/test/path"))
+        assertThat(spanData.attributes["server.address"], equalTo("fake-base-path"))
+        assertThat(spanData.attributes["server.port"], equalTo(443L))
+        assertThat(spanData.attributes["http.response.status_code"], equalTo(200L))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
     }
 

@@ -61,7 +61,7 @@ class FakeNationalGridTest : NationalGridContractTest() {
             containsEntries(
                 listOf(
                     "service.name" to "national-grid-test",
-                    "http.status" to 200L,
+                    "http.response.status_code" to 200L,
                     "http.path" to "/intensity/${time.toLocalDate()}T00:30Z/${time.toLocalDate()}T06:00Z",
                     "http.target" to "National Grid"
                 )
