@@ -27,50 +27,48 @@ fun limitCalculatorApp(openTelemetry: ManagedOpenTelemetry) = handleLensFailures
 
 private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
     "/calculate/intensity/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
-        val span = openTelemetry.span("intensity limit calculation")
-        val scheduleRequest = scheduleRequestLens(request)
-        val intensityLimit = limitLens(request)
-        underIntensityLimit(
-            scheduleRequest.electricity,
-            intensityLimit,
-            scheduleRequest.start,
-            scheduleRequest.end,
-            scheduleRequest.time
-        )
-            .fold(
-                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-                { failed ->
-                    if (failed is NoChargeTimePossible) {
-                        span.updateName("intensity limit not possible")
+        openTelemetry.span("intensity limit calculation") { span ->
+            val scheduleRequest = scheduleRequestLens(request)
+            val intensityLimit = limitLens(request)
+            underIntensityLimit(
+                scheduleRequest.electricity,
+                intensityLimit,
+                scheduleRequest.start,
+                scheduleRequest.end,
+                scheduleRequest.time
+            )
+                .fold(
+                    { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                    { failed ->
+                        if (failed is NoChargeTimePossible) {
+                            span.updateName("intensity limit not possible")
+                        }
+                        handleFailure(failed)
                     }
-                    handleFailure(failed)
-                }
-            ).also {
-                openTelemetry.end(span)
-            }
+                )
+        }
     },
     "/calculate/price/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
-        val span = openTelemetry.span("price limit calculation")
-        val scheduleRequest = scheduleRequestLens(request)
-        val priceLimit = limitLens(request)
-        underPriceLimit(
-            scheduleRequest.electricity,
-            priceLimit,
-            scheduleRequest.start,
-            scheduleRequest.end,
-            scheduleRequest.time
-        )
-            .fold(
-                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-                { failed ->
-                    if (failed is NoChargeTimePossible) {
-                        span.updateName("price limit not possible")
+        openTelemetry.span("price limit calculation") { span ->
+            val scheduleRequest = scheduleRequestLens(request)
+            val priceLimit = limitLens(request)
+            underPriceLimit(
+                scheduleRequest.electricity,
+                priceLimit,
+                scheduleRequest.start,
+                scheduleRequest.end,
+                scheduleRequest.time
+            )
+                .fold(
+                    { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                    { failed ->
+                        if (failed is NoChargeTimePossible) {
+                            span.updateName("price limit not possible")
+                        }
+                        handleFailure(failed)
                     }
-                    handleFailure(failed)
-                }
-            ).also {
-                openTelemetry.end(span)
-            }
+                )
+        }
     }
 )
 

@@ -29,28 +29,31 @@ class Calculator(
     private val weightsCalc: WeightsCalculator,
     private val openTelemetry: ManagedOpenTelemetry
 ) {
-    fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> {
-        val parentSpan = openTelemetry.span("charge time calculation")
-        val span = openTelemetry.span("fetch electricity data")
-        val prices =
-            octopus.prices(calculationData.product, calculationData.tariff, calculationData.start, calculationData.end)
-                .also {
-                    span.addEvent("prices retrieved")
+    fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> =
+        openTelemetry.span("charge time calculation") {
+            openTelemetry.span("fetch electricity data") { span ->
+                val prices =
+                    octopus.prices(
+                        calculationData.product,
+                        calculationData.tariff,
+                        calculationData.start,
+                        calculationData.end
+                    )
+                        .also {
+                            span.addEvent("prices retrieved")
+                        }
+                val intensity = nationalGrid.intensity(calculationData.start, calculationData.end).also {
+                    span.addEvent("intensity retrieved")
                 }
-        val intensity = nationalGrid.intensity(calculationData.start, calculationData.end).also {
-            span.addEvent("intensity retrieved")
-        }
-        return flatZip(prices, intensity) { priceData, intensityData ->
-            Success(createElectricityFrom(priceData, intensityData)).also {
-                span.addEvent("electricity data created")
-                openTelemetry.end(span)
+                flatZip(prices, intensity) { priceData, intensityData ->
+                    Success(createElectricityFrom(priceData, intensityData)).also {
+                        span.addEvent("electricity data created")
+                    }
+                }
+            }.flatMap { electricity ->
+                getChargeTime(calculationData, electricity)
             }
-        }.flatMap { electricity ->
-            getChargeTime(calculationData, electricity)
-        }.also {
-            openTelemetry.end(parentSpan)
         }
-    }
 
     fun createElectricityFrom(
         prices: Prices,
@@ -67,44 +70,42 @@ class Calculator(
     fun getChargeTime(
         calculationData: CalculationData,
         electricity: Electricity
-    ): Result<ChargeTime, Failed> {
-        val span = openTelemetry.span("calculate charge time")
-        return when {
-            calculationData.intensityLimit != null -> {
-                intensityLimitedChargeTime(
-                    electricity,
-                    calculationData.intensityLimit,
-                    calculationData.time,
-                    calculationData.start,
-                    calculationData.end,
-                    span
-                )
-            }
+    ): Result<ChargeTime, Failed> =
+        openTelemetry.span("calculate charge time") { span ->
+            when {
+                calculationData.intensityLimit != null -> {
+                    intensityLimitedChargeTime(
+                        electricity,
+                        calculationData.intensityLimit,
+                        calculationData.time,
+                        calculationData.start,
+                        calculationData.end,
+                        span
+                    )
+                }
 
-            calculationData.priceLimit != null -> {
-                priceLimitedChargeTime(
-                    electricity,
-                    calculationData.priceLimit,
-                    calculationData.time,
-                    calculationData.start,
-                    calculationData.end,
-                    span
-                )
-            }
+                calculationData.priceLimit != null -> {
+                    priceLimitedChargeTime(
+                        electricity,
+                        calculationData.priceLimit,
+                        calculationData.time,
+                        calculationData.start,
+                        calculationData.end,
+                        span
+                    )
+                }
 
-            else -> {
-                weightsCalc.chargeTime(
-                    electricity,
-                    calculationData.weights!!,
-                    calculationData.time,
-                    calculationData.start,
-                    calculationData.end
-                )
+                else -> {
+                    weightsCalc.chargeTime(
+                        electricity,
+                        calculationData.weights!!,
+                        calculationData.time,
+                        calculationData.start,
+                        calculationData.end
+                    )
+                }
             }
-        }.also {
-            openTelemetry.end(span)
         }
-    }
 
     private fun createElectricityData(price: PriceData, intensity: IntensityData): ElectricityData {
         return ElectricityData(

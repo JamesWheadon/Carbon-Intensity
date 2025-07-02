@@ -18,25 +18,31 @@ import org.http4k.core.Filter
 import org.http4k.core.Uri
 
 interface ManagedOpenTelemetry {
-    fun span(spanName: String): ManagedSpan
+    fun <T> span(spanName: String, block: (ManagedSpan) -> T): T
     fun end(span: ManagedSpan)
     fun trace(spanName: String, targetName: String): Filter
     fun propagateTrace(): Filter
     fun receiveTrace(): Filter
 }
 
-class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val serviceName: String): ManagedOpenTelemetry {
+class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val serviceName: String) :
+    ManagedOpenTelemetry {
     private val context = ArrayDeque<Context>()
 
     companion object {
         fun noOp() = TracingOpenTelemetry(OpenTelemetry.noop(), "")
     }
 
-    override fun span(spanName: String): ManagedSpan {
+    private fun span(spanName: String): ManagedSpan {
         val span = spanBuilder(spanName)
             .startSpan()
         context.addLast(currentContext().with(span))
         return ManagedSpan(span)
+    }
+
+    override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T {
+        val span = span(spanName)
+        return block(span).also { end(span) }
     }
 
     override fun end(span: ManagedSpan) {

@@ -39,7 +39,7 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `creates a span with the provided name`() {
-        openTelemetry.span("testSpan").end()
+        openTelemetry.span("testSpan") { }
 
         assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
         val spanData = openTelemetry.spans().first()
@@ -49,9 +49,9 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `can add an event to a span`() {
-        val span = openTelemetry.span("testSpan")
-        span.addEvent("test-event")
-        openTelemetry.end(span)
+        openTelemetry.span("testSpan") { span ->
+            span.addEvent("test-event")
+        }
 
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.events, equalTo(listOf(SpanEvent("test-event"))))
@@ -59,12 +59,10 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `sets a span as the current active span and removes it when ended`() {
-        val span = openTelemetry.span("testSpan")
-        val firstChildSpan = openTelemetry.span("firstChildSpan")
-        openTelemetry.end(firstChildSpan)
-        val secondChildSpan = openTelemetry.span("secondChildSpan")
-        openTelemetry.end(secondChildSpan)
-        openTelemetry.end(span)
+        openTelemetry.span("testSpan") {
+            openTelemetry.span("firstChildSpan") { }
+            openTelemetry.span("secondChildSpan") { }
+        }
 
         val parentSpanData = openTelemetry.spans().first { it.name == "testSpan" }
         val firstChildSpanData = openTelemetry.spans().first { it.name == "firstChildSpan" }
@@ -75,7 +73,12 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `traces an http request`() {
-        openTelemetry.trace("http-request", "other-service").then { Response(OK) }(Request(GET, "https://fake-base-path/test/path"))
+        openTelemetry.trace("http-request", "other-service").then { Response(OK) }(
+            Request(
+                GET,
+                "https://fake-base-path/test/path"
+            )
+        )
 
         assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
         val spanData = openTelemetry.spans().first()
@@ -102,13 +105,13 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `propagates trace context over http`() {
-        val span = openTelemetry.span("to be propagated")
         var sentRequest: Request? = null
-        openTelemetry.propagateTrace().then { request ->
-            sentRequest = request
-            Response(OK)
-        }(Request(GET, "/test/path/propagated"))
-        openTelemetry.end(span)
+        openTelemetry.span("to be propagated") {
+            openTelemetry.propagateTrace().then { request ->
+                sentRequest = request
+                Response(OK)
+            }(Request(GET, "/test/path/propagated"))
+        }
 
         assertThat(sentRequest!!, hasHeader("traceparent"))
     }
@@ -116,13 +119,13 @@ class TracingOpenTelemetryTest {
     @Test
     fun `receives trace context over http`(testInfo: TestInfo) {
         val callerOpenTelemetry = TestTracingOpenTelemetry(Local, "other-service")
-        val startSpan = callerOpenTelemetry.span("starting span")
-        callerOpenTelemetry.propagateTrace().then(openTelemetry.receiveTrace()).then {
-            val span = openTelemetry.span("received span")
-            openTelemetry.end(span)
-            Response(OK)
-        }(Request(GET, "/test/path/propagated"))
-        openTelemetry.end(startSpan)
+        callerOpenTelemetry.span("starting span") {
+            callerOpenTelemetry.propagateTrace().then(openTelemetry.receiveTrace()).then {
+                openTelemetry.span("received span") {
+                    Response(OK)
+                }
+            }(Request(GET, "/test/path/propagated"))
+        }
 
         val receivedSpanData = openTelemetry.spans().first { it.name == "received span" }
         val sentSpanData = callerOpenTelemetry.spans().first { it.name == "starting span" }
