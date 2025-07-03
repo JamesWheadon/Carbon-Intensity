@@ -16,6 +16,8 @@ import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 import java.util.stream.Stream
 
 class TracingOpenTelemetryTest {
@@ -74,10 +76,7 @@ class TracingOpenTelemetryTest {
     @Test
     fun `traces an http request`() {
         openTelemetry.trace("http-request", "other-service").then { Response(OK) }(
-            Request(
-                GET,
-                "https://fake-base-path/test/path"
-            )
+            Request(GET, "https://fake-base-path/test/path")
         )
 
         assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
@@ -118,17 +117,22 @@ class TracingOpenTelemetryTest {
 
     @Test
     fun `receives trace context over http`(testInfo: TestInfo) {
-        val callerOpenTelemetry = TestTracingOpenTelemetry(Local, "other-service")
-        callerOpenTelemetry.span("starting span") {
-            callerOpenTelemetry.propagateTrace().then(openTelemetry.receiveTrace()).then {
-                openTelemetry.span("received span") {
-                    Response(OK)
-                }
+        val executor = Executors.newSingleThreadExecutor()
+
+        openTelemetry.span("starting span") {
+            openTelemetry.propagateTrace().then { request ->
+                executor.submit(Callable {
+                    openTelemetry.receiveTrace().then {
+                        openTelemetry.span("received span") {
+                            Response(OK)
+                        }
+                    }(request)
+                }).get()
             }(Request(GET, "/test/path/propagated"))
         }
 
         val receivedSpanData = openTelemetry.spans().first { it.name == "received span" }
-        val sentSpanData = callerOpenTelemetry.spans().first { it.name == "starting span" }
+        val sentSpanData = openTelemetry.spans().first { it.name == "starting span" }
         assertThat(receivedSpanData.parentSpanId, equalTo(sentSpanData.spanId))
     }
 }
