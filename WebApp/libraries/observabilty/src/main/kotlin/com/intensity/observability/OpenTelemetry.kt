@@ -37,14 +37,15 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     }
 
     override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T {
-        val span = span(spanName)
-        return block(span).also { span.end() }
+        return span(spanName).use { span ->
+            block(span)
+        }
     }
 
     override fun trace(spanName: String, targetName: String): Filter {
         return Filter { next ->
             { request ->
-                val span = spanBuilder(spanName)
+                ManagedSpan(spanBuilder(spanName)
                     .setSpanKind(SpanKind.CLIENT)
                     .setAttribute("http.target", targetName)
                     .setAttribute("http.path", request.uri.path)
@@ -53,11 +54,10 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
                     .setAttribute(SERVER_ADDRESS, request.uri.host)
                     .setAttribute(SERVER_PORT, request.uri.port?.toLong() ?: pathFrom(request.uri))
                     .startSpan()
-                val scope = span.makeCurrent()
-                next(request).also { response ->
-                    span.setAttribute(HTTP_RESPONSE_STATUS_CODE, response.status.code.toLong())
-                    scope.close()
-                    span.end()
+                ).use { span ->
+                    next(request).also { response ->
+                        span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, response.status.code.toLong())
+                    }
                 }
             }
         }
@@ -110,10 +110,10 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     }
 }
 
-class ManagedSpan(private val span: Span) {
+class ManagedSpan(private val span: Span): AutoCloseable {
     private val scope = span.makeCurrent()
 
-    fun end() {
+    override fun close() {
         scope.close()
         span.end()
     }
@@ -124,5 +124,9 @@ class ManagedSpan(private val span: Span) {
 
     fun updateName(newName: String) {
         span.updateName(newName)
+    }
+
+    fun setAttribute(key: String, value: Long) {
+        span.setAttribute(key, value)
     }
 }
