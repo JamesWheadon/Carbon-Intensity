@@ -3,7 +3,7 @@ package com.intensity.observability
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.api.trace.SpanKind
+import io.opentelemetry.api.trace.SpanKind.CLIENT
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.TextMapGetter
@@ -15,6 +15,7 @@ import io.opentelemetry.semconv.ServerAttributes.SERVER_PORT
 import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
 import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.http4k.core.Filter
+import org.http4k.core.Request
 import org.http4k.core.Uri
 
 interface ManagedOpenTelemetry {
@@ -24,20 +25,19 @@ interface ManagedOpenTelemetry {
     fun receiveTrace(): Filter
 }
 
-class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val serviceName: String) :
-    ManagedOpenTelemetry {
+class TracingOpenTelemetry(
+    private val openTelemetry: OpenTelemetry,
+    private val serviceName: String
+) : ManagedOpenTelemetry {
     companion object {
         fun noOp() = TracingOpenTelemetry(OpenTelemetry.noop(), "")
     }
 
-    private fun span(spanName: String): ManagedSpan {
-        val span = spanBuilder(spanName)
-            .startSpan()
-        return ManagedSpan(span)
-    }
-
     override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T {
-        return span(spanName).use { span ->
+        return ManagedSpan(
+            spanBuilder(spanName)
+                .startSpan()
+        ).use { span ->
             block(span)
         }
     }
@@ -45,15 +45,16 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     override fun trace(spanName: String, targetName: String): Filter {
         return Filter { next ->
             { request ->
-                ManagedSpan(spanBuilder(spanName)
-                    .setSpanKind(SpanKind.CLIENT)
-                    .setAttribute("http.target", targetName)
-                    .setAttribute("http.path", request.uri.path)
-                    .setAttribute(HTTP_REQUEST_METHOD, request.method.name)
-                    .setAttribute(URL_FULL, request.uri.toString())
-                    .setAttribute(SERVER_ADDRESS, request.uri.host)
-                    .setAttribute(SERVER_PORT, request.uri.port?.toLong() ?: pathFrom(request.uri))
-                    .startSpan()
+                ManagedSpan(
+                    spanBuilder(spanName)
+                        .setSpanKind(CLIENT)
+                        .setAttribute("http.target", targetName)
+                        .setAttribute("http.path", request.uri.path)
+                        .setAttribute(HTTP_REQUEST_METHOD, request.method.name)
+                        .setAttribute(URL_FULL, request.uri.toString())
+                        .setAttribute(SERVER_ADDRESS, request.uri.host)
+                        .setAttribute(SERVER_PORT, request.port())
+                        .startSpan()
                 ).use { span ->
                     next(request).also { response ->
                         span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, response.status.code.toLong())
@@ -62,6 +63,8 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
             }
         }
     }
+
+    private fun Request.port() = uri.port?.toLong() ?: pathFrom(uri)
 
     private fun pathFrom(scheme: Uri): Long {
         return when (scheme.scheme) {
@@ -110,7 +113,7 @@ class TracingOpenTelemetry(private val openTelemetry: OpenTelemetry, private val
     }
 }
 
-class ManagedSpan(private val span: Span): AutoCloseable {
+class ManagedSpan(private val span: Span) : AutoCloseable {
     private val scope = span.makeCurrent()
 
     override fun close() {
