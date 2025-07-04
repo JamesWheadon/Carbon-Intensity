@@ -1,9 +1,12 @@
 package com.intensity.observability
 
 import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.SpanKind.CLIENT
+import io.opentelemetry.api.trace.SpanKind.INTERNAL
 import io.opentelemetry.api.trace.StatusCode.ERROR
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
@@ -35,7 +38,7 @@ class TracingOpenTelemetry(
     }
 
     override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T {
-        val span = ManagedSpan(spanBuilder(spanName).startSpan())
+        val span = createSpan(spanName)
         return try {
             block(span)
         } catch (e: Exception) {
@@ -49,16 +52,17 @@ class TracingOpenTelemetry(
     override fun trace(spanName: String, targetName: String): Filter {
         return Filter { next ->
             { request ->
-                val span = ManagedSpan(
-                    spanBuilder(spanName)
-                        .setSpanKind(CLIENT)
-                        .setAttribute("http.target", targetName)
-                        .setAttribute("http.path", request.uri.path)
-                        .setAttribute(HTTP_REQUEST_METHOD, request.method.name)
-                        .setAttribute(URL_FULL, request.uri.toString())
-                        .setAttribute(SERVER_ADDRESS, request.uri.host)
-                        .setAttribute(SERVER_PORT, request.port())
-                        .startSpan()
+                val span = createSpan(
+                    spanName = spanName,
+                    spanKind = CLIENT,
+                    attributes = Attributes.of(
+                        HTTP_REQUEST_METHOD, request.method.name,
+                        URL_FULL, request.uri.toString(),
+                        SERVER_ADDRESS, request.uri.host,
+                        SERVER_PORT, request.port(),
+                        AttributeKey.stringKey("http.target"), targetName,
+                        AttributeKey.stringKey("http.path"), request.uri.path
+                    )
                 )
                 try {
                     next(request).also { response ->
@@ -73,6 +77,20 @@ class TracingOpenTelemetry(
             }
         }
     }
+
+    private fun createSpan(
+        spanName: String,
+        spanKind: SpanKind = INTERNAL,
+        attributes: Attributes = Attributes.empty()
+    ): ManagedSpan =
+        ManagedSpan(
+            openTelemetry.getTracer("com.intensity.observability")
+                .spanBuilder(spanName)
+                .setSpanKind(spanKind)
+                .setAttribute(SERVICE_NAME, serviceName)
+                .setAllAttributes(attributes)
+                .startSpan()
+        )
 
     private fun Request.port() = uri.port?.toLong() ?: pathFrom(uri)
 
@@ -104,11 +122,6 @@ class TracingOpenTelemetry(
             }
         }
     }
-
-    private fun spanBuilder(spanName: String): SpanBuilder =
-        openTelemetry.getTracer("com.intensity.observability")
-            .spanBuilder(spanName)
-            .setAttribute(SERVICE_NAME, serviceName)
 
     private object Setter : TextMapSetter<MutableMap<String, String?>> {
         override fun set(carrier: MutableMap<String, String?>?, key: String, value: String) {
