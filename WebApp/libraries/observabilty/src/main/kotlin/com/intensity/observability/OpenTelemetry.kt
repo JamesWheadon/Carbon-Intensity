@@ -56,7 +56,11 @@ class TracingOpenTelemetry(
                     )
                 ).observe { span ->
                     next(request).also { response ->
-                        span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, response.status.code.toLong())
+                        val status = response.status
+                        span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, status.code.toLong())
+                        if (status.clientError || status.serverError) {
+                            span.setError()
+                        }
                     }
                 }
             }

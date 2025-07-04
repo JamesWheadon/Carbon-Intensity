@@ -1,6 +1,7 @@
 package com.intensity.observability
 
 import com.intensity.observability.SpanData.Status.Error
+import com.intensity.observability.SpanData.Status.Unset
 import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -8,6 +9,7 @@ import com.natpryce.hamkrest.hasSize
 import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.then
 import org.http4k.hamkrest.hasHeader
@@ -49,6 +51,7 @@ class TracingOpenTelemetryTest {
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
+        assertThat(spanData.status, equalTo(Unset))
     }
 
     @Test
@@ -62,7 +65,7 @@ class TracingOpenTelemetryTest {
     }
 
     @Test
-    fun `marks a span as an erorr if an exception thrown`() {
+    fun `marks a span as an error if an exception thrown`() {
         assertThrows<RuntimeException> {
             openTelemetry.span("testSpan") { span ->
                 throw RuntimeException()
@@ -104,6 +107,7 @@ class TracingOpenTelemetryTest {
         assertThat(spanData.attributes["server.port"], equalTo(443L))
         assertThat(spanData.attributes["http.response.status_code"], equalTo(200L))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
+        assertThat(spanData.status, equalTo(Unset))
     }
 
     @ParameterizedTest
@@ -114,6 +118,17 @@ class TracingOpenTelemetryTest {
         assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.attributes["server.port"], equalTo(port))
+    }
+
+    @Test
+    fun `sets client http trace as an error on a 4XX or 5XX response`() {
+        openTelemetry.trace("http-request", "other-service").then { Response(INTERNAL_SERVER_ERROR) }(
+            Request(GET, "https://fake-base-path/test/path")
+        )
+
+        assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
+        val spanData = openTelemetry.spans().first()
+        assertThat(spanData.status, equalTo(Error))
     }
 
     @Test
