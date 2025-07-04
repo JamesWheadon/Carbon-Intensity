@@ -1,5 +1,6 @@
 package com.intensity.observability
 
+import com.intensity.observability.SpanData.Status.Error
 import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -13,6 +14,7 @@ import org.http4k.hamkrest.hasHeader
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -57,6 +59,18 @@ class TracingOpenTelemetryTest {
 
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.events, equalTo(listOf(SpanEvent("test-event"))))
+    }
+
+    @Test
+    fun `marks a span as an erorr if an exception thrown`() {
+        assertThrows<RuntimeException> {
+            openTelemetry.span("testSpan") { span ->
+                throw RuntimeException()
+            }
+        }
+
+        val spanData = openTelemetry.spans().first()
+        assertThat(spanData.status, equalTo(Error))
     }
 
     @Test

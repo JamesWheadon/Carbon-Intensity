@@ -4,6 +4,7 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind.CLIENT
+import io.opentelemetry.api.trace.StatusCode.ERROR
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.TextMapGetter
@@ -34,18 +35,21 @@ class TracingOpenTelemetry(
     }
 
     override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T {
-        return ManagedSpan(
-            spanBuilder(spanName)
-                .startSpan()
-        ).use { span ->
+        val span = ManagedSpan(spanBuilder(spanName).startSpan())
+        return try {
             block(span)
+        } catch (e: Exception) {
+            span.setError()
+            throw e
+        } finally {
+            span.close()
         }
     }
 
     override fun trace(spanName: String, targetName: String): Filter {
         return Filter { next ->
             { request ->
-                ManagedSpan(
+                val span = ManagedSpan(
                     spanBuilder(spanName)
                         .setSpanKind(CLIENT)
                         .setAttribute("http.target", targetName)
@@ -55,10 +59,16 @@ class TracingOpenTelemetry(
                         .setAttribute(SERVER_ADDRESS, request.uri.host)
                         .setAttribute(SERVER_PORT, request.port())
                         .startSpan()
-                ).use { span ->
+                )
+                try {
                     next(request).also { response ->
                         span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, response.status.code.toLong())
                     }
+                } catch (e: Exception) {
+                    span.setError()
+                    throw e
+                } finally {
+                    span.close()
                 }
             }
         }
@@ -113,10 +123,10 @@ class TracingOpenTelemetry(
     }
 }
 
-class ManagedSpan(private val span: Span) : AutoCloseable {
+class ManagedSpan(private val span: Span) {
     private val scope = span.makeCurrent()
 
-    override fun close() {
+    fun close() {
         scope.close()
         span.end()
     }
@@ -131,5 +141,9 @@ class ManagedSpan(private val span: Span) : AutoCloseable {
 
     fun setAttribute(key: String, value: Long) {
         span.setAttribute(key, value)
+    }
+
+    fun setError() {
+        span.setStatus(ERROR)
     }
 }

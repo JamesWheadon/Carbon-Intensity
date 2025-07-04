@@ -1,5 +1,7 @@
 package com.intensity.observability
 
+import com.intensity.observability.SpanData.Status.Error
+import com.intensity.observability.SpanData.Status.Unset
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.TracerProvider
@@ -9,10 +11,10 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
 import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.data.StatusData.unset
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import io.opentelemetry.semconv.HttpAttributes.HTTP_REQUEST_METHOD
 import io.opentelemetry.semconv.HttpAttributes.HTTP_RESPONSE_STATUS_CODE
-import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
 import org.http4k.core.Status
 import java.io.File
@@ -54,7 +56,7 @@ class TestTracingOpenTelemetry private constructor(
 @Suppress("unused")
 class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
     private val serviceNameResource =
-        Resource.create(Attributes.of(ServiceAttributes.SERVICE_NAME, "otel-jaeger-example-kotlin"))
+        Resource.create(Attributes.of(SERVICE_NAME, "otel-jaeger-example-kotlin"))
     private val inMemorySpanExporter = InMemorySpanExporter.create()
     private val jaegerOtlpExporter = OtlpGrpcSpanExporter.builder()
         .setEndpoint("http://localhost:4317")
@@ -84,6 +86,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             span.parentSpanId,
             span.attributes.asMap().mapKeys { key -> key.key.key },
             span.events.map { SpanEvent(it.name) },
+            span.status(),
             span.instrumentationScopeInfo.name,
             span.startEpochNanos
         )
@@ -174,6 +177,12 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
     }
 }
 
+private fun io.opentelemetry.sdk.trace.data.SpanData.status(): SpanData.Status =
+    when(status) {
+        unset() -> Unset
+        else -> Error
+    }
+
 enum class TestProfile {
     Local,
     Jaeger
@@ -212,9 +221,15 @@ data class SpanData(
     val parentSpanId: String,
     val attributes: Map<String, Any>,
     val events: List<SpanEvent>,
+    val status: Status,
     val instrumentationName: String,
     val startEpochNanos: Long
-)
+) {
+    enum class Status {
+        Unset,
+        Error
+    }
+}
 
 data class SpanEvent(val name: String)
 
