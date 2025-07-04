@@ -37,22 +37,13 @@ class TracingOpenTelemetry(
         fun noOp() = TracingOpenTelemetry(OpenTelemetry.noop(), "")
     }
 
-    override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T {
-        val span = createSpan(spanName)
-        return try {
-            block(span)
-        } catch (e: Exception) {
-            span.setError()
-            throw e
-        } finally {
-            span.close()
-        }
-    }
+    override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T =
+        createSpan(spanName).observe(block)
 
     override fun trace(spanName: String, targetName: String): Filter {
         return Filter { next ->
             { request ->
-                val span = createSpan(
+                createSpan(
                     spanName = spanName,
                     spanKind = CLIENT,
                     attributes = Attributes.of(
@@ -63,16 +54,10 @@ class TracingOpenTelemetry(
                         AttributeKey.stringKey("http.target"), targetName,
                         AttributeKey.stringKey("http.path"), request.uri.path
                     )
-                )
-                try {
+                ).observe { span ->
                     next(request).also { response ->
                         span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, response.status.code.toLong())
                     }
-                } catch (e: Exception) {
-                    span.setError()
-                    throw e
-                } finally {
-                    span.close()
                 }
             }
         }
@@ -91,6 +76,16 @@ class TracingOpenTelemetry(
                 .setAllAttributes(attributes)
                 .startSpan()
         )
+
+    private fun <T> ManagedSpan.observe(block: (ManagedSpan) -> T): T =
+        try {
+            block(this)
+        } catch (e: Exception) {
+            setError()
+            throw e
+        } finally {
+            close()
+        }
 
     private fun Request.port() = uri.port?.toLong() ?: pathFrom(uri)
 
