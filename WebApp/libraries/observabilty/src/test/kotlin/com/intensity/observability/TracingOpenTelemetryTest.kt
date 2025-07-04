@@ -10,6 +10,7 @@ import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
+import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.then
 import org.http4k.hamkrest.hasHeader
@@ -91,7 +92,7 @@ class TracingOpenTelemetryTest {
     }
 
     @Test
-    fun `traces an http request`() {
+    fun `traces an outbound http request`() {
         openTelemetry.trace("http-request", "other-service").then { Response(OK) }(
             Request(GET, "https://fake-base-path/test/path")
         )
@@ -123,6 +124,34 @@ class TracingOpenTelemetryTest {
     @Test
     fun `sets client http trace as an error on a 4XX or 5XX response`() {
         openTelemetry.trace("http-request", "other-service").then { Response(INTERNAL_SERVER_ERROR) }(
+            Request(GET, "https://fake-base-path/test/path")
+        )
+
+        assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
+        val spanData = openTelemetry.spans().first()
+        assertThat(spanData.status, equalTo(Error))
+    }
+
+    @Test
+    fun `traces an inbound http request`() {
+        openTelemetry.inbound("http-request").then { Response(OK) }(
+            Request(GET, "https://fake-base-path/test/path")
+        )
+
+        assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
+        val spanData = openTelemetry.spans().first()
+        assertThat(spanData.attributes["service.name"], equalTo("test-service"))
+        assertThat(spanData.attributes["http.request.method"], equalTo("GET"))
+        assertThat(spanData.attributes["url.path"], equalTo("/test/path"))
+        assertThat(spanData.attributes["url.scheme"], equalTo("https"))
+        assertThat(spanData.attributes["http.response.status_code"], equalTo(200L))
+        assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
+        assertThat(spanData.status, equalTo(Unset))
+    }
+
+    @Test
+    fun `sets inbound http trace as an error on a 4XX or 5XX response`() {
+        openTelemetry.inbound("http-request").then { Response(NOT_FOUND) }(
             Request(GET, "https://fake-base-path/test/path")
         )
 

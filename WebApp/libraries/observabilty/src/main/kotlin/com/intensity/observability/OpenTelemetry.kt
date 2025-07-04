@@ -7,6 +7,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.SpanKind.CLIENT
 import io.opentelemetry.api.trace.SpanKind.INTERNAL
+import io.opentelemetry.api.trace.SpanKind.SERVER
 import io.opentelemetry.api.trace.StatusCode.ERROR
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.Context
@@ -18,6 +19,8 @@ import io.opentelemetry.semconv.ServerAttributes.SERVER_ADDRESS
 import io.opentelemetry.semconv.ServerAttributes.SERVER_PORT
 import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
 import io.opentelemetry.semconv.UrlAttributes.URL_FULL
+import io.opentelemetry.semconv.UrlAttributes.URL_PATH
+import io.opentelemetry.semconv.UrlAttributes.URL_SCHEME
 import org.http4k.core.Filter
 import org.http4k.core.Request
 import org.http4k.core.Uri
@@ -25,6 +28,7 @@ import org.http4k.core.Uri
 interface ManagedOpenTelemetry {
     fun <T> span(spanName: String, block: (ManagedSpan) -> T): T
     fun trace(spanName: String, targetName: String): Filter
+    fun inbound(spanName: String): Filter
     fun propagateTrace(): Filter
     fun receiveTrace(): Filter
 }
@@ -53,6 +57,31 @@ class TracingOpenTelemetry(
                         SERVER_PORT, request.port(),
                         AttributeKey.stringKey("http.target"), targetName,
                         AttributeKey.stringKey("http.path"), request.uri.path
+                    )
+                ).observe { span ->
+                    next(request).also { response ->
+                        val status = response.status
+                        span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, status.code.toLong())
+                        if (status.clientError || status.serverError) {
+                            span.setError()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun inbound(spanName: String): Filter {
+        return Filter { next ->
+            { request ->
+                createSpan(
+                    spanName = spanName,
+                    spanKind = SERVER,
+                    attributes = Attributes.of(
+                        HTTP_REQUEST_METHOD, request.method.name,
+                        URL_PATH, request.uri.path,
+                        URL_SCHEME, request.uri.scheme,
+                        SERVER_PORT, request.port()
                     )
                 ).observe { span ->
                     next(request).also { response ->
