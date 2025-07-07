@@ -24,13 +24,12 @@ import io.opentelemetry.semconv.UrlAttributes.URL_SCHEME
 import org.http4k.core.Filter
 import org.http4k.core.Request
 import org.http4k.core.Uri
+import org.http4k.core.then
 
 interface ManagedOpenTelemetry {
     fun <T> span(spanName: String, block: (ManagedSpan) -> T): T
-    fun trace(spanName: String, targetName: String): Filter
-    fun inbound(spanName: String): Filter
-    fun propagateTrace(): Filter
-    fun receiveTrace(): Filter
+    fun outboundHttp(spanName: String, targetName: String): Filter
+    fun inboundHttp(spanName: String): Filter
 }
 
 class TracingOpenTelemetry(
@@ -44,52 +43,75 @@ class TracingOpenTelemetry(
     override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T =
         createSpan(spanName).observe(block)
 
-    override fun trace(spanName: String, targetName: String): Filter {
-        return Filter { next ->
-            { request ->
-                createSpan(
-                    spanName = spanName,
-                    spanKind = CLIENT,
-                    attributes = Attributes.of(
-                        HTTP_REQUEST_METHOD, request.method.name,
-                        URL_FULL, request.uri.toString(),
-                        SERVER_ADDRESS, request.uri.host,
-                        SERVER_PORT, request.port(),
-                        AttributeKey.stringKey("http.target"), targetName,
-                        AttributeKey.stringKey("http.path"), request.uri.path
-                    )
-                ).observe { span ->
-                    next(request).also { response ->
-                        val status = response.status
-                        span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, status.code.toLong())
-                        if (status.clientError || status.serverError) {
-                            span.setError()
-                        }
+    override fun outboundHttp(spanName: String, targetName: String): Filter =
+        clientTrace(spanName, targetName)
+            .then(propagateTrace())
+
+    override fun inboundHttp(spanName: String): Filter =
+        receiveTrace()
+            .then(serverTrace(spanName))
+
+    private fun clientTrace(spanName: String, targetName: String) = Filter { next ->
+        { request ->
+            createSpan(
+                spanName = spanName,
+                spanKind = CLIENT,
+                attributes = Attributes.of(
+                    HTTP_REQUEST_METHOD, request.method.name,
+                    URL_FULL, request.uri.toString(),
+                    SERVER_ADDRESS, request.uri.host,
+                    SERVER_PORT, request.port(),
+                    AttributeKey.stringKey("http.target"), targetName,
+                    AttributeKey.stringKey("http.path"), request.uri.path
+                )
+            ).observe { span ->
+                next(request).also { response ->
+                    val status = response.status
+                    span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, status.code.toLong())
+                    if (status.clientError || status.serverError) {
+                        span.setError()
                     }
                 }
             }
         }
     }
 
-    override fun inbound(spanName: String): Filter {
-        return Filter { next ->
+    private fun propagateTrace(): Filter =
+        Filter { next ->
             { request ->
-                createSpan(
-                    spanName = spanName,
-                    spanKind = SERVER,
-                    attributes = Attributes.of(
-                        HTTP_REQUEST_METHOD, request.method.name,
-                        URL_PATH, request.uri.path,
-                        URL_SCHEME, request.uri.scheme,
-                        SERVER_PORT, request.port()
-                    )
-                ).observe { span ->
-                    next(request).also { response ->
-                        val status = response.status
-                        span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, status.code.toLong())
-                        if (status.clientError || status.serverError) {
-                            span.setError()
-                        }
+                val headers = request.headers.toMap().toMutableMap()
+                W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, Setter)
+                next(request.headers(headers.toList()))
+            }
+        }
+
+    private fun receiveTrace(): Filter =
+        Filter { next ->
+            { request ->
+                val headers = request.headers.toMap().toMutableMap()
+                W3CTraceContextPropagator.getInstance().extract(Context.current(), headers, Getter).makeCurrent().use {
+                    next(request)
+                }
+            }
+        }
+
+    private fun serverTrace(spanName: String) = Filter { next ->
+        { request ->
+            createSpan(
+                spanName = spanName,
+                spanKind = SERVER,
+                attributes = Attributes.of(
+                    HTTP_REQUEST_METHOD, request.method.name,
+                    URL_PATH, request.uri.path,
+                    URL_SCHEME, request.uri.scheme,
+                    SERVER_PORT, request.port()
+                )
+            ).observe { span ->
+                next(request).also { response ->
+                    val status = response.status
+                    span.setAttribute(HTTP_RESPONSE_STATUS_CODE.key, status.code.toLong())
+                    if (status.clientError || status.serverError) {
+                        span.setError()
                     }
                 }
             }
@@ -130,27 +152,6 @@ class TracingOpenTelemetry(
         }
     }
 
-    override fun propagateTrace(): Filter {
-        return Filter { next ->
-            { request ->
-                val headers = request.headers.toMap().toMutableMap()
-                W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, Setter)
-                next(request.headers(headers.toList()))
-            }
-        }
-    }
-
-    override fun receiveTrace(): Filter {
-        return Filter { next ->
-            { request ->
-                val headers = request.headers.toMap().toMutableMap()
-                W3CTraceContextPropagator.getInstance().extract(Context.current(), headers, Getter).makeCurrent().use {
-                    next(request)
-                }
-            }
-        }
-    }
-
     private object Setter : TextMapSetter<MutableMap<String, String?>> {
         override fun set(carrier: MutableMap<String, String?>?, key: String, value: String) {
             carrier?.put(key, value)
@@ -174,10 +175,6 @@ class ManagedSpan(private val span: Span) {
 
     fun addEvent(eventName: String) {
         span.addEvent(eventName)
-    }
-
-    fun updateName(newName: String) {
-        span.updateName(newName)
     }
 
     fun setAttribute(key: String, value: Long) {

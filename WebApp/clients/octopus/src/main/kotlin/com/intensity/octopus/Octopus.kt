@@ -34,7 +34,7 @@ interface Octopus {
 
 class OctopusCloud(private val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : Octopus {
     override fun products(): Result<Products, Failed> {
-        val response = openTelemetry.trace("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "/"))
+        val response = openTelemetry.outboundHttp("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "/"))
         return when (response.status) {
             OK -> Success(productsLens(response))
             else -> Failure(OctopusCommunicationFailed)
@@ -42,7 +42,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val openTelemet
     }
 
     override fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
-        val response = openTelemetry.trace("Fetch Octopus Product", "Octopus").then(httpHandler)(
+        val response = openTelemetry.outboundHttp("Fetch Octopus Product", "Octopus").then(httpHandler)(
             Request(GET, "/${product.code}/")
         )
         return when (response.status) {
@@ -60,7 +60,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val openTelemet
     ): Result<Prices, Failed> {
         val periodFrom = start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         val periodTo = end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
-        val response = openTelemetry.trace("Fetch Octopus Tariff Prices", "Octopus").then(httpHandler)(
+        val response = openTelemetry.outboundHttp("Fetch Octopus Tariff Prices", "Octopus").then(httpHandler)(
             Request(
                 GET,
                 "/${product.code}/electricity-tariffs/${tariff.code}/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"

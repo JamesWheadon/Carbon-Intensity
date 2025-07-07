@@ -26,8 +26,8 @@ fun limitCalculatorApp(openTelemetry: ManagedOpenTelemetry) = handleLensFailures
     .then(limitRoutes(openTelemetry))
 
 private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
-    "/calculate/intensity/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
-        openTelemetry.span("intensity limit calculation") { span ->
+    "/calculate/intensity/{limit}" bind POST to openTelemetry.inboundHttp("intensity limit calculation")
+        .then { request ->
             val scheduleRequest = scheduleRequestLens(request)
             val intensityLimit = limitLens(request)
             underIntensityLimit(
@@ -40,35 +40,26 @@ private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
                 .fold(
                     { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
                     { failed ->
-                        if (failed is NoChargeTimePossible) {
-                            span.updateName("intensity limit not possible")
-                        }
                         handleFailure(failed)
                     }
                 )
-        }
-    },
-    "/calculate/price/{limit}" bind POST to openTelemetry.receiveTrace().then { request ->
-        openTelemetry.span("price limit calculation") { span ->
-            val scheduleRequest = scheduleRequestLens(request)
-            val priceLimit = limitLens(request)
-            underPriceLimit(
-                scheduleRequest.electricity,
-                priceLimit,
-                scheduleRequest.start,
-                scheduleRequest.end,
-                scheduleRequest.time
+        },
+    "/calculate/price/{limit}" bind POST to openTelemetry.inboundHttp("price limit calculation").then { request ->
+        val scheduleRequest = scheduleRequestLens(request)
+        val priceLimit = limitLens(request)
+        underPriceLimit(
+            scheduleRequest.electricity,
+            priceLimit,
+            scheduleRequest.start,
+            scheduleRequest.end,
+            scheduleRequest.time
+        )
+            .fold(
+                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                { failed ->
+                    handleFailure(failed)
+                }
             )
-                .fold(
-                    { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-                    { failed ->
-                        if (failed is NoChargeTimePossible) {
-                            span.updateName("price limit not possible")
-                        }
-                        handleFailure(failed)
-                    }
-                )
-        }
     }
 )
 

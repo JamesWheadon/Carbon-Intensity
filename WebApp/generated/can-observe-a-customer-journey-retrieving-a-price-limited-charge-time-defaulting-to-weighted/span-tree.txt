@@ -4,5 +4,5 @@ charge time calculation
 │   └── Fetch Carbon Intensity
 └── calculate charge time
     ├── Price limit
-    │   └── price limit not possible
+    │   └── price limit calculation
     └── Weighted calculation

@@ -4,5 +4,5 @@ charge time calculation
 │   └── Fetch Carbon Intensity
 └── calculate charge time
     ├── Intensity limit
-    │   └── intensity limit not possible
+    │   └── intensity limit calculation
     └── Weighted calculation

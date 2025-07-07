@@ -34,8 +34,7 @@ class WeightsCalculatorCloud(private val httpHandler: HttpHandler, private val o
         start: ZonedDateTime,
         end: ZonedDateTime
     ): Result<ChargeTime, Failed> {
-        val response = openTelemetry.trace("Weighted calculation", "Weights")
-            .then(openTelemetry.propagateTrace())
+        val response = openTelemetry.outboundHttp("Weighted calculation", "Weights")
             .then(httpHandler)(
             Request(
                 Method.POST,
