@@ -2,6 +2,9 @@ package com.intensity.observability
 
 import com.intensity.observability.SpanData.Status.Error
 import com.intensity.observability.SpanData.Status.Unset
+import com.intensity.observability.SpanData.Type.Client
+import com.intensity.observability.SpanData.Type.Internal
+import com.intensity.observability.SpanData.Type.Server
 import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -52,6 +55,7 @@ class TracingOpenTelemetryTest {
         val spanData = openTelemetry.spans().first()
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
+        assertThat(spanData.type, equalTo(Internal))
         assertThat(spanData.status, equalTo(Unset))
     }
 
@@ -68,7 +72,7 @@ class TracingOpenTelemetryTest {
     @Test
     fun `marks a span as an error if an exception thrown`() {
         assertThrows<RuntimeException> {
-            openTelemetry.span("testSpan") { span ->
+            openTelemetry.span("testSpan") {
                 throw RuntimeException()
             }
         }
@@ -108,6 +112,7 @@ class TracingOpenTelemetryTest {
         assertThat(spanData.attributes["server.port"], equalTo(443L))
         assertThat(spanData.attributes["http.response.status_code"], equalTo(200L))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
+        assertThat(spanData.type, equalTo(Client))
         assertThat(spanData.status, equalTo(Unset))
     }
 
@@ -146,6 +151,7 @@ class TracingOpenTelemetryTest {
         assertThat(spanData.attributes["url.scheme"], equalTo("https"))
         assertThat(spanData.attributes["http.response.status_code"], equalTo(200L))
         assertThat(spanData.instrumentationName, equalTo("com.intensity.observability"))
+        assertThat(spanData.type, equalTo(Server))
         assertThat(spanData.status, equalTo(Unset))
     }
 

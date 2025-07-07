@@ -1,9 +1,8 @@
 package com.intensity.observability
 
-import com.intensity.observability.SpanData.Status.Error
-import com.intensity.observability.SpanData.Status.Unset
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
@@ -87,6 +86,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
             span.attributes.asMap().mapKeys { key -> key.key.key },
             span.events.map { SpanEvent(it.name) },
             span.status(),
+            span.type(),
             span.instrumentationScopeInfo.name,
             span.startEpochNanos
         )
@@ -179,8 +179,15 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
 private fun io.opentelemetry.sdk.trace.data.SpanData.status(): SpanData.Status =
     when(status) {
-        unset() -> Unset
-        else -> Error
+        unset() -> SpanData.Status.Unset
+        else -> SpanData.Status.Error
+    }
+
+private fun io.opentelemetry.sdk.trace.data.SpanData.type(): SpanData.Type =
+    when(kind) {
+        SpanKind.CLIENT -> SpanData.Type.Client
+        SpanKind.SERVER -> SpanData.Type.Server
+        else -> SpanData.Type.Internal
     }
 
 enum class TestProfile {
@@ -222,12 +229,18 @@ data class SpanData(
     val attributes: Map<String, Any>,
     val events: List<SpanEvent>,
     val status: Status,
+    val type: Type,
     val instrumentationName: String,
     val startEpochNanos: Long
 ) {
     enum class Status {
         Unset,
         Error
+    }
+    enum class Type {
+        Internal,
+        Client,
+        Server
     }
 }
 
