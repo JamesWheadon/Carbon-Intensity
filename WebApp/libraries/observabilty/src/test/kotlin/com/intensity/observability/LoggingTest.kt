@@ -1,7 +1,10 @@
 package com.intensity.observability
 
+import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.containsSubstring
+import com.natpryce.hamkrest.equalTo
+import com.natpryce.hamkrest.hasSize
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -11,7 +14,9 @@ import java.nio.charset.Charset
 
 class LoggingTest {
     private val standardOut = System.out
-    private val outputStreamCaptor: ByteArrayOutputStream = ByteArrayOutputStream()
+    private val outputStreamCaptor = ByteArrayOutputStream()
+    private val testLogging = TestLogging()
+    private val tracing = TestTracingOpenTelemetry(Local, "logging-test")
 
     @BeforeEach
     fun setUp() {
@@ -27,7 +32,18 @@ class LoggingTest {
     fun `prints a log message to stdout as json`() {
         logToStandardOut()(TestLogEvent)
 
-        assertThat(outputStreamCaptor.toString(Charset.defaultCharset()), containsSubstring("""{"type":"TestLogEvent"}"""))
+        assertThat(outputStreamCaptor.toString(Charset.defaultCharset()), containsSubstring(""""type":"TestLogEvent""""))
+    }
+
+    @Test
+    fun `adds trace and span information to a log`() {
+        tracing.span("test") {
+            testLogging(TestLogEvent)
+        }
+
+        val logs = testLogging.logs()
+        assertThat(logs, hasSize(equalTo(1)))
+        assertThat(logs.first().span, equalTo(tracing.spans().first().spanId))
     }
 }
 

@@ -81,8 +81,8 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
     fun spans(): List<SpanData> = inMemorySpanExporter.finishedSpanItems.map { span ->
         SpanData(
             span.name,
-            span.spanId,
-            span.parentSpanId,
+            SpanId(span.spanId),
+            SpanId(span.parentSpanId),
             span.attributes.asMap().mapKeys { key -> key.key.key },
             span.events.map { SpanEvent(it.name) },
             span.status(),
@@ -114,7 +114,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
 
     fun approveSpanDiagram(spans: List<SpanData>, testName: String) {
         val sortedSpans = spans.sortedBy { it.startEpochNanos }
-        val (roots, children) = spans.partition { it.parentSpanId == "0000000000000000" }
+        val (roots, children) = spans.partition { it.parentSpanId == SpanId("0000000000000000") }
 
         children.firstOrNull { span -> spans.none { it.spanId == span.parentSpanId } }?.let { span ->
             throw AssertionError("A Span was not ended, parent of ${span.name}")
@@ -224,8 +224,8 @@ class TreeNode(private val span: SpanData, private val children: List<TreeNode>)
 
 data class SpanData(
     val name: String,
-    val spanId: String,
-    val parentSpanId: String,
+    val spanId: SpanId,
+    val parentSpanId: SpanId,
     val attributes: Map<String, Any>,
     val events: List<SpanEvent>,
     val status: Status,
