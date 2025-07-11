@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(libs.http4k.core)
+    implementation(libs.http4k.jackson)
     implementation(libs.openTelemetry.api)
     testFixturesImplementation(libs.openTelemetry.api)
     implementation(libs.openTelemetry.sdk)
