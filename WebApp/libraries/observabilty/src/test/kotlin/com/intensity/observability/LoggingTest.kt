@@ -1,5 +1,7 @@
 package com.intensity.observability
 
+import com.intensity.observability.Severity.Error
+import com.intensity.observability.Severity.Info
 import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.containsSubstring
@@ -36,16 +38,28 @@ class LoggingTest {
     }
 
     @Test
-    fun `adds trace and span information to a log`() {
+    fun `sets a log level`() {
         tracing.span("test") {
             testLogging(TestLogEvent)
         }
 
         val logs = testLogging.logs()
         assertThat(logs, hasSize(equalTo(1)))
+        assertThat(logs.first().severity, equalTo(Info))
         assertThat(logs.first().span, equalTo(tracing.spans().first().spanId))
         assertThat(logs.first().trace, equalTo(tracing.spans().first().traceId))
+    }
+
+    @Test
+    fun `adds trace and span information to a log`() {
+        tracing.span("test") {
+            testLogging(TestErrorLogEvent)
+        }
+
+        val logs = testLogging.logs()
+        assertThat(logs.first().severity, equalTo(Error))
     }
 }
 
 data object TestLogEvent : LogEvent
+data object TestErrorLogEvent : ErrorLogEvent
