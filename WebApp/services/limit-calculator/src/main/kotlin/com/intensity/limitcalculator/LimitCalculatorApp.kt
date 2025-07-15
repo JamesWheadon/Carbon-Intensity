@@ -6,7 +6,7 @@ import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
 import com.intensity.core.handleLensFailures
-import com.intensity.observability.ManagedOpenTelemetry
+import com.intensity.observability.Tracer
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
@@ -22,10 +22,10 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import java.time.ZonedDateTime
 
-fun limitCalculatorApp(openTelemetry: ManagedOpenTelemetry) = handleLensFailures()
+fun limitCalculatorApp(openTelemetry: Tracer) = handleLensFailures()
     .then(limitRoutes(openTelemetry))
 
-private fun limitRoutes(openTelemetry: ManagedOpenTelemetry) = routes(
+private fun limitRoutes(openTelemetry: Tracer) = routes(
     "/calculate/intensity/{limit}" bind POST to openTelemetry.inboundHttp("intensity limit calculation")
         .then { request ->
             val scheduleRequest = scheduleRequestLens(request)

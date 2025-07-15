@@ -10,8 +10,8 @@ import com.intensity.nationalgrid.Intensity
 import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
+import com.intensity.observability.TestOpenTelemetryTracer
 import com.intensity.observability.TestProfile.Local
-import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusProduct
 import com.intensity.octopus.OctopusTariff
@@ -34,7 +34,7 @@ import java.time.temporal.ChronoUnit
 class CalculatorTest {
     private val fakeLimit = FakeLimitCalculator()
     private val fakeWeights = FakeWeightsCalculator()
-    private val openTelemetry = TestTracingOpenTelemetry(Local, "calculator")
+    private val openTelemetry = TestOpenTelemetryTracer(Local, "calculator")
     private val calculator = Calculator(
         OctopusFake(),
         NationalGridFake(),

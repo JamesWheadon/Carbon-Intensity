@@ -2,8 +2,8 @@ package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
+import com.intensity.observability.TestOpenTelemetryTracer
 import com.intensity.observability.TestProfile.Local
-import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import java.time.ZonedDateTime
@@ -14,7 +14,7 @@ abstract class EndToEndTest {
     val nationalGrid = FakeNationalGrid()
     val limitCalculator = FakeLimitCalculator()
     val weightsCalculator = FakeWeightsCalculator()
-    private val centralOpenTelemetry = TestTracingOpenTelemetry(Local, "central")
+    private val centralOpenTelemetry = TestOpenTelemetryTracer(Local, "central")
     val app =
         carbonIntensity(
             NationalGridCloud(nationalGrid, centralOpenTelemetry),

@@ -2,9 +2,9 @@ package com.intensity.nationalgrid
 
 import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isFailure
+import com.intensity.observability.OpenTelemetryTracer
+import com.intensity.observability.TestOpenTelemetryTracer
 import com.intensity.observability.TestProfile.Local
-import com.intensity.observability.TestTracingOpenTelemetry
-import com.intensity.observability.TracingOpenTelemetry
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.valueOrNull
@@ -39,7 +39,7 @@ abstract class NationalGridContractTest {
 
 class FakeNationalGridTest : NationalGridContractTest() {
     private val fakeNationalGrid = FakeNationalGrid()
-    private val testOpenTelemetry = TestTracingOpenTelemetry(Local, "national-grid-test")
+    private val testOpenTelemetry = TestOpenTelemetryTracer(Local, "national-grid-test")
     override val nationalGrid = NationalGridCloud(fakeNationalGrid, testOpenTelemetry)
 
     @Test
@@ -72,5 +72,5 @@ class FakeNationalGridTest : NationalGridContractTest() {
 
 @Disabled
 class NationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGridCloud(nationalGridClient(), TracingOpenTelemetry.noOp())
+    override val nationalGrid = NationalGridCloud(nationalGridClient(), OpenTelemetryTracer.noOp())
 }

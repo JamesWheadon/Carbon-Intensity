@@ -26,18 +26,18 @@ import org.http4k.core.Request
 import org.http4k.core.Uri
 import org.http4k.core.then
 
-interface ManagedOpenTelemetry {
+interface Tracer {
     fun <T> span(spanName: String, block: (ManagedSpan) -> T): T
     fun outboundHttp(spanName: String, targetName: String): Filter
     fun inboundHttp(spanName: String): Filter
 }
 
-class TracingOpenTelemetry(
+class OpenTelemetryTracer(
     private val openTelemetry: OpenTelemetry,
     private val serviceName: String
-) : ManagedOpenTelemetry {
+) : Tracer {
     companion object {
-        fun noOp() = TracingOpenTelemetry(OpenTelemetry.noop(), "")
+        fun noOp() = OpenTelemetryTracer(OpenTelemetry.noop(), "")
     }
 
     override fun <T> span(spanName: String, block: (ManagedSpan) -> T): T =

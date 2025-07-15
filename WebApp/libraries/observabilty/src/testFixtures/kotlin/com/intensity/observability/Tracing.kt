@@ -20,29 +20,29 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
-class TestTracingOpenTelemetry private constructor(
+class TestOpenTelemetryTracer private constructor(
     private val testOpenTelemetry: TestOpenTelemetry,
-    openTelemetry: ManagedOpenTelemetry
-) : ManagedOpenTelemetry by openTelemetry {
+    openTelemetry: Tracer
+) : Tracer by openTelemetry {
     constructor(profile: TestProfile, serviceName: String) : this(TestOpenTelemetry(profile), serviceName)
     private constructor(testOpenTelemetry: TestOpenTelemetry, serviceName: String) :
-            this(testOpenTelemetry, TracingOpenTelemetry(testOpenTelemetry, serviceName))
+            this(testOpenTelemetry, OpenTelemetryTracer(testOpenTelemetry, serviceName))
 
     fun spans() = testOpenTelemetry.spans()
 
-    fun spans(vararg telemetry: TestTracingOpenTelemetry): List<SpanData> =
+    fun spans(vararg telemetry: TestOpenTelemetryTracer): List<SpanData> =
         testOpenTelemetry.spans().plus(telemetry.flatMap { it.spans() })
 
     fun spanNames(): List<String> = spans().map { it.name }
 
-    fun spanNames(vararg telemetry: TestTracingOpenTelemetry): List<String> = spans(*telemetry).map { it.name }
+    fun spanNames(vararg telemetry: TestOpenTelemetryTracer): List<String> = spans(*telemetry).map { it.name }
 
     fun approveSpanDiagram(testName: String) {
         val spans = spans().toMutableList()
         testOpenTelemetry.approveSpanDiagram(spans, testName)
     }
 
-    fun approveSpanDiagram(testName: String, vararg telemetry: TestTracingOpenTelemetry) {
+    fun approveSpanDiagram(testName: String, vararg telemetry: TestOpenTelemetryTracer) {
         val spans = spans(*telemetry).toMutableList()
         testOpenTelemetry.approveSpanDiagram(spans, testName)
     }

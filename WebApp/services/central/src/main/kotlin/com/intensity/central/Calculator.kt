@@ -8,8 +8,8 @@ import com.intensity.core.Failed
 import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
-import com.intensity.observability.ManagedOpenTelemetry
 import com.intensity.observability.ManagedSpan
+import com.intensity.observability.Tracer
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.PriceData
 import com.intensity.octopus.Prices
@@ -27,7 +27,7 @@ class Calculator(
     private val nationalGrid: NationalGrid,
     private val limitCalc: LimitCalculator,
     private val weightsCalc: WeightsCalculator,
-    private val openTelemetry: ManagedOpenTelemetry
+    private val openTelemetry: Tracer
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> =
         openTelemetry.span("charge time calculation") {

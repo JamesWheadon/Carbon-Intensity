@@ -18,7 +18,7 @@ class LoggingTest {
     private val standardOut = System.out
     private val outputStreamCaptor = ByteArrayOutputStream()
     private val testLogging = TestLogging()
-    private val tracing = TestTracingOpenTelemetry(Local, "logging-test")
+    private val tracing = TestOpenTelemetryTracer(Local, "logging-test")
 
     @BeforeEach
     fun setUp() {

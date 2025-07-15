@@ -4,7 +4,7 @@ import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.Failed
 import com.intensity.core.chargeTimeLens
-import com.intensity.observability.ManagedOpenTelemetry
+import com.intensity.observability.Tracer
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -26,7 +26,7 @@ interface WeightsCalculator {
     ): Result<ChargeTime, Failed>
 }
 
-class WeightsCalculatorCloud(private val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : WeightsCalculator {
+class WeightsCalculatorCloud(private val httpHandler: HttpHandler, private val openTelemetry: Tracer) : WeightsCalculator {
     override fun chargeTime(
         electricity: Electricity,
         weights: Weights,

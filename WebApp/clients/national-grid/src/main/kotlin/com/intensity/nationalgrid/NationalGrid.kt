@@ -2,7 +2,7 @@ package com.intensity.nationalgrid
 
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
-import com.intensity.observability.ManagedOpenTelemetry
+import com.intensity.observability.Tracer
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -21,7 +21,7 @@ interface NationalGrid {
     fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed>
 }
 
-class NationalGridCloud(private val httpHandler: HttpHandler, private val openTelemetry: ManagedOpenTelemetry) : NationalGrid {
+class NationalGridCloud(private val httpHandler: HttpHandler, private val openTelemetry: Tracer) : NationalGrid {
     override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
         val start = from.plusMinutes(30 - from.minute % 30L)
         val end = to.plusMinutes((30 - (to.minute % 30L)) % 30L)

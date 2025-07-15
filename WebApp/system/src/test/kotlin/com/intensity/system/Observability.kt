@@ -6,8 +6,8 @@ import com.intensity.central.carbonIntensity
 import com.intensity.limitcalculator.limitCalculatorApp
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
+import com.intensity.observability.TestOpenTelemetryTracer
 import com.intensity.observability.TestProfile.Local
-import com.intensity.observability.TestTracingOpenTelemetry
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
@@ -20,8 +20,8 @@ import java.time.ZonedDateTime
 class Observability {
     private val nationalGridFake = FakeNationalGrid()
     private val octopusFake = FakeOctopus()
-    private val centralOpenTelemetry = TestTracingOpenTelemetry(Local, "Central")
-    private val limitCalculatorOpenTelemetry = TestTracingOpenTelemetry(Local, "Limit Calculator")
+    private val centralOpenTelemetry = TestOpenTelemetryTracer(Local, "Central")
+    private val limitCalculatorOpenTelemetry = TestOpenTelemetryTracer(Local, "Limit Calculator")
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, centralOpenTelemetry),
         OctopusCloud(octopusFake, centralOpenTelemetry),

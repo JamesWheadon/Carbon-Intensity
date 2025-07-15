@@ -28,8 +28,8 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.stream.Stream
 
-class TracingOpenTelemetryTest {
-    private val openTelemetry = TestTracingOpenTelemetry(Local, "test-service")
+class OpenTelemetryTracerTest {
+    private val openTelemetry = TestOpenTelemetryTracer(Local, "test-service")
 
     companion object {
         @JvmStatic

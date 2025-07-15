@@ -2,9 +2,9 @@ package com.intensity.octopus
 
 import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isSuccess
+import com.intensity.observability.OpenTelemetryTracer
+import com.intensity.observability.TestOpenTelemetryTracer
 import com.intensity.observability.TestProfile.Local
-import com.intensity.observability.TestTracingOpenTelemetry
-import com.intensity.observability.TracingOpenTelemetry
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Failure
@@ -154,7 +154,7 @@ class FakeOctopusTest : OctopusContractTest() {
             listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2)
         )
     }
-    private val openTelemetry = TestTracingOpenTelemetry(Local, "octopus-test")
+    private val openTelemetry = TestOpenTelemetryTracer(Local, "octopus-test")
 
     override val octopus = OctopusCloud(fakeOctopus, openTelemetry)
 
@@ -252,5 +252,5 @@ class FakeOctopusTest : OctopusContractTest() {
 
 @Disabled
 class OctopusTest : OctopusContractTest() {
-    override val octopus = OctopusCloud(octopusClient(), TracingOpenTelemetry.noOp())
+    override val octopus = OctopusCloud(octopusClient(), OpenTelemetryTracer.noOp())
 }
