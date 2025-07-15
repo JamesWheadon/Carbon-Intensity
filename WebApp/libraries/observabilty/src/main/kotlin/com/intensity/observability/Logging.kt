@@ -12,11 +12,14 @@ internal fun logToStandardOut(): LogOutput = LogOutput { log ->
     println(log.asLogMessage().asJsonObject())
 }
 
-interface LogEvent : Event
+interface LogEvent : Event {
+    val message: String
+}
 interface ErrorLogEvent : LogEvent
 
 data class LogMessage(
     val type: String,
+    val message: String,
     val severity: Severity,
     val trace: TraceId,
     val span: SpanId
@@ -30,6 +33,7 @@ internal fun LogEvent.asLogMessage(): LogMessage {
     }
     return LogMessage(
         javaClass.simpleName,
+        message,
         severity,
         TraceId(currentSpanContext.traceId),
         SpanId(currentSpanContext.spanId)

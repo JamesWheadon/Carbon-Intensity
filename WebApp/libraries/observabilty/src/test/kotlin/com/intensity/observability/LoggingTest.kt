@@ -32,7 +32,7 @@ class LoggingTest {
 
     @Test
     fun `prints a log message to stdout as json`() {
-        logToStandardOut()(TestLogEvent)
+        logToStandardOut()(TestLogEvent("Info log message"))
 
         assertThat(outputStreamCaptor.toString(Charset.defaultCharset()), containsSubstring(""""type":"TestLogEvent""""))
     }
@@ -40,12 +40,13 @@ class LoggingTest {
     @Test
     fun `sets a log level`() {
         tracing.span("test") {
-            testLogging(TestLogEvent)
+            testLogging(TestLogEvent("Info log message"))
         }
 
         val logs = testLogging.logs()
         assertThat(logs, hasSize(equalTo(1)))
         assertThat(logs.first().severity, equalTo(Info))
+        assertThat(logs.first().message, equalTo("Info log message"))
         assertThat(logs.first().span, equalTo(tracing.spans().first().spanId))
         assertThat(logs.first().trace, equalTo(tracing.spans().first().traceId))
     }
@@ -53,13 +54,14 @@ class LoggingTest {
     @Test
     fun `adds trace and span information to a log`() {
         tracing.span("test") {
-            testLogging(TestErrorLogEvent)
+            testLogging(TestErrorLogEvent("Error log message"))
         }
 
         val logs = testLogging.logs()
         assertThat(logs.first().severity, equalTo(Error))
+        assertThat(logs.first().message, equalTo("Error log message"))
     }
 }
 
-data object TestLogEvent : LogEvent
-data object TestErrorLogEvent : ErrorLogEvent
+data class TestLogEvent(override val message: String) : LogEvent
+data class TestErrorLogEvent(override val message: String) : ErrorLogEvent
