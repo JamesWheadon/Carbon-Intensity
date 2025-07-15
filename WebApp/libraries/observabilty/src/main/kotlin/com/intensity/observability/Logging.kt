@@ -14,10 +14,21 @@ interface LogEvent : Event
 
 data class LogMessage(
     val type: String,
+    val trace: TraceId,
     val span: SpanId
 )
 
-internal fun LogEvent.asLogMessage() = LogMessage(javaClass.simpleName, SpanId(Span.current().spanContext.spanId))
+internal fun LogEvent.asLogMessage(): LogMessage {
+    val currentSpanContext = Span.current().spanContext
+    return LogMessage(
+        javaClass.simpleName,
+        TraceId(currentSpanContext.traceId),
+        SpanId(currentSpanContext.spanId)
+    )
+}
+
+@JvmInline
+value class TraceId(val value: String)
 
 @JvmInline
 value class SpanId(val value: String)

@@ -44,6 +44,7 @@ class LoggingTest {
         val logs = testLogging.logs()
         assertThat(logs, hasSize(equalTo(1)))
         assertThat(logs.first().span, equalTo(tracing.spans().first().spanId))
+        assertThat(logs.first().trace, equalTo(tracing.spans().first().traceId))
     }
 }
 

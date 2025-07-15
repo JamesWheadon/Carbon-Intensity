@@ -81,6 +81,7 @@ class TestOpenTelemetry(profile: TestProfile) : OpenTelemetry {
     fun spans(): List<SpanData> = inMemorySpanExporter.finishedSpanItems.map { span ->
         SpanData(
             span.name,
+            TraceId(span.traceId),
             SpanId(span.spanId),
             SpanId(span.parentSpanId),
             span.attributes.asMap().mapKeys { key -> key.key.key },
@@ -224,6 +225,7 @@ class TreeNode(private val span: SpanData, private val children: List<TreeNode>)
 
 data class SpanData(
     val name: String,
+    val traceId: TraceId,
     val spanId: SpanId,
     val parentSpanId: SpanId,
     val attributes: Map<String, Any>,
