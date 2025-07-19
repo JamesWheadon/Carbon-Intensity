@@ -6,7 +6,7 @@ import io.opentelemetry.api.trace.Span
 import org.http4k.events.Event
 import org.http4k.format.Jackson.asJsonObject
 
-internal fun interface LogOutput: (LogEvent) -> Unit
+fun interface LogOutput: (LogEvent) -> Unit
 
 internal fun logToStandardOut(): LogOutput = LogOutput { log ->
     println(log.asLogMessage().asJsonObject())
