@@ -23,7 +23,7 @@ class TestObservability {
         val openTelemetry = openTelemetry
         return Observability(
             OpenTelemetryTracer(openTelemetry, serviceName),
-            Metrics(openTelemetry),
+            Metrics(openTelemetry, serviceName),
             logging
         )
     }

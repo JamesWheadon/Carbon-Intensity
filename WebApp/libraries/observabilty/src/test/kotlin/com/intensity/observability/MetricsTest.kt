@@ -13,6 +13,7 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.testing.exporter.InMemoryMetricReader
+import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -22,16 +23,17 @@ class MetricsTest {
 
     @Test
     fun `increments a counter by one`() {
-        Metrics(openTelemetry).measure(CounterMetric(MetricName("testMetric")))
+        Metrics(openTelemetry, "testService").measure(CounterMetric(MetricName("testMetric")))
 
         val metricData = metricReader.collectAllMetrics().first { it.name == "testMetric" }
         assertThat(metricData.longSumData.points.sumOf { it.value }, equalTo(1))
+        assertThat(metricData.longSumData.points.map { it.attributes.get(SERVICE_NAME) }.distinct(), equalTo(listOf("testService")))
     }
 
     @Test
     fun `only creates a counter once`() {
         val spy = OpenTelemetrySpy(openTelemetry)
-        val metrics = Metrics(spy)
+        val metrics = Metrics(spy, "testService")
 
         metrics.measure(CounterMetric(MetricName("testMetric")))
         metrics.measure(CounterMetric(MetricName("testMetric")))
@@ -39,24 +41,26 @@ class MetricsTest {
         assertThat(spy.metricsCreated(), equalTo(listOf("testMetric")))
         val metricData = metricReader.collectAllMetrics().first { it.name == "testMetric" }
         assertThat(metricData.longSumData.points.sumOf { it.value }, equalTo(2))
+        assertThat(metricData.longSumData.points.map { it.attributes.get(SERVICE_NAME) }.distinct(), equalTo(listOf("testService")))
     }
 
     @Test
     fun `increments a double metric by the supplied amount`() {
         val spy = OpenTelemetrySpy(openTelemetry)
-        val metrics = Metrics(spy)
+        val metrics = Metrics(spy, "testService")
 
         metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 2.0))
         metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 3.0))
 
         val metricData = metricReader.collectAllMetrics().first { it.name == "testDoubleMetric" }
         assertThat(metricData.doubleSumData.points.sumOf { it.value }, equalTo(5.0))
+        assertThat(metricData.doubleSumData.points.map { it.attributes.get(SERVICE_NAME) }.distinct(), equalTo(listOf("testService")))
     }
 
     @Test
     fun `does not allow a metric name to be used for multiple types of metric`() {
         val spy = OpenTelemetrySpy(openTelemetry)
-        val metrics = Metrics(spy)
+        val metrics = Metrics(spy, "testService")
         metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 2.0))
 
         assertThrows<IllegalStateException> {

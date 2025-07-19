@@ -12,7 +12,7 @@ class Observability(
         fun noOp(serviceName: String): Observability =
             Observability(
                 OpenTelemetryTracer(OpenTelemetry.noop(), serviceName),
-                Metrics(OpenTelemetry.noop()),
+                Metrics(OpenTelemetry.noop(), serviceName),
                 { }
             )
     }

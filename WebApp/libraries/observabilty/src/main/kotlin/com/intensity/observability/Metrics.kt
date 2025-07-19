@@ -2,14 +2,16 @@ package com.intensity.observability
 
 import com.intensity.observability.Metric.Type
 import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.metrics.DoubleCounter
 import io.opentelemetry.api.metrics.LongCounter
+import io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME
 
-class Metrics(private val openTelemetry: OpenTelemetry) {
+class Metrics(private val openTelemetry: OpenTelemetry, private val serviceName: String) {
     private val registry = mutableMapOf<MetricName, MetricInstrument<out Any>>()
 
     fun <T> measure(metric: Metric<T>) {
-        metricInstrument(metric).measure(metric)
+        metricInstrument(metric).measure(metric, serviceName)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -38,22 +40,22 @@ class Metrics(private val openTelemetry: OpenTelemetry) {
 sealed interface MetricInstrument<T> {
     val type: Type
 
-    fun measure(metric: Metric<T>)
+    fun measure(metric: Metric<T>, serviceName: String)
 }
 
 class LongCounterWrapper(private val counter: LongCounter) : MetricInstrument<Long> {
     override val type = Type.Counter
 
-    override fun measure(metric: Metric<Long>) {
-        counter.add(metric.value)
+    override fun measure(metric: Metric<Long>, serviceName: String) {
+        counter.add(metric.value, Attributes.of(SERVICE_NAME, serviceName))
     }
 }
 
 class DoubleCounterWrapper(private val counter: DoubleCounter) : MetricInstrument<Double> {
     override val type = Type.DoubleCounter
 
-    override fun measure(metric: Metric<Double>) {
-        counter.add(metric.value)
+    override fun measure(metric: Metric<Double>, serviceName: String) {
+        counter.add(metric.value, Attributes.of(SERVICE_NAME, serviceName))
     }
 }
 
