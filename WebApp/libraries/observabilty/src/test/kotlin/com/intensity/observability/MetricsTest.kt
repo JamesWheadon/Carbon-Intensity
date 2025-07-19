@@ -14,6 +14,7 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.testing.exporter.InMemoryMetricReader
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class MetricsTest {
     private val metricReader = InMemoryMetricReader.builder().build()
@@ -31,6 +32,7 @@ class MetricsTest {
     fun `only creates a counter once`() {
         val spy = OpenTelemetrySpy(openTelemetry)
         val metrics = Metrics(spy)
+
         metrics.measure(CounterMetric(MetricName("testMetric")))
         metrics.measure(CounterMetric(MetricName("testMetric")))
 
@@ -43,11 +45,23 @@ class MetricsTest {
     fun `increments a double metric by the supplied amount`() {
         val spy = OpenTelemetrySpy(openTelemetry)
         val metrics = Metrics(spy)
+
         metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 2.0))
         metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 3.0))
 
         val metricData = metricReader.collectAllMetrics().first { it.name == "testDoubleMetric" }
         assertThat(metricData.doubleSumData.points.sumOf { it.value }, equalTo(5.0))
+    }
+
+    @Test
+    fun `does not allow a metric name to be used for multiple types of metric`() {
+        val spy = OpenTelemetrySpy(openTelemetry)
+        val metrics = Metrics(spy)
+        metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 2.0))
+
+        assertThrows<IllegalStateException> {
+            metrics.measure(CounterMetric(MetricName("testDoubleMetric")))
+        }
     }
 }
 
