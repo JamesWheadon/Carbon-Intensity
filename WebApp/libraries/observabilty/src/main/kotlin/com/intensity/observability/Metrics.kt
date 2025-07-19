@@ -5,29 +5,46 @@ import io.opentelemetry.api.metrics.DoubleCounter
 import io.opentelemetry.api.metrics.LongCounter
 
 class Metrics(private val openTelemetry: OpenTelemetry) {
-    private val registry = mutableMapOf<MetricName, LongCounter>()
-    private val doubleRegistry = mutableMapOf<MetricName, DoubleCounter>()
+    private val registry = mutableMapOf<MetricName, MetricInstrument<out Any>>()
 
-    fun measure(metric: Metric) {
+    @Suppress("UNCHECKED_CAST")
+    fun <T> measure(metric: Metric<T>) {
+        val metricInstrument = registry.getOrPut(metric.name) {
+            createMetricInstrument(metric)
+        } as MetricInstrument<T>
+        metricInstrument.measure(metric)
+    }
+
+    private fun <T> createMetricInstrument(metric: Metric<T>) =
         when (metric) {
-            is CounterMetric -> registry.getOrPut(metric.name) {
-                openTelemetry.getMeter("com.intensity.observability").counterBuilder(metric.name.value).build()
-            }
-                .add(1)
-            is DoubleMetric -> doubleRegistry.getOrPut(metric.name) {
-                openTelemetry.getMeter("com.intensity.observability").counterBuilder(metric.name.value).ofDoubles().build()
-            }
-                .add(metric.value)
+            is CounterMetric -> LongCounterWrapper(openTelemetry.getMeter("com.intensity.observability").counterBuilder(metric.name.value).build())
+            is DoubleMetric -> DoubleCounterWrapper(openTelemetry.getMeter("com.intensity.observability").counterBuilder(metric.name.value).ofDoubles().build())
         }
+}
+
+sealed interface MetricInstrument<T> {
+    fun measure(metric: Metric<T>)
+}
+
+class LongCounterWrapper(private val counter: LongCounter) : MetricInstrument<Long> {
+    override fun measure(metric: Metric<Long>) {
+        counter.add(metric.value)
     }
 }
 
-sealed interface Metric {
-    val name: MetricName
+class DoubleCounterWrapper(private val counter: DoubleCounter) : MetricInstrument<Double> {
+    override fun measure(metric: Metric<Double>) {
+        counter.add(metric.value)
+    }
 }
 
-data class CounterMetric(override val name: MetricName) : Metric
-data class DoubleMetric(override val name: MetricName, val value: Double) : Metric
+sealed interface Metric<T> {
+    val name: MetricName
+    val value: T
+}
+
+data class CounterMetric(override val name: MetricName, override val value: Long = 1) : Metric<Long>
+data class DoubleMetric(override val name: MetricName, override val value: Double) : Metric<Double>
 
 @JvmInline
 value class MetricName(val value: String)
