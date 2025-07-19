@@ -21,7 +21,7 @@ class MetricsTest {
 
     @Test
     fun `increments a counter by one`() {
-        Metrics(openTelemetry).measure(Metric(MetricName("testMetric")))
+        Metrics(openTelemetry).measure(CounterMetric(MetricName("testMetric")))
 
         val metricData = metricReader.collectAllMetrics().first { it.name == "testMetric" }
         assertThat(metricData.longSumData.points.sumOf { it.value }, equalTo(1))
@@ -31,12 +31,23 @@ class MetricsTest {
     fun `only creates a counter once`() {
         val spy = OpenTelemetrySpy(openTelemetry)
         val metrics = Metrics(spy)
-        metrics.measure(Metric(MetricName("testMetric")))
-        metrics.measure(Metric(MetricName("testMetric")))
+        metrics.measure(CounterMetric(MetricName("testMetric")))
+        metrics.measure(CounterMetric(MetricName("testMetric")))
 
         assertThat(spy.metricsCreated(), equalTo(listOf("testMetric")))
         val metricData = metricReader.collectAllMetrics().first { it.name == "testMetric" }
         assertThat(metricData.longSumData.points.sumOf { it.value }, equalTo(2))
+    }
+
+    @Test
+    fun `increments a double metric by the supplied amount`() {
+        val spy = OpenTelemetrySpy(openTelemetry)
+        val metrics = Metrics(spy)
+        metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 2.0))
+        metrics.measure(DoubleMetric(MetricName("testDoubleMetric"), 3.0))
+
+        val metricData = metricReader.collectAllMetrics().first { it.name == "testDoubleMetric" }
+        assertThat(metricData.doubleSumData.points.sumOf { it.value }, equalTo(5.0))
     }
 }
 
