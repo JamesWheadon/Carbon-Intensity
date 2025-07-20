@@ -2,9 +2,8 @@ package com.intensity.nationalgrid
 
 import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isFailure
-import com.intensity.observability.OpenTelemetryTracer
-import com.intensity.observability.TestOpenTelemetryTracer
-import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.Observability
+import com.intensity.observability.TestObservability
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.valueOrNull
@@ -39,8 +38,8 @@ abstract class NationalGridContractTest {
 
 class FakeNationalGridTest : NationalGridContractTest() {
     private val fakeNationalGrid = FakeNationalGrid()
-    private val testOpenTelemetry = TestOpenTelemetryTracer(Local, "national-grid-test")
-    override val nationalGrid = NationalGridCloud(fakeNationalGrid, testOpenTelemetry)
+    private val testOpenTelemetry = TestObservability()
+    override val nationalGrid = NationalGridCloud(fakeNationalGrid, testOpenTelemetry.observability("national-grid-test"))
 
     @Test
     fun `responds with correct failure if error getting intensity data for time period`() {
@@ -54,7 +53,7 @@ class FakeNationalGridTest : NationalGridContractTest() {
     fun `creates a span with data about the call`() {
         nationalGrid.intensity(time, time.plusHours(6))
 
-        assertThat(testOpenTelemetry.spanNames(), equalTo(listOf("Fetch Carbon Intensity")))
+        assertThat(testOpenTelemetry.spans().map { it.name }, equalTo(listOf("Fetch Carbon Intensity")))
         val fetchSpan = testOpenTelemetry.spans().first { it.name == "Fetch Carbon Intensity" }
         assertThat(
             fetchSpan.attributes,
@@ -72,5 +71,5 @@ class FakeNationalGridTest : NationalGridContractTest() {
 
 @Disabled
 class NationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGridCloud(nationalGridClient(), OpenTelemetryTracer.noOp())
+    override val nationalGrid = NationalGridCloud(nationalGridClient(), Observability.noOp())
 }

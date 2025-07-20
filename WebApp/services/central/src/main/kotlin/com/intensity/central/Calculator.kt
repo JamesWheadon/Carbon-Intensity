@@ -9,7 +9,7 @@ import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
 import com.intensity.observability.ManagedSpan
-import com.intensity.observability.Tracer
+import com.intensity.observability.Observability
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.PriceData
 import com.intensity.octopus.Prices
@@ -27,11 +27,11 @@ class Calculator(
     private val nationalGrid: NationalGrid,
     private val limitCalc: LimitCalculator,
     private val weightsCalc: WeightsCalculator,
-    private val openTelemetry: Tracer
+    private val observability: Observability
 ) {
     fun calculate(calculationData: CalculationData): Result<ChargeTime, Failed> =
-        openTelemetry.span("charge time calculation") {
-            openTelemetry.span("fetch electricity data") { span ->
+        observability.span("charge time calculation") {
+            observability.span("fetch electricity data") { span ->
                 val prices =
                     octopus.prices(
                         calculationData.product,
@@ -71,7 +71,7 @@ class Calculator(
         calculationData: CalculationData,
         electricity: Electricity
     ): Result<ChargeTime, Failed> =
-        openTelemetry.span("calculate charge time") { span ->
+        observability.span("calculate charge time") { span ->
             when {
                 calculationData.intensityLimit != null -> {
                     intensityLimitedChargeTime(

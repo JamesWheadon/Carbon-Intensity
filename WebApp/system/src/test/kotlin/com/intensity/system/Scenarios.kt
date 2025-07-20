@@ -7,8 +7,7 @@ import com.intensity.core.chargeTimeLens
 import com.intensity.limitcalculator.limitCalculatorApp
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
-import com.intensity.observability.TestOpenTelemetryTracer
-import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestObservability
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
@@ -94,8 +93,9 @@ class Customer {
             listOf(9.8, 9.8, 10.0, 10.0, 9.5, 9.5, 10.0, 10.0, 10.0, 10.0, 10.0, 9.0, 9.0, 10.0, 9.8, 9.8)
         )
     }
-    private val centralOpenTelemetry = TestOpenTelemetryTracer(Local, "test")
-    private val limitCalcOpenTelemetry = TestOpenTelemetryTracer(Local, "limit")
+    private val observability = TestObservability()
+    private val centralOpenTelemetry = observability.observability("test")
+    private val limitCalcOpenTelemetry = observability.observability("limit")
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, centralOpenTelemetry),
         OctopusCloud(octopusFake, centralOpenTelemetry),
@@ -218,6 +218,6 @@ class Customer {
     private fun String.toISO8601() = replace(" ", "T") + "Z"
 
     fun approveTracing(testName: String) {
-        centralOpenTelemetry.approveSpanDiagram(testName, limitCalcOpenTelemetry)
+        observability.approveSpanDiagram(testName)
     }
 }

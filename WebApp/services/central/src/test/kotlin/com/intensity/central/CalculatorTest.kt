@@ -10,8 +10,7 @@ import com.intensity.nationalgrid.Intensity
 import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
-import com.intensity.observability.TestOpenTelemetryTracer
-import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestObservability
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusProduct
 import com.intensity.octopus.OctopusTariff
@@ -23,7 +22,6 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -34,7 +32,8 @@ import java.time.temporal.ChronoUnit
 class CalculatorTest {
     private val fakeLimit = FakeLimitCalculator()
     private val fakeWeights = FakeWeightsCalculator()
-    private val openTelemetry = TestOpenTelemetryTracer(Local, "calculator")
+    private val observability = TestObservability()
+    private val openTelemetry = observability.observability("calculator")
     private val calculator = Calculator(
         OctopusFake(),
         NationalGridFake(),
@@ -79,11 +78,6 @@ class CalculatorTest {
             )
         )
     )
-
-    @AfterEach
-    fun tearDown() {
-        openTelemetry.shutdown()
-    }
 
     @Test
     fun `creates electricity data from prices and intensity data`() {
@@ -311,7 +305,7 @@ class CalculatorTest {
             )
         )
 
-        val spans = openTelemetry.spans()
+        val spans = observability.spans()
         val parentSpan = spans.first { it.name == "charge time calculation" }
         val gettingElectricityDataSpan = spans.first { it.name == "fetch electricity data" }
         val calculatingChargeTimeSpan = spans.first { it.name == "calculate charge time" }

@@ -2,7 +2,7 @@ package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGridCloud
-import com.intensity.observability.OpenTelemetryTracer
+import com.intensity.observability.Observability
 import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.OctopusCloud
 import com.natpryce.hamkrest.and
@@ -23,26 +23,26 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(JsonApprovalTest::class)
 class OpenApiTest {
     private val client = JavaHttpClient()
-    private val openTelemetry = OpenTelemetryTracer.noOp()
+    private val observability = Observability.noOp()
     private val server = carbonIntensityServer(
         1000,
         NationalGridCloud(
             FakeNationalGrid(),
-            openTelemetry
+            observability
         ),
         OctopusCloud(
             FakeOctopus(),
-            openTelemetry
+            observability
         ),
         LimitCalculatorCloud(
             FakeLimitCalculator(),
-            openTelemetry
+            observability
         ),
         WeightsCalculatorCloud(
             FakeWeightsCalculator(),
-            openTelemetry
+            observability
         ),
-        openTelemetry
+        observability
     )
 
     @BeforeEach

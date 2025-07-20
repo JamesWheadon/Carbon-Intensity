@@ -1,11 +1,11 @@
 package com.intensity.observability
 
+import com.intensity.observability.SpanData.SpanEvent
 import com.intensity.observability.SpanData.Status.Error
 import com.intensity.observability.SpanData.Status.Unset
 import com.intensity.observability.SpanData.Type.Client
 import com.intensity.observability.SpanData.Type.Internal
 import com.intensity.observability.SpanData.Type.Server
-import com.intensity.observability.TestProfile.Local
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.hasSize
@@ -29,7 +29,8 @@ import java.util.concurrent.Executors
 import java.util.stream.Stream
 
 class OpenTelemetryTracerTest {
-    private val openTelemetry = TestOpenTelemetryTracer(Local, "test-service")
+    private val openTelemetry = TestOpenTelemetry()
+    private val tracer = OpenTelemetryTracer(openTelemetry, "test-service")
 
     companion object {
         @JvmStatic
@@ -49,7 +50,7 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `creates a span with the provided name`() {
-        openTelemetry.span("testSpan") { }
+        tracer.span("testSpan") { }
 
         assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
         val spanData = openTelemetry.spans().first()
@@ -61,7 +62,7 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `can add an event to a span`() {
-        openTelemetry.span("testSpan") { span ->
+        tracer.span("testSpan") { span ->
             span.addEvent("test-event")
         }
 
@@ -72,7 +73,7 @@ class OpenTelemetryTracerTest {
     @Test
     fun `marks a span as an error if an exception thrown`() {
         assertThrows<RuntimeException> {
-            openTelemetry.span("testSpan") {
+            tracer.span("testSpan") {
                 throw RuntimeException()
             }
         }
@@ -83,9 +84,9 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `sets a span as the current active span and removes it when ended`() {
-        openTelemetry.span("testSpan") {
-            openTelemetry.span("firstChildSpan") { }
-            openTelemetry.span("secondChildSpan") { }
+        tracer.span("testSpan") {
+            tracer.span("firstChildSpan") { }
+            tracer.span("secondChildSpan") { }
         }
 
         val parentSpanData = openTelemetry.spans().first { it.name == "testSpan" }
@@ -97,7 +98,7 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `traces an outbound http request`() {
-        openTelemetry.outboundHttp("http-request", "other-service").then { Response(OK) }(
+        tracer.outboundHttp("http-request", "other-service").then { Response(OK) }(
             Request(GET, "https://fake-base-path/test/path")
         )
 
@@ -119,7 +120,7 @@ class OpenTelemetryTracerTest {
     @ParameterizedTest
     @MethodSource("basePaths")
     fun `adds the correct port attribute value for a trace`(basePath: String, port: Long) {
-        openTelemetry.outboundHttp("http-request", "other-service").then { Response(OK) }(
+        tracer.outboundHttp("http-request", "other-service").then { Response(OK) }(
             Request(
                 GET,
                 "$basePath/test/path"
@@ -133,7 +134,7 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `sets client http trace as an error on a 4XX or 5XX response`() {
-        openTelemetry.outboundHttp("http-request", "other-service").then { Response(INTERNAL_SERVER_ERROR) }(
+        tracer.outboundHttp("http-request", "other-service").then { Response(INTERNAL_SERVER_ERROR) }(
             Request(GET, "https://fake-base-path/test/path")
         )
 
@@ -144,7 +145,7 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `traces an inbound http request`() {
-        openTelemetry.inboundHttp("http-request").then { Response(OK) }(
+        tracer.inboundHttp("http-request").then { Response(OK) }(
             Request(GET, "https://fake-base-path/test/path")
         )
 
@@ -162,7 +163,7 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `sets inbound http trace as an error on a 4XX or 5XX response`() {
-        openTelemetry.inboundHttp("http-request").then { Response(NOT_FOUND) }(
+        tracer.inboundHttp("http-request").then { Response(NOT_FOUND) }(
             Request(GET, "https://fake-base-path/test/path")
         )
 
@@ -174,7 +175,7 @@ class OpenTelemetryTracerTest {
     @Test
     fun `propagates trace context over http`() {
         var sentRequest: Request? = null
-        openTelemetry.outboundHttp("to be propagated", "test-target").then { request ->
+        tracer.outboundHttp("to be propagated", "test-target").then { request ->
             sentRequest = request
             Response(OK)
         }(Request(GET, "/test/path/propagated"))
@@ -186,9 +187,9 @@ class OpenTelemetryTracerTest {
     fun `receives trace context over http`(testInfo: TestInfo) {
         val executor = Executors.newSingleThreadExecutor()
 
-        openTelemetry.outboundHttp("starting span", "test-target").then { request ->
+        tracer.outboundHttp("starting span", "test-target").then { request ->
             executor.submit(Callable {
-                openTelemetry.inboundHttp("received span").then {
+                tracer.inboundHttp("received span").then {
                     Response(OK)
                 }(request)
             }).get()

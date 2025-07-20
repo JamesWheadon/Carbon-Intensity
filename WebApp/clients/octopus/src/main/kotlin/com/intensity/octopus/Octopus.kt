@@ -3,7 +3,7 @@ package com.intensity.octopus
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
-import com.intensity.observability.Tracer
+import com.intensity.observability.Observability
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -32,9 +32,9 @@ interface Octopus {
     ): Result<Prices, Failed>
 }
 
-class OctopusCloud(private val httpHandler: HttpHandler, private val openTelemetry: Tracer) : Octopus {
+class OctopusCloud(private val httpHandler: HttpHandler, private val observability: Observability) : Octopus {
     override fun products(): Result<Products, Failed> {
-        val response = openTelemetry.outboundHttp("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "/"))
+        val response = observability.outboundHttp("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "/"))
         return when (response.status) {
             OK -> Success(productsLens(response))
             else -> Failure(OctopusCommunicationFailed)
@@ -42,7 +42,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val openTelemet
     }
 
     override fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
-        val response = openTelemetry.outboundHttp("Fetch Octopus Product", "Octopus").then(httpHandler)(
+        val response = observability.outboundHttp("Fetch Octopus Product", "Octopus").then(httpHandler)(
             Request(GET, "/${product.code}/")
         )
         return when (response.status) {
@@ -60,7 +60,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val openTelemet
     ): Result<Prices, Failed> {
         val periodFrom = start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         val periodTo = end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))
-        val response = openTelemetry.outboundHttp("Fetch Octopus Tariff Prices", "Octopus").then(httpHandler)(
+        val response = observability.outboundHttp("Fetch Octopus Tariff Prices", "Octopus").then(httpHandler)(
             Request(
                 GET,
                 "/${product.code}/electricity-tariffs/${tariff.code}/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"

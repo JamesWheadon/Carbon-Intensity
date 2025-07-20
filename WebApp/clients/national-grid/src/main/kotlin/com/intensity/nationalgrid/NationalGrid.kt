@@ -2,7 +2,7 @@ package com.intensity.nationalgrid
 
 import com.intensity.core.ErrorResponse
 import com.intensity.core.Failed
-import com.intensity.observability.Tracer
+import com.intensity.observability.Observability
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -21,11 +21,11 @@ interface NationalGrid {
     fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed>
 }
 
-class NationalGridCloud(private val httpHandler: HttpHandler, private val openTelemetry: Tracer) : NationalGrid {
+class NationalGridCloud(private val httpHandler: HttpHandler, private val observability: Observability) : NationalGrid {
     override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
         val start = from.plusMinutes(30 - from.minute % 30L)
         val end = to.plusMinutes((30 - (to.minute % 30L)) % 30L)
-        val response = openTelemetry.outboundHttp("Fetch Carbon Intensity", "National Grid").then(httpHandler)(Request(GET, "/intensity/$start/$end"))
+        val response = observability.outboundHttp("Fetch Carbon Intensity", "National Grid").then(httpHandler)(Request(GET, "/intensity/$start/$end"))
         return when (response.status) {
             OK -> Success(nationalGridDataLens(response))
             else -> Failure(NationalGridFailed)

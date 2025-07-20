@@ -1,7 +1,6 @@
 package com.intensity.limitcalculator
 
-import com.intensity.observability.TestOpenTelemetryTracer
-import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.TestObservability
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
@@ -13,8 +12,8 @@ import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
 
 class LimitCalculatorAppKtTest {
-    private val openTelemetry = TestOpenTelemetryTracer(Local, "limit-test")
-    private val app = limitCalculatorApp(openTelemetry)
+    private val observability = TestObservability()
+    private val app = limitCalculatorApp(observability.observability("limit-test"))
 
     @Test
     fun `returns the charge time working under the intensity limit`() {

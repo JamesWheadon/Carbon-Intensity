@@ -6,7 +6,7 @@ import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
 import com.intensity.core.handleLensFailures
-import com.intensity.observability.Tracer
+import com.intensity.observability.Observability
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
@@ -22,11 +22,11 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import java.time.ZonedDateTime
 
-fun limitCalculatorApp(openTelemetry: Tracer) = handleLensFailures()
-    .then(limitRoutes(openTelemetry))
+fun limitCalculatorApp(observability: Observability) = handleLensFailures()
+    .then(limitRoutes(observability))
 
-private fun limitRoutes(openTelemetry: Tracer) = routes(
-    "/calculate/intensity/{limit}" bind POST to openTelemetry.inboundHttp("intensity limit calculation")
+private fun limitRoutes(observability: Observability) = routes(
+    "/calculate/intensity/{limit}" bind POST to observability.inboundHttp("intensity limit calculation")
         .then { request ->
             val scheduleRequest = scheduleRequestLens(request)
             val intensityLimit = limitLens(request)
@@ -44,7 +44,7 @@ private fun limitRoutes(openTelemetry: Tracer) = routes(
                     }
                 )
         },
-    "/calculate/price/{limit}" bind POST to openTelemetry.inboundHttp("price limit calculation").then { request ->
+    "/calculate/price/{limit}" bind POST to observability.inboundHttp("price limit calculation").then { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
         underPriceLimit(

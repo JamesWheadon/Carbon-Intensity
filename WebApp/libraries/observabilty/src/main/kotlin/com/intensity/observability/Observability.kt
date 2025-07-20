@@ -9,10 +9,10 @@ class Observability(
     private val logging: LogOutput
 ) : Tracer by tracer {
     companion object {
-        fun noOp(serviceName: String): Observability =
+        fun noOp(): Observability =
             Observability(
-                OpenTelemetryTracer(OpenTelemetry.noop(), serviceName),
-                Metrics(OpenTelemetry.noop(), serviceName),
+                OpenTelemetryTracer(OpenTelemetry.noop(), "unused"),
+                Metrics(OpenTelemetry.noop(), "unused"),
                 { }
             )
     }

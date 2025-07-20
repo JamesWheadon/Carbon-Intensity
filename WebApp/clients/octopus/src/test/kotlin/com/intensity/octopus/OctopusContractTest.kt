@@ -2,9 +2,8 @@ package com.intensity.octopus
 
 import com.intensity.coretest.containsEntries
 import com.intensity.coretest.isSuccess
-import com.intensity.observability.OpenTelemetryTracer
-import com.intensity.observability.TestOpenTelemetryTracer
-import com.intensity.observability.TestProfile.Local
+import com.intensity.observability.Observability
+import com.intensity.observability.TestObservability
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import dev.forkhandles.result4k.Failure
@@ -154,9 +153,8 @@ class FakeOctopusTest : OctopusContractTest() {
             listOf(22.0, 22.16, 18.38, 19.84, 16.6, 19.79, 18.0, 22.2)
         )
     }
-    private val openTelemetry = TestOpenTelemetryTracer(Local, "octopus-test")
-
-    override val octopus = OctopusCloud(fakeOctopus, openTelemetry)
+    private val observability = TestObservability()
+    override val octopus = OctopusCloud(fakeOctopus, observability.observability("octopus-test"))
 
     @Test
     fun `handles failure getting products`() {
@@ -191,8 +189,8 @@ class FakeOctopusTest : OctopusContractTest() {
     fun `creates a span with data about the request to get octopus products`() {
         octopus.products()
 
-        assertThat(openTelemetry.spanNames(), equalTo(listOf("Fetch Octopus Products")))
-        val fetchSpan = openTelemetry.spans().first { it.name == "Fetch Octopus Products" }
+        assertThat(observability.spans().map { it.name }, equalTo(listOf("Fetch Octopus Products")))
+        val fetchSpan = observability.spans().first { it.name == "Fetch Octopus Products" }
         assertThat(
             fetchSpan.attributes,
             containsEntries(
@@ -210,8 +208,8 @@ class FakeOctopusTest : OctopusContractTest() {
     fun `creates a span with data about the request to get an octopus product`() {
         octopus.product(OctopusProduct("AGILE-FLEX-22-11-25"))
 
-        assertThat(openTelemetry.spanNames(), equalTo(listOf("Fetch Octopus Product")))
-        val fetchSpan = openTelemetry.spans().first { it.name == "Fetch Octopus Product" }
+        assertThat(observability.spans().map { it.name }, equalTo(listOf("Fetch Octopus Product")))
+        val fetchSpan = observability.spans().first { it.name == "Fetch Octopus Product" }
         assertThat(
             fetchSpan.attributes,
             containsEntries(
@@ -234,8 +232,8 @@ class FakeOctopusTest : OctopusContractTest() {
             ZonedDateTime.of(2023, 3, 26, 1, 29, 0, 0, ZoneId.of("UTC"))
         )
 
-        assertThat(openTelemetry.spanNames(), equalTo(listOf("Fetch Octopus Tariff Prices")))
-        val fetchSpan = openTelemetry.spans().first { it.name == "Fetch Octopus Tariff Prices" }
+        assertThat(observability.spans().map { it.name }, equalTo(listOf("Fetch Octopus Tariff Prices")))
+        val fetchSpan = observability.spans().first { it.name == "Fetch Octopus Tariff Prices" }
         assertThat(
             fetchSpan.attributes,
             containsEntries(
@@ -252,5 +250,5 @@ class FakeOctopusTest : OctopusContractTest() {
 
 @Disabled
 class OctopusTest : OctopusContractTest() {
-    override val octopus = OctopusCloud(octopusClient(), OpenTelemetryTracer.noOp())
+    override val octopus = OctopusCloud(octopusClient(), Observability.noOp())
 }

@@ -4,7 +4,7 @@ import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.Failed
 import com.intensity.core.chargeTimeLens
-import com.intensity.observability.Tracer
+import com.intensity.observability.Observability
 import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
@@ -21,9 +21,9 @@ interface LimitCalculator {
     fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed>
 }
 
-class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val openTelemetry: Tracer) : LimitCalculator {
+class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val observability: Observability) : LimitCalculator {
     override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
-        val response = openTelemetry.outboundHttp("Intensity limit", "Limit")
+        val response = observability.outboundHttp("Intensity limit", "Limit")
             .then(httpHandler)(
             Request(Method.POST, "/calculate/intensity/$limit").with(
                 ScheduleRequest.lens of ScheduleRequest(
@@ -42,7 +42,7 @@ class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val ope
     }
 
     override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
-        val response = openTelemetry.outboundHttp("Price limit", "Limit")
+        val response = observability.outboundHttp("Price limit", "Limit")
             .then(httpHandler)(
             Request(
                 Method.POST,
