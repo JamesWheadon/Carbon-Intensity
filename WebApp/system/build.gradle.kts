@@ -9,8 +9,8 @@ dependencies {
     testImplementation(projects.libraries.core)
     testImplementation(projects.libraries.observabilty)
     testImplementation(testFixtures(projects.libraries.core))
-    testImplementation(testFixtures(projects.clients.nationalGrid))
-    testImplementation(testFixtures(projects.clients.octopus))
+    testImplementation(testFixtures(projects.libraries.nationalGrid))
+    testImplementation(testFixtures(projects.libraries.octopus))
     testImplementation(testFixtures(projects.libraries.observabilty))
 
     testImplementation(libs.http4k.core)

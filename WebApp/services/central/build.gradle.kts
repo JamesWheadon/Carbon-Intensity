@@ -6,8 +6,8 @@ dependencies {
     implementation(projects.libraries.core)
     implementation(projects.libraries.observabilty)
     implementation(projects.libraries.openApi)
-    implementation(projects.clients.nationalGrid)
-    implementation(projects.clients.octopus)
+    implementation(projects.libraries.nationalGrid)
+    implementation(projects.libraries.octopus)
 
     implementation(libs.http4k.core)
     implementation(libs.http4k.jackson)
@@ -15,8 +15,8 @@ dependencies {
     implementation(libs.result4k)
 
     testImplementation(testFixtures(projects.libraries.core))
-    testImplementation(testFixtures(projects.clients.nationalGrid))
-    testImplementation(testFixtures(projects.clients.octopus))
+    testImplementation(testFixtures(projects.libraries.nationalGrid))
+    testImplementation(testFixtures(projects.libraries.octopus))
     testImplementation(testFixtures(projects.libraries.observabilty))
 
     testImplementation(libs.junit.engine)
