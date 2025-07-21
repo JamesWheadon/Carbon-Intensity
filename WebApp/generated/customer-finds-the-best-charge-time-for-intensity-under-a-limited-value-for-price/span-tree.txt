@@ -1,7 +1,8 @@
-charge time calculation
-├── fetch electricity data
-│   ├── Fetch Octopus Tariff Prices
-│   └── Fetch Carbon Intensity
-└── calculate charge time
-    └── Price limit
-        └── POST /calculate/price/10.0
+POST /octopus/charge-time
+└── charge time calculation
+    ├── fetch electricity data
+    │   ├── Fetch Octopus Tariff Prices
+    │   └── Fetch Carbon Intensity
+    └── calculate charge time
+        └── Price limit
+            └── POST /calculate/price/10.0

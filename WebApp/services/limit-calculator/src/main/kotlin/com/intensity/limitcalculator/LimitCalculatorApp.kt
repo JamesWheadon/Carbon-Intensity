@@ -25,43 +25,46 @@ import java.time.ZonedDateTime
 fun limitCalculatorApp(observability: Observability) = handleLensFailures()
     .then(limitRoutes(observability))
 
-private fun limitRoutes(observability: Observability) = routes(
-    "/calculate/intensity/{limit}" bind POST to observability.inboundHttp()
-        .then { request ->
-            val scheduleRequest = scheduleRequestLens(request)
-            val intensityLimit = limitLens(request)
-            underIntensityLimit(
-                scheduleRequest.electricity,
-                intensityLimit,
-                scheduleRequest.start,
-                scheduleRequest.end,
-                scheduleRequest.time
-            )
-                .fold(
-                    { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-                    { failed ->
-                        handleFailure(failed)
-                    }
-                )
-        },
-    "/calculate/price/{limit}" bind POST to observability.inboundHttp().then { request ->
-        val scheduleRequest = scheduleRequestLens(request)
-        val priceLimit = limitLens(request)
-        underPriceLimit(
-            scheduleRequest.electricity,
-            priceLimit,
-            scheduleRequest.start,
-            scheduleRequest.end,
-            scheduleRequest.time
-        )
-            .fold(
-                { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-                { failed ->
-                    handleFailure(failed)
+private fun limitRoutes(observability: Observability) =
+    observability.inboundHttp()
+        .then(
+            routes(
+                "/calculate/intensity/{limit}" bind POST to { request ->
+                    val scheduleRequest = scheduleRequestLens(request)
+                    val intensityLimit = limitLens(request)
+                    underIntensityLimit(
+                        scheduleRequest.electricity,
+                        intensityLimit,
+                        scheduleRequest.start,
+                        scheduleRequest.end,
+                        scheduleRequest.time
+                    )
+                        .fold(
+                            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                            { failed ->
+                                handleFailure(failed)
+                            }
+                        )
+                },
+                "/calculate/price/{limit}" bind POST to { request ->
+                    val scheduleRequest = scheduleRequestLens(request)
+                    val priceLimit = limitLens(request)
+                    underPriceLimit(
+                        scheduleRequest.electricity,
+                        priceLimit,
+                        scheduleRequest.start,
+                        scheduleRequest.end,
+                        scheduleRequest.time
+                    )
+                        .fold(
+                            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                            { failed ->
+                                handleFailure(failed)
+                            }
+                        )
                 }
             )
-    }
-)
+        )
 
 private fun handleFailure(failed: Failed): Response {
     val status = when (failed) {

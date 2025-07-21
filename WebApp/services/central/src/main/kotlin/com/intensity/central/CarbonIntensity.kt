@@ -65,6 +65,7 @@ fun carbonIntensity(
     weightsCalculator: WeightsCalculator,
     observability: Observability
 ) = corsMiddleware
+    .then(observability.inboundHttp())
     .then(CatchLensFailure { _: LensFailure ->
         Response(BAD_REQUEST).with(errorResponseLens of InvalidRequestFailed.toErrorResponse())
     })

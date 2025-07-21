@@ -1,4 +1,4 @@
-Fetch Carbon Intensity
-
-Weighted calculation
-└── POST /calculate
+POST /intensities/charge-time
+├── Fetch Carbon Intensity
+└── Weighted calculation
+    └── POST /calculate
