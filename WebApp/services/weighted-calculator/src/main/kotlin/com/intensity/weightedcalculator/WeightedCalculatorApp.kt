@@ -22,7 +22,7 @@ fun weightedCalculatorApp(observability: Observability) = handleLensFailures()
     .then(weightedCalculatorRoute(observability))
 
 private fun weightedCalculatorRoute(observability: Observability) =
-    "/calculate" bind POST to observability.inboundHttp("weighted calculation")
+    "/calculate" bind POST to observability.inboundHttp()
         .then { request ->
             val scheduleRequest = scheduleRequestLens(request)
             calculate(

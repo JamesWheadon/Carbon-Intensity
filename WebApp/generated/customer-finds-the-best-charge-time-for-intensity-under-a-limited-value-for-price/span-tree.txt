@@ -4,4 +4,4 @@ charge time calculation
 │   └── Fetch Carbon Intensity
 └── calculate charge time
     └── Price limit
-        └── price limit calculation
+        └── POST /calculate/price/10.0

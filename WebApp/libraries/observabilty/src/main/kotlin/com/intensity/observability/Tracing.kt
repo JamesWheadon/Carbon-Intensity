@@ -29,7 +29,7 @@ import org.http4k.core.then
 interface Tracer {
     fun <T> span(spanName: String, block: (ManagedSpan) -> T): T
     fun outboundHttp(spanName: String, targetName: String): Filter
-    fun inboundHttp(spanName: String): Filter
+    fun inboundHttp(): Filter
 }
 
 class OpenTelemetryTracer(
@@ -47,9 +47,9 @@ class OpenTelemetryTracer(
         clientTrace(spanName, targetName)
             .then(propagateTrace())
 
-    override fun inboundHttp(spanName: String): Filter =
+    override fun inboundHttp(): Filter =
         receiveTrace()
-            .then(serverTrace(spanName))
+            .then(serverTrace())
 
     private fun clientTrace(spanName: String, targetName: String) = Filter { next ->
         { request ->
@@ -95,10 +95,10 @@ class OpenTelemetryTracer(
             }
         }
 
-    private fun serverTrace(spanName: String) = Filter { next ->
+    private fun serverTrace() = Filter { next ->
         { request ->
             createSpan(
-                spanName = spanName,
+                spanName = "${request.method.name} ${request.uri.path}",
                 spanKind = SERVER,
                 attributes = Attributes.of(
                     HTTP_REQUEST_METHOD, request.method.name,

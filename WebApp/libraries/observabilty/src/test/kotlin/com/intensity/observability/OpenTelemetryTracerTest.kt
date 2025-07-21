@@ -145,12 +145,13 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `traces an inbound http request`() {
-        tracer.inboundHttp("http-request").then { Response(OK) }(
+        tracer.inboundHttp().then { Response(OK) }(
             Request(GET, "https://fake-base-path/test/path")
         )
 
         assertThat(openTelemetry.spans(), hasSize(equalTo(1)))
         val spanData = openTelemetry.spans().first()
+        assertThat(spanData.name, equalTo("GET /test/path"))
         assertThat(spanData.attributes["service.name"], equalTo("test-service"))
         assertThat(spanData.attributes["http.request.method"], equalTo("GET"))
         assertThat(spanData.attributes["url.path"], equalTo("/test/path"))
@@ -163,7 +164,7 @@ class OpenTelemetryTracerTest {
 
     @Test
     fun `sets inbound http trace as an error on a 4XX or 5XX response`() {
-        tracer.inboundHttp("http-request").then { Response(NOT_FOUND) }(
+        tracer.inboundHttp().then { Response(NOT_FOUND) }(
             Request(GET, "https://fake-base-path/test/path")
         )
 
@@ -189,13 +190,13 @@ class OpenTelemetryTracerTest {
 
         tracer.outboundHttp("starting span", "test-target").then { request ->
             executor.submit(Callable {
-                tracer.inboundHttp("received span").then {
+                tracer.inboundHttp().then {
                     Response(OK)
                 }(request)
             }).get()
         }(Request(GET, "/test/path/propagated"))
 
-        val receivedSpanData = openTelemetry.spans().first { it.name == "received span" }
+        val receivedSpanData = openTelemetry.spans().first { it.name == "GET /test/path/propagated" }
         val sentSpanData = openTelemetry.spans().first { it.name == "starting span" }
         assertThat(receivedSpanData.parentSpanId, equalTo(sentSpanData.spanId))
     }

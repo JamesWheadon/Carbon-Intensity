@@ -26,7 +26,7 @@ fun limitCalculatorApp(observability: Observability) = handleLensFailures()
     .then(limitRoutes(observability))
 
 private fun limitRoutes(observability: Observability) = routes(
-    "/calculate/intensity/{limit}" bind POST to observability.inboundHttp("intensity limit calculation")
+    "/calculate/intensity/{limit}" bind POST to observability.inboundHttp()
         .then { request ->
             val scheduleRequest = scheduleRequestLens(request)
             val intensityLimit = limitLens(request)
@@ -44,7 +44,7 @@ private fun limitRoutes(observability: Observability) = routes(
                     }
                 )
         },
-    "/calculate/price/{limit}" bind POST to observability.inboundHttp("price limit calculation").then { request ->
+    "/calculate/price/{limit}" bind POST to observability.inboundHttp().then { request ->
         val scheduleRequest = scheduleRequestLens(request)
         val priceLimit = limitLens(request)
         underPriceLimit(
