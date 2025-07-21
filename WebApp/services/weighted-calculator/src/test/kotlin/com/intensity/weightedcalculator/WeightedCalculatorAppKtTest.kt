@@ -1,5 +1,6 @@
 package com.intensity.weightedcalculator
 
+import com.intensity.observability.TestObservability
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
@@ -10,7 +11,8 @@ import org.http4k.core.Status.Companion.OK
 import org.junit.jupiter.api.Test
 
 class WeightedCalculatorAppKtTest {
-    private val app = weightedCalculatorApp()
+    private val observability = TestObservability()
+    private val app = weightedCalculatorApp(observability.observability("weights-test"))
 
     @Test
     fun `returns the result of the schedule calculation`() {

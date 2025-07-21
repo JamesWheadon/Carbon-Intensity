@@ -96,11 +96,12 @@ class Customer {
     private val observability = TestObservability()
     private val centralOpenTelemetry = observability.observability("test")
     private val limitCalcOpenTelemetry = observability.observability("limit")
+    private val weightsCalcOpenTelemetry = observability.observability("weights")
     private val app = carbonIntensity(
         NationalGridCloud(nationalGridFake, centralOpenTelemetry),
         OctopusCloud(octopusFake, centralOpenTelemetry),
         LimitCalculatorCloud(limitCalculatorApp(limitCalcOpenTelemetry), centralOpenTelemetry),
-        WeightsCalculatorCloud(weightedCalculatorApp(), centralOpenTelemetry),
+        WeightsCalculatorCloud(weightedCalculatorApp(weightsCalcOpenTelemetry), centralOpenTelemetry),
         centralOpenTelemetry
     )
     private var startTime = ""

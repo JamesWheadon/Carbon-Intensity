@@ -5,6 +5,7 @@ import com.intensity.core.NoChargeTimePossible
 import com.intensity.core.chargeTimeLens
 import com.intensity.core.errorResponseLens
 import com.intensity.core.handleLensFailures
+import com.intensity.observability.Observability
 import dev.forkhandles.result4k.fold
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
@@ -17,23 +18,31 @@ import org.http4k.format.Jackson
 import org.http4k.routing.bind
 import java.time.ZonedDateTime
 
-fun weightedCalculatorApp() = handleLensFailures()
-    .then(weightedCalculatorRoute())
+fun weightedCalculatorApp(observability: Observability) = handleLensFailures()
+    .then(weightedCalculatorRoute(observability))
 
-private fun weightedCalculatorRoute() = "/calculate" bind POST to { request ->
-    val scheduleRequest = scheduleRequestLens(request)
-    calculate(scheduleRequest.electricity, scheduleRequest.weights(), scheduleRequest.start, scheduleRequest.end, scheduleRequest.time)
-        .fold(
-            { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
-            { failed ->
-                val status = when (failed) {
-                    NoChargeTimePossible -> NOT_FOUND
-                    else -> BAD_REQUEST
-                }
-                Response(status).with(errorResponseLens of failed.toErrorResponse())
-            }
-        )
-}
+private fun weightedCalculatorRoute(observability: Observability) =
+    "/calculate" bind POST to observability.inboundHttp("weighted calculation")
+        .then { request ->
+            val scheduleRequest = scheduleRequestLens(request)
+            calculate(
+                scheduleRequest.electricity,
+                scheduleRequest.weights(),
+                scheduleRequest.start,
+                scheduleRequest.end,
+                scheduleRequest.time
+            )
+                .fold(
+                    { chargeTime -> Response(OK).with(chargeTimeLens of chargeTime) },
+                    { failed ->
+                        val status = when (failed) {
+                            NoChargeTimePossible -> NOT_FOUND
+                            else -> BAD_REQUEST
+                        }
+                        Response(status).with(errorResponseLens of failed.toErrorResponse())
+                    }
+                )
+        }
 
 data class ScheduleRequest(
     val time: Long,

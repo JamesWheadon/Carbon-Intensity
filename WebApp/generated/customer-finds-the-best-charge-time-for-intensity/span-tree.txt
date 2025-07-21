@@ -1,3 +1,4 @@
 Fetch Carbon Intensity
 
 Weighted calculation
+└── weighted calculation
