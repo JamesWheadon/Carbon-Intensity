@@ -1,21 +1,18 @@
 package com.intensity.system
 
-import com.intensity.central.LimitCalculatorCloud
-import com.intensity.central.WeightsCalculatorCloud
 import com.intensity.central.carbonIntensity
 import com.intensity.core.chargeTimeLens
 import com.intensity.limitcalculator.limitCalculatorApp
 import com.intensity.nationalgrid.FakeNationalGrid
-import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.observability.TestObservability
 import com.intensity.octopus.FakeOctopus
-import com.intensity.octopus.OctopusCloud
 import com.intensity.weightedcalculator.weightedCalculatorApp
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.http4k.routing.reverseProxyRouting
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
@@ -97,11 +94,14 @@ class Customer {
     private val centralOpenTelemetry = observability.observability("test")
     private val limitCalcOpenTelemetry = observability.observability("limit")
     private val weightsCalcOpenTelemetry = observability.observability("weights")
+    private val network = reverseProxyRouting(
+        "grid" to nationalGridFake,
+        "octopus" to octopusFake,
+        "limit" to limitCalculatorApp(limitCalcOpenTelemetry),
+        "weights" to weightedCalculatorApp(weightsCalcOpenTelemetry)
+    )
     private val app = carbonIntensity(
-        NationalGridCloud(nationalGridFake, centralOpenTelemetry),
-        OctopusCloud(octopusFake, centralOpenTelemetry),
-        LimitCalculatorCloud(limitCalculatorApp(limitCalcOpenTelemetry), centralOpenTelemetry),
-        WeightsCalculatorCloud(weightedCalculatorApp(weightsCalcOpenTelemetry), centralOpenTelemetry),
+        network,
         centralOpenTelemetry
     )
     private var startTime = ""

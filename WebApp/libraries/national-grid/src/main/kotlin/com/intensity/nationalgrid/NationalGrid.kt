@@ -25,7 +25,7 @@ class NationalGridCloud(private val httpHandler: HttpHandler, private val observ
     override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
         val start = from.plusMinutes(30 - from.minute % 30L)
         val end = to.plusMinutes((30 - (to.minute % 30L)) % 30L)
-        val response = observability.outboundHttp("Fetch Carbon Intensity", "National Grid").then(httpHandler)(Request(GET, "/intensity/$start/$end"))
+        val response = observability.outboundHttp("Fetch Carbon Intensity", "National Grid").then(httpHandler)(Request(GET, "_://grid/intensity/$start/$end"))
         return when (response.status) {
             OK -> Success(nationalGridDataLens(response))
             else -> Failure(NationalGridFailed)

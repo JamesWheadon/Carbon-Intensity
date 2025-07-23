@@ -9,7 +9,7 @@ import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import org.http4k.core.HttpHandler
-import org.http4k.core.Method
+import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status
 import org.http4k.core.then
@@ -25,7 +25,7 @@ class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val obs
     override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
         val response = observability.outboundHttp("Intensity limit", "Limit")
             .then(httpHandler)(
-            Request(Method.POST, "/calculate/intensity/$limit").with(
+            Request(POST, "_://limit/calculate/intensity/$limit").with(
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
                     electricity,
@@ -43,11 +43,7 @@ class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val obs
 
     override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
         val response = observability.outboundHttp("Price limit", "Limit")
-            .then(httpHandler)(
-            Request(
-                Method.POST,
-                "/calculate/price/$limit"
-            ).with(
+            .then(httpHandler)(Request(POST, "_://limit/calculate/price/$limit").with(
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
                     electricity,

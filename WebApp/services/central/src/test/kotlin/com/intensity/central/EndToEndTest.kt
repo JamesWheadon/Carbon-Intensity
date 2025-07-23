@@ -1,10 +1,9 @@
 package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
-import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.observability.TestObservability
 import com.intensity.octopus.FakeOctopus
-import com.intensity.octopus.OctopusCloud
+import org.http4k.routing.reverseProxyRouting
 import java.time.ZonedDateTime
 
 abstract class EndToEndTest {
@@ -14,14 +13,16 @@ abstract class EndToEndTest {
     val limitCalculator = FakeLimitCalculator()
     val weightsCalculator = FakeWeightsCalculator()
     private val observability = TestObservability().observability("central")
-    val app =
-        carbonIntensity(
-            NationalGridCloud(nationalGrid, observability),
-            OctopusCloud(octopus, observability),
-            LimitCalculatorCloud(limitCalculator, observability),
-            WeightsCalculatorCloud(weightsCalculator, observability),
-            observability
-        )
+    private val network = reverseProxyRouting(
+        "grid" to nationalGrid,
+        "octopus" to octopus,
+        "limit" to limitCalculator,
+        "weights" to weightsCalculator
+    )
+    val app = carbonIntensity(
+        network,
+        observability
+    )
 
     fun getErrorResponse(message: String) = """{"error":"$message"}"""
 }

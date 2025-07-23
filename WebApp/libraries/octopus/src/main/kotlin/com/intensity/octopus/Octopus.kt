@@ -34,7 +34,7 @@ interface Octopus {
 
 class OctopusCloud(private val httpHandler: HttpHandler, private val observability: Observability) : Octopus {
     override fun products(): Result<Products, Failed> {
-        val response = observability.outboundHttp("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "/"))
+        val response = observability.outboundHttp("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "_://octopus/"))
         return when (response.status) {
             OK -> Success(productsLens(response))
             else -> Failure(OctopusCommunicationFailed)
@@ -43,7 +43,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val observabili
 
     override fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
         val response = observability.outboundHttp("Fetch Octopus Product", "Octopus").then(httpHandler)(
-            Request(GET, "/${product.code}/")
+            Request(GET, "_://octopus/${product.code}/")
         )
         return when (response.status) {
             OK -> Success(productDetailsLens(response))
@@ -63,7 +63,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val observabili
         val response = observability.outboundHttp("Fetch Octopus Tariff Prices", "Octopus").then(httpHandler)(
             Request(
                 GET,
-                "/${product.code}/electricity-tariffs/${tariff.code}/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"
+                "_://octopus/${product.code}/electricity-tariffs/${tariff.code}/standard-unit-rates/?period_from=$periodFrom&period_to=$periodTo"
             )
         )
         return when (response.status) {

@@ -9,7 +9,7 @@ import dev.forkhandles.result4k.Failure
 import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import org.http4k.core.HttpHandler
-import org.http4k.core.Method
+import org.http4k.core.Method.POST
 import org.http4k.core.Request
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.then
@@ -37,8 +37,8 @@ class WeightsCalculatorCloud(private val httpHandler: HttpHandler, private val o
         val response = observability.outboundHttp("Weighted calculation", "Weights")
             .then(httpHandler)(
             Request(
-                Method.POST,
-                "/calculate"
+                POST,
+                "_://weights/calculate"
             ).with(
                 ScheduleRequest.lens of ScheduleRequest(
                     time,
