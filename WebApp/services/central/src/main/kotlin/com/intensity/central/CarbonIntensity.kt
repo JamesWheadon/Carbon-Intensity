@@ -6,7 +6,7 @@ import com.intensity.nationalgrid.NationalGridCloud
 import com.intensity.nationalgrid.nationalGridClient
 import com.intensity.observability.Observability
 import com.intensity.octopus.InvalidRequestFailed
-import com.intensity.octopus.OctopusCloud
+import com.intensity.octopus.Octopus
 import com.intensity.octopus.octopusClient
 import com.intensity.openapi.openApi3
 import org.http4k.client.JavaHttpClient
@@ -57,7 +57,7 @@ fun carbonIntensity(
     observability: Observability
 ): RoutingHttpHandler {
     val nationalGrid = NationalGridCloud(network, observability)
-    val octopus = OctopusCloud(network, observability)
+    val octopus = Octopus(network, observability)
     val limitCalculator = LimitCalculatorCloud(network, observability)
     val weightsCalculator = WeightsCalculatorCloud(network, observability)
     return corsMiddleware

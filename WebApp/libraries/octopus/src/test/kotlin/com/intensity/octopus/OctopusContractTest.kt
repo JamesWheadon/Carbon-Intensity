@@ -154,7 +154,7 @@ class FakeOctopusTest : OctopusContractTest() {
         )
     }
     private val observability = TestObservability()
-    override val octopus = OctopusCloud(fakeOctopus, observability.observability("octopus-test"))
+    override val octopus = Octopus(fakeOctopus, observability.observability("octopus-test"))
 
     @Test
     fun `handles failure getting products`() {
@@ -250,5 +250,5 @@ class FakeOctopusTest : OctopusContractTest() {
 
 @Disabled
 class OctopusTest : OctopusContractTest() {
-    override val octopus = OctopusCloud(octopusClient(), Observability.noOp())
+    override val octopus = Octopus(octopusClient(), Observability.noOp())
 }

@@ -3,7 +3,6 @@ package com.intensity.central
 import com.intensity.core.ChargeTime
 import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
-import com.intensity.core.Failed
 import com.intensity.coretest.isFailure
 import com.intensity.coretest.isSuccess
 import com.intensity.nationalgrid.Intensity
@@ -11,37 +10,36 @@ import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.nationalgrid.NationalGridData
 import com.intensity.observability.TestObservability
+import com.intensity.octopus.FakeOctopus
 import com.intensity.octopus.Octopus
 import com.intensity.octopus.OctopusProduct
 import com.intensity.octopus.OctopusTariff
 import com.intensity.octopus.PriceData
 import com.intensity.octopus.Prices
-import com.intensity.octopus.ProductDetails
-import com.intensity.octopus.Products
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import dev.forkhandles.result4k.Result
 import dev.forkhandles.result4k.Success
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
+import java.time.temporal.ChronoUnit.HOURS
 
 class CalculatorTest {
     private val fakeLimit = FakeLimitCalculator()
     private val fakeWeights = FakeWeightsCalculator()
     private val observability = TestObservability()
     private val openTelemetry = observability.observability("calculator")
+    private val octopus = FakeOctopus()
     private val calculator = Calculator(
-        OctopusFake(),
+        Octopus(octopus, openTelemetry),
         NationalGridFake(),
         LimitCalculatorCloud(fakeLimit, openTelemetry),
         WeightsCalculatorCloud(fakeWeights, openTelemetry),
         openTelemetry
     )
-    private val startTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized()).truncatedTo(ChronoUnit.MINUTES)
+    private val startTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized()).truncatedTo(HOURS)
     private val calculatorData = CalculationData(
         OctopusProduct("not needed"),
         OctopusTariff("not needed"),
@@ -292,6 +290,7 @@ class CalculatorTest {
 
     @Test
     fun `spans and traces are created`() {
+        octopus.setPricesFor("product", "tariff" to startTime, listOf(12.5, 12.6, 12.7, 12.8))
         fakeLimit.setIntensityChargeTime(100.0, startTime.toString() to startTime.plusMinutes(45).toString())
 
         calculator.calculate(
@@ -314,32 +313,6 @@ class CalculatorTest {
         assertThat(calculatingChargeTimeSpan.events.map { it.name }, equalTo(listOf("calculated using intensity limit")))
         assertThat(calculatingChargeTimeSpan.parentSpanId, equalTo(parentSpan.spanId))
     }
-}
-
-class OctopusFake : Octopus {
-    override fun products(): Result<Products, Failed> {
-        TODO("Not yet implemented")
-    }
-
-    override fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
-        TODO("Not yet implemented")
-    }
-
-    override fun prices(
-        product: OctopusProduct,
-        tariff: OctopusTariff,
-        start: ZonedDateTime,
-        end: ZonedDateTime
-    ) = Success(
-        Prices(
-            listOf(
-                PriceData(12.5, 13.0, start, start.plusMinutes(30)),
-                PriceData(12.6, 13.1, start.plusMinutes(30), start.plusMinutes(60)),
-                PriceData(12.7, 13.2, start.plusMinutes(60), start.plusMinutes(90)),
-                PriceData(12.8, 13.3, start.plusMinutes(90), start.plusMinutes(120))
-            )
-        )
-    )
 }
 
 class NationalGridFake : NationalGrid {

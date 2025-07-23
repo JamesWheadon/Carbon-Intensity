@@ -21,19 +21,8 @@ import org.http4k.format.Jackson
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-interface Octopus {
-    fun products(): Result<Products, Failed>
-    fun product(product: OctopusProduct): Result<ProductDetails, Failed>
-    fun prices(
-        product: OctopusProduct,
-        tariff: OctopusTariff,
-        start: ZonedDateTime,
-        end: ZonedDateTime
-    ): Result<Prices, Failed>
-}
-
-class OctopusCloud(private val httpHandler: HttpHandler, private val observability: Observability) : Octopus {
-    override fun products(): Result<Products, Failed> {
+class Octopus(private val httpHandler: HttpHandler, private val observability: Observability) {
+    fun products(): Result<Products, Failed> {
         val response = observability.outboundHttp("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "_://octopus/"))
         return when (response.status) {
             OK -> Success(productsLens(response))
@@ -41,7 +30,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val observabili
         }
     }
 
-    override fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
+    fun product(product: OctopusProduct): Result<ProductDetails, Failed> {
         val response = observability.outboundHttp("Fetch Octopus Product", "Octopus").then(httpHandler)(
             Request(GET, "_://octopus/${product.code}/")
         )
@@ -52,7 +41,7 @@ class OctopusCloud(private val httpHandler: HttpHandler, private val observabili
         }
     }
 
-    override fun prices(
+    fun prices(
         product: OctopusProduct,
         tariff: OctopusTariff,
         start: ZonedDateTime,
