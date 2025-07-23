@@ -39,7 +39,7 @@ abstract class NationalGridContractTest {
 class FakeNationalGridTest : NationalGridContractTest() {
     private val fakeNationalGrid = FakeNationalGrid()
     private val testOpenTelemetry = TestObservability()
-    override val nationalGrid = NationalGridCloud(fakeNationalGrid, testOpenTelemetry.observability("national-grid-test"))
+    override val nationalGrid = NationalGrid(fakeNationalGrid, testOpenTelemetry.observability("national-grid-test"))
 
     @Test
     fun `responds with correct failure if error getting intensity data for time period`() {
@@ -71,5 +71,5 @@ class FakeNationalGridTest : NationalGridContractTest() {
 
 @Disabled
 class NationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGridCloud(nationalGridClient(), Observability.noOp())
+    override val nationalGrid = NationalGrid(nationalGridClient(), Observability.noOp())
 }

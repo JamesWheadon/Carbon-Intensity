@@ -17,12 +17,8 @@ import org.http4k.filter.ClientFilters
 import org.http4k.format.Jackson
 import java.time.ZonedDateTime
 
-interface NationalGrid {
-    fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed>
-}
-
-class NationalGridCloud(private val httpHandler: HttpHandler, private val observability: Observability) : NationalGrid {
-    override fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
+class NationalGrid(private val httpHandler: HttpHandler, private val observability: Observability) {
+    fun intensity(from: ZonedDateTime, to: ZonedDateTime): Result<NationalGridData, Failed> {
         val start = from.plusMinutes(30 - from.minute % 30L)
         val end = to.plusMinutes((30 - (to.minute % 30L)) % 30L)
         val response = observability.outboundHttp("Fetch Carbon Intensity", "National Grid").then(httpHandler)(Request(GET, "_://grid/intensity/$start/$end"))

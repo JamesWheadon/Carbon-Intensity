@@ -5,6 +5,7 @@ import com.intensity.core.Electricity
 import com.intensity.core.ElectricityData
 import com.intensity.coretest.isFailure
 import com.intensity.coretest.isSuccess
+import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.Intensity
 import com.intensity.nationalgrid.IntensityData
 import com.intensity.nationalgrid.NationalGrid
@@ -18,12 +19,10 @@ import com.intensity.octopus.PriceData
 import com.intensity.octopus.Prices
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import dev.forkhandles.result4k.Success
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit.HOURS
 
 class CalculatorTest {
@@ -32,9 +31,10 @@ class CalculatorTest {
     private val observability = TestObservability()
     private val openTelemetry = observability.observability("calculator")
     private val octopus = FakeOctopus()
+    private val nationalGrid = FakeNationalGrid()
     private val calculator = Calculator(
         Octopus(octopus, openTelemetry),
-        NationalGridFake(),
+        NationalGrid(nationalGrid, openTelemetry),
         LimitCalculatorCloud(fakeLimit, openTelemetry),
         WeightsCalculatorCloud(fakeWeights, openTelemetry),
         openTelemetry
@@ -291,6 +291,7 @@ class CalculatorTest {
     @Test
     fun `spans and traces are created`() {
         octopus.setPricesFor("product", "tariff" to startTime, listOf(12.5, 12.6, 12.7, 12.8))
+        nationalGrid.setDateData(startTime, listOf(100, 99, 101, 102))
         fakeLimit.setIntensityChargeTime(100.0, startTime.toString() to startTime.plusMinutes(45).toString())
 
         calculator.calculate(
@@ -313,17 +314,4 @@ class CalculatorTest {
         assertThat(calculatingChargeTimeSpan.events.map { it.name }, equalTo(listOf("calculated using intensity limit")))
         assertThat(calculatingChargeTimeSpan.parentSpanId, equalTo(parentSpan.spanId))
     }
-}
-
-class NationalGridFake : NationalGrid {
-    override fun intensity(from: ZonedDateTime, to: ZonedDateTime) = Success(
-        NationalGridData(
-            listOf(
-                IntensityData(from, from.plusMinutes(30), Intensity(100, null, "")),
-                IntensityData(from.plusMinutes(30), from.plusMinutes(60), Intensity(99, null, "")),
-                IntensityData(from.plusMinutes(60), from.plusMinutes(90), Intensity(101, null, "")),
-                IntensityData(from.plusMinutes(90), from.plusMinutes(120), Intensity(102, null, ""))
-            )
-        )
-    )
 }
