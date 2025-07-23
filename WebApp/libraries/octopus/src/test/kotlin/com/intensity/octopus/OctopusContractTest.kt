@@ -250,5 +250,5 @@ class FakeOctopusTest : OctopusContractTest() {
 
 @Disabled
 class OctopusTest : OctopusContractTest() {
-    override val octopus = Octopus(octopusClient(), Observability.noOp())
+    override val octopus = Octopus(Octopus.client(), Observability.noOp())
 }

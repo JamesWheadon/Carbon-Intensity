@@ -7,6 +7,7 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.observability.TestObservability
 import com.intensity.octopus.FakeOctopus
+import com.intensity.octopus.Octopus
 import com.intensity.weightedcalculator.weightedCalculatorApp
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
@@ -97,7 +98,7 @@ class Customer {
     private val weightsCalcOpenTelemetry = observability.observability("weights")
     private val network = reverseProxyRouting(
         NationalGrid.pathSegment to nationalGridFake,
-        "octopus" to octopusFake,
+        Octopus.pathSegment to octopusFake,
         "limit" to limitCalculatorApp(limitCalcOpenTelemetry),
         "weights" to weightedCalculatorApp(weightsCalcOpenTelemetry)
     )

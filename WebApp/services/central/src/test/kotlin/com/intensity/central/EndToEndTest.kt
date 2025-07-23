@@ -4,6 +4,7 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.observability.TestObservability
 import com.intensity.octopus.FakeOctopus
+import com.intensity.octopus.Octopus
 import org.http4k.routing.reverseProxyRouting
 import java.time.ZonedDateTime
 
@@ -16,7 +17,7 @@ abstract class EndToEndTest {
     private val observability = TestObservability().observability("central")
     private val network = reverseProxyRouting(
         NationalGrid.pathSegment to nationalGrid,
-        "octopus" to octopus,
+        Octopus.pathSegment to octopus,
         "limit" to limitCalculator,
         "weights" to weightsCalculator
     )

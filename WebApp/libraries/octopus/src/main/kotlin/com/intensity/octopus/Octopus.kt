@@ -1,3 +1,5 @@
+@file:Suppress("MayBeConstant")
+
 package com.intensity.octopus
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -22,6 +24,13 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 class Octopus(private val httpHandler: HttpHandler, private val observability: Observability) {
+    companion object {
+        val pathSegment = "octopus"
+
+        fun client() = ClientFilters.SetBaseUriFrom(Uri.of("https://api.octopus.energy/v1/products"))
+            .then(JavaHttpClient())
+    }
+
     fun products(): Result<Products, Failed> {
         val response = observability.outboundHttp("Fetch Octopus Products", "Octopus").then(httpHandler)(Request(GET, "_://octopus/"))
         return when (response.status) {
@@ -63,9 +72,6 @@ class Octopus(private val httpHandler: HttpHandler, private val observability: O
         }
     }
 }
-
-fun octopusClient() = ClientFilters.SetBaseUriFrom(Uri.of("https://api.octopus.energy/v1/products"))
-    .then(JavaHttpClient())
 
 @JvmInline
 value class OctopusProduct(val code: String)

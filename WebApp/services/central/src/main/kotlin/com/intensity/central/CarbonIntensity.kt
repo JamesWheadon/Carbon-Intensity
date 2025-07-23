@@ -5,7 +5,6 @@ import com.intensity.nationalgrid.NationalGrid
 import com.intensity.observability.Observability
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
-import com.intensity.octopus.octopusClient
 import com.intensity.openapi.openApi3
 import org.http4k.client.JavaHttpClient
 import org.http4k.contract.PreFlightExtraction.Companion.None
@@ -34,7 +33,7 @@ fun main() {
     val observability = Observability.noOp()
     val network = reverseProxyRouting(
         NationalGrid.pathSegment to NationalGrid.client(),
-        "octopus" to octopusClient(),
+        Octopus.pathSegment to Octopus.client(),
         "limit" to calculatorClient(limitCalculatorUrl),
         "weights" to calculatorClient(weightsCalculatorUrl)
     )

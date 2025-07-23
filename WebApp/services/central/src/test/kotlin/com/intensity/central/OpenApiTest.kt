@@ -4,6 +4,7 @@ import com.intensity.nationalgrid.FakeNationalGrid
 import com.intensity.nationalgrid.NationalGrid
 import com.intensity.observability.Observability
 import com.intensity.octopus.FakeOctopus
+import com.intensity.octopus.Octopus
 import com.natpryce.hamkrest.and
 import com.natpryce.hamkrest.assertion.assertThat
 import org.http4k.core.Method.GET
@@ -23,7 +24,7 @@ class OpenApiTest {
 
     private val network = reverseProxyRouting(
         NationalGrid.pathSegment to FakeNationalGrid(),
-        "octopus" to FakeOctopus(),
+        Octopus.pathSegment to FakeOctopus(),
         "limit" to FakeLimitCalculator(),
         "weights" to FakeWeightsCalculator()
     )
