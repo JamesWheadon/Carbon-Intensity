@@ -1,6 +1,7 @@
 package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
+import com.intensity.nationalgrid.NationalGrid
 import com.intensity.observability.Observability
 import com.intensity.octopus.FakeOctopus
 import com.natpryce.hamkrest.and
@@ -21,7 +22,7 @@ class OpenApiTest {
     private val observability = Observability.noOp()
 
     private val network = reverseProxyRouting(
-        "grid" to FakeNationalGrid(),
+        NationalGrid.pathSegment to FakeNationalGrid(),
         "octopus" to FakeOctopus(),
         "limit" to FakeLimitCalculator(),
         "weights" to FakeWeightsCalculator()

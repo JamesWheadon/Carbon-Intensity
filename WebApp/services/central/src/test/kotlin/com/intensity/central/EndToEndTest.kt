@@ -1,6 +1,7 @@
 package com.intensity.central
 
 import com.intensity.nationalgrid.FakeNationalGrid
+import com.intensity.nationalgrid.NationalGrid
 import com.intensity.observability.TestObservability
 import com.intensity.octopus.FakeOctopus
 import org.http4k.routing.reverseProxyRouting
@@ -14,7 +15,7 @@ abstract class EndToEndTest {
     val weightsCalculator = FakeWeightsCalculator()
     private val observability = TestObservability().observability("central")
     private val network = reverseProxyRouting(
-        "grid" to nationalGrid,
+        NationalGrid.pathSegment to nationalGrid,
         "octopus" to octopus,
         "limit" to limitCalculator,
         "weights" to weightsCalculator

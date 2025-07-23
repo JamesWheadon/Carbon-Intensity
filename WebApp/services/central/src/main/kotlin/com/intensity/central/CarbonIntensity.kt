@@ -2,7 +2,6 @@ package com.intensity.central
 
 import com.intensity.core.errorResponseLens
 import com.intensity.nationalgrid.NationalGrid
-import com.intensity.nationalgrid.nationalGridClient
 import com.intensity.observability.Observability
 import com.intensity.octopus.InvalidRequestFailed
 import com.intensity.octopus.Octopus
@@ -34,7 +33,7 @@ fun main() {
     val weightsCalculatorUrl = "http://localhost:9002"
     val observability = Observability.noOp()
     val network = reverseProxyRouting(
-        "grid" to nationalGridClient(),
+        NationalGrid.pathSegment to NationalGrid.client(),
         "octopus" to octopusClient(),
         "limit" to calculatorClient(limitCalculatorUrl),
         "weights" to calculatorClient(weightsCalculatorUrl)

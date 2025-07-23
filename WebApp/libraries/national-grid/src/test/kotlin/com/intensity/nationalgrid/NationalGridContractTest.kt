@@ -71,5 +71,5 @@ class FakeNationalGridTest : NationalGridContractTest() {
 
 @Disabled
 class NationalGridTest : NationalGridContractTest() {
-    override val nationalGrid = NationalGrid(nationalGridClient(), Observability.noOp())
+    override val nationalGrid = NationalGrid(NationalGrid.client(), Observability.noOp())
 }

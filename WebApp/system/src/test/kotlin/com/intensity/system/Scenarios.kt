@@ -4,6 +4,7 @@ import com.intensity.central.carbonIntensity
 import com.intensity.core.chargeTimeLens
 import com.intensity.limitcalculator.limitCalculatorApp
 import com.intensity.nationalgrid.FakeNationalGrid
+import com.intensity.nationalgrid.NationalGrid
 import com.intensity.observability.TestObservability
 import com.intensity.octopus.FakeOctopus
 import com.intensity.weightedcalculator.weightedCalculatorApp
@@ -95,7 +96,7 @@ class Customer {
     private val limitCalcOpenTelemetry = observability.observability("limit")
     private val weightsCalcOpenTelemetry = observability.observability("weights")
     private val network = reverseProxyRouting(
-        "grid" to nationalGridFake,
+        NationalGrid.pathSegment to nationalGridFake,
         "octopus" to octopusFake,
         "limit" to limitCalculatorApp(limitCalcOpenTelemetry),
         "weights" to weightedCalculatorApp(weightsCalcOpenTelemetry)
