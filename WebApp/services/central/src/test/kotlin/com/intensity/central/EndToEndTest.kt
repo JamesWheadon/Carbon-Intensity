@@ -18,8 +18,8 @@ abstract class EndToEndTest {
     private val network = reverseProxyRouting(
         NationalGrid.pathSegment to nationalGrid,
         Octopus.pathSegment to octopus,
-        "limit" to limitCalculator,
-        "weights" to weightsCalculator
+        LimitCalculator.pathSegment to limitCalculator,
+        WeightsCalculator.pathSegment to weightsCalculator
     )
     val app = carbonIntensity(
         network,

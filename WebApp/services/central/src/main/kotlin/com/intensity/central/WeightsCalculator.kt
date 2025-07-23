@@ -1,3 +1,5 @@
+@file:Suppress("MayBeConstant")
+
 package com.intensity.central
 
 import com.intensity.core.ChargeTime
@@ -16,18 +18,12 @@ import org.http4k.core.then
 import org.http4k.core.with
 import java.time.ZonedDateTime
 
-interface WeightsCalculator {
-    fun chargeTime(
-        electricity: Electricity,
-        weights: Weights,
-        time: Long,
-        start: ZonedDateTime,
-        end: ZonedDateTime
-    ): Result<ChargeTime, Failed>
-}
+class WeightsCalculator(private val httpHandler: HttpHandler, private val observability: Observability) {
+    companion object {
+        val pathSegment = "weights"
+    }
 
-class WeightsCalculatorCloud(private val httpHandler: HttpHandler, private val observability: Observability) : WeightsCalculator {
-    override fun chargeTime(
+    fun chargeTime(
         electricity: Electricity,
         weights: Weights,
         time: Long,

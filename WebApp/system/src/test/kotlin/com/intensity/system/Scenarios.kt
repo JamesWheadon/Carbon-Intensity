@@ -1,5 +1,7 @@
 package com.intensity.system
 
+import com.intensity.central.LimitCalculator
+import com.intensity.central.WeightsCalculator
 import com.intensity.central.carbonIntensity
 import com.intensity.core.chargeTimeLens
 import com.intensity.limitcalculator.limitCalculatorApp
@@ -99,8 +101,8 @@ class Customer {
     private val network = reverseProxyRouting(
         NationalGrid.pathSegment to nationalGridFake,
         Octopus.pathSegment to octopusFake,
-        "limit" to limitCalculatorApp(limitCalcOpenTelemetry),
-        "weights" to weightedCalculatorApp(weightsCalcOpenTelemetry)
+        LimitCalculator.pathSegment to limitCalculatorApp(limitCalcOpenTelemetry),
+        WeightsCalculator.pathSegment to weightedCalculatorApp(weightsCalcOpenTelemetry)
     )
     private val app = carbonIntensity(
         network,

@@ -1,3 +1,5 @@
+@file:Suppress("MayBeConstant")
+
 package com.intensity.central
 
 import com.intensity.core.ChargeTime
@@ -16,13 +18,12 @@ import org.http4k.core.then
 import org.http4k.core.with
 import java.math.BigDecimal
 
-interface LimitCalculator {
-    fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed>
-    fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed>
-}
+class LimitCalculator(private val httpHandler: HttpHandler, private val observability: Observability) {
+    companion object {
+        val pathSegment = "limit"
+    }
 
-class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val observability: Observability) : LimitCalculator {
-    override fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
+    fun intensityLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
         val response = observability.outboundHttp("Intensity limit", "Limit")
             .then(httpHandler)(
             Request(POST, "_://limit/calculate/intensity/$limit").with(
@@ -41,7 +42,7 @@ class LimitCalculatorCloud(private val httpHandler: HttpHandler, private val obs
         }
     }
 
-    override fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
+    fun priceLimit(electricity: Electricity, limit: BigDecimal, time: Long): Result<ChargeTime, Failed> {
         val response = observability.outboundHttp("Price limit", "Limit")
             .then(httpHandler)(Request(POST, "_://limit/calculate/price/$limit").with(
                 ScheduleRequest.lens of ScheduleRequest(

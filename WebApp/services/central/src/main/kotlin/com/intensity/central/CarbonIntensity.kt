@@ -34,8 +34,8 @@ fun main() {
     val network = reverseProxyRouting(
         NationalGrid.pathSegment to NationalGrid.client(),
         Octopus.pathSegment to Octopus.client(),
-        "limit" to calculatorClient(limitCalculatorUrl),
-        "weights" to calculatorClient(weightsCalculatorUrl)
+        LimitCalculator.pathSegment to calculatorClient(limitCalculatorUrl),
+        WeightsCalculator.pathSegment to calculatorClient(weightsCalculatorUrl)
     )
     carbonIntensity(
         network,
@@ -55,8 +55,8 @@ fun carbonIntensity(
 ): RoutingHttpHandler {
     val nationalGrid = NationalGrid(network, observability)
     val octopus = Octopus(network, observability)
-    val limitCalculator = LimitCalculatorCloud(network, observability)
-    val weightsCalculator = WeightsCalculatorCloud(network, observability)
+    val limitCalculator = LimitCalculator(network, observability)
+    val weightsCalculator = WeightsCalculator(network, observability)
     return corsMiddleware
         .then(observability.inboundHttp())
         .then(CatchLensFailure { _: LensFailure ->

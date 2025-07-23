@@ -25,8 +25,8 @@ class OpenApiTest {
     private val network = reverseProxyRouting(
         NationalGrid.pathSegment to FakeNationalGrid(),
         Octopus.pathSegment to FakeOctopus(),
-        "limit" to FakeLimitCalculator(),
-        "weights" to FakeWeightsCalculator()
+        LimitCalculator.pathSegment to FakeLimitCalculator(),
+        WeightsCalculator.pathSegment to FakeWeightsCalculator()
     )
     private val server = carbonIntensity(network, observability)
 

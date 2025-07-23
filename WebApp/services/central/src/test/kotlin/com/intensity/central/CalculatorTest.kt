@@ -35,8 +35,8 @@ class CalculatorTest {
     private val calculator = Calculator(
         Octopus(octopus, openTelemetry),
         NationalGrid(nationalGrid, openTelemetry),
-        LimitCalculatorCloud(fakeLimit, openTelemetry),
-        WeightsCalculatorCloud(fakeWeights, openTelemetry),
+        LimitCalculator(fakeLimit, openTelemetry),
+        WeightsCalculator(fakeWeights, openTelemetry),
         openTelemetry
     )
     private val startTime = LocalDateTime.now().atZone(ZoneId.of("UTC").normalized()).truncatedTo(HOURS)
