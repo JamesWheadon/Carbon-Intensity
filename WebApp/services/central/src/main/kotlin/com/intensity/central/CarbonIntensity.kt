@@ -32,15 +32,13 @@ fun main() {
     val limitCalculatorUrl = "http://localhost:9001"
     val weightsCalculatorUrl = "http://localhost:9002"
     val observability = Observability.noOp()
-    val server = carbonIntensityServer(
-        port,
+    carbonIntensity(
         NationalGridCloud(nationalGridClient(), observability),
         OctopusCloud(octopusClient(), observability),
         LimitCalculatorCloud(calculatorClient(limitCalculatorUrl), observability),
         WeightsCalculatorCloud(calculatorClient(weightsCalculatorUrl), observability),
         observability
-    ).start()
-    println("Server started on " + server.port())
+    ).asServer(SunHttp(port)).start()
 }
 
 fun calculatorClient(limitCalculatorUrl: String) =
@@ -48,15 +46,6 @@ fun calculatorClient(limitCalculatorUrl: String) =
         .then(JavaHttpClient())
 
 val corsMiddleware = Cors(CorsPolicy.UnsafeGlobalPermissive)
-
-fun carbonIntensityServer(
-    port: Int,
-    nationalGrid: NationalGrid,
-    octopus: Octopus,
-    limitCalculator: LimitCalculator,
-    weightsCalculator: WeightsCalculator,
-    observability: Observability
-) = carbonIntensity(nationalGrid, octopus, limitCalculator, weightsCalculator, observability).asServer(SunHttp(port))
 
 fun carbonIntensity(
     nationalGrid: NationalGrid,
